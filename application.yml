@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: knowledge-management-service
+server:
+  port: 8080
+logging:
+  level:
+    com.team.knowledge: INFO
