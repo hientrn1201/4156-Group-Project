@@ -13,7 +13,7 @@ public class Document {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false)
+  @Column(name="filename")
   private String filename;
 
   @Column(name="type")
