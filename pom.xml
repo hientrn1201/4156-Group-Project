@@ -11,10 +11,10 @@
   </parent>
 
   <groupId>dev.coms4156.project</groupId>
-  <artifactId>individualproject</artifactId>
+  <artifactId>teamproject</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>individualproject</name>
-  <description>individualproject</description>
+  <name>Knowledge Management Service</name>
+  <description>ai-powered document processing and text extraction service</description>
 
   <url/>
   <licenses>
