@@ -1,8 +1,10 @@
-package com.team.knowledge.controller;
+package dev.coms4156.project.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import dev.coms4156.project.controller.Controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

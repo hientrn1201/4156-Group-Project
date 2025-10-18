@@ -1,4 +1,4 @@
-package com.team.knowledge.controller;
+package dev.coms4156.project.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

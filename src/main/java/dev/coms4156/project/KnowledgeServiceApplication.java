@@ -1,4 +1,4 @@
-package com.team.knowledge;
+package dev.coms4156.project;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
