@@ -3,19 +3,55 @@ spring:
     name: knowledge-management-service
 
   datasource:
-      url: jdbc:postgresql://localhost:5432/knowledge_db
-      username: username
-      password: password
+      url: jdbc:postgresql://localhost:5433/postgresml
+      username: postgresml
+      password: ""
       driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  # Spring AI PostgresML Configuration
+  ai:
+    model:
+      embedding: postgresml
+    postgresml:
+      embedding:
+        create-extension: true
+        options:
+          transformer: distilbert-base-uncased
+          vectorType: PG_VECTOR
+          metadataMode: EMBED
+          kwargs:
+            device: cpu
 
 server:
   port: 8080
+
 logging:
   level:
-    com.team.knowledge: INFO
+    dev.coms4156.project: INFO
     org.hibernate.SQL: DEBUG
+    org.springframework.ai: DEBUG
+
+# Custom application properties
+app:
+  document:
+    chunk-size: 1000
+    chunk-overlap: 200
+    max-file-size: 50MB
+  vector:
+    dimensions: 768  # distilbert-base-uncased produces 768-dimensional embeddings
+    similarity-threshold: 0.7
+  summarization:
+    max-summary-length: 500

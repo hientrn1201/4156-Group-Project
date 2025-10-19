@@ -1,0 +1,622 @@
+{
+  "info": {
+    "name": "AI Knowledge Management Service API",
+    "description": "Complete API collection for testing the AI Knowledge Management Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Document Management",
+      "item": [
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get All Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"]
+            }
+          }
+        },
+        {
+          "name": "Get Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Documents by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/status/COMPLETED",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "status", "COMPLETED"]
+            }
+          }
+        },
+        {
+          "name": "Get Documents with Summaries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/summaries",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "summaries"]
+            }
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Processing Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Upload Document with Custom Chunking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "chunkSize",
+                  "value": "500",
+                  "type": "text"
+                },
+                {
+                  "key": "overlapSize",
+                  "value": "100",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/upload/custom",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "upload", "custom"]
+            }
+          }
+        },
+        {
+          "name": "Reprocess Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chunkSize\": 800,\n  \"overlapSize\": 150\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/reprocess",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "reprocess"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Document Chunks",
+      "item": [
+        {
+          "name": "Get Document Chunks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/chunks",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "chunks"]
+            }
+          }
+        },
+        {
+          "name": "Get Chunk Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/chunks/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "chunks", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Generate Embeddings for Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/embeddings/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "embeddings", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Get Chunk by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/chunks/{{chunkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["chunks", "{{chunkId}}"]
+            }
+          }
+        },
+        {
+          "name": "Search Chunks by Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"machine learning algorithms\",\n  \"threshold\": 0.7,\n  \"limit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chunks/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["chunks", "search"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Embedding Operations",
+      "item": [
+        {
+          "name": "Find Similar Chunks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"artificial intelligence and machine learning\",\n  \"threshold\": 0.6,\n  \"limit\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/embeddings/similar",
+              "host": ["{{baseUrl}}"],
+              "path": ["embeddings", "similar"]
+            }
+          }
+        },
+        {
+          "name": "Get Embedding for Text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This is a sample text to generate embedding for\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/embeddings/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["embeddings", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Calculate Similarity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text1\": \"Machine learning is a subset of artificial intelligence\",\n  \"text2\": \"AI includes machine learning as one of its components\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/embeddings/similarity",
+              "host": ["{{baseUrl}}"],
+              "path": ["embeddings", "similarity"]
+            }
+          }
+        },
+        {
+          "name": "Get Embedding Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/embeddings/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["embeddings", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search Operations",
+      "item": [
+        {
+          "name": "Semantic Search (Embedding-based)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"machine learning algorithms\",\n  \"threshold\": 0.7,\n  \"limit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/search/semantic",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "semantic"]
+            }
+          }
+        },
+        {
+          "name": "Advanced Semantic Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"artificial intelligence and deep learning\",\n  \"threshold\": 0.8,\n  \"limit\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/search/semantic/advanced",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "semantic", "advanced"]
+            }
+          }
+        },
+        {
+          "name": "Search in Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"specific topic\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/search/document/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "document", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Search Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/suggestions?prefix=machine",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "suggestions"],
+              "query": [
+                {
+                  "key": "prefix",
+                  "value": "machine"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Search Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/analytics",
+              "host": ["{{baseUrl}}"],
+              "path": ["search", "analytics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Summarization",
+      "item": [
+        {
+          "name": "Cross-Document Summary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What are the main findings?\",\n  \"context\": \"Document content from multiple sources...\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/summarize/cross",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "summarize", "cross"]
+            }
+          }
+        },
+        {
+          "name": "Extract Key Insights",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Long text content to analyze for key insights and findings...\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/insights",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "insights"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Graph",
+      "item": [
+        {
+          "name": "Get Document Relationships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/relationships/document/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "relationships", "document", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Relationships by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/relationships/type/SEMANTIC_SIMILARITY",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "relationships", "type", "SEMANTIC_SIMILARITY"]
+            }
+          }
+        },
+        {
+          "name": "Get High-Confidence Relationships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/relationships/high-confidence?threshold=0.8",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "relationships", "high-confidence"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "0.8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Analyze Document Connections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/analysis/document/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "analysis", "document", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Knowledge Graph Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Relationship Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/relationship-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["knowledge", "relationship-types"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "System & Configuration",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "Test Hugging Face Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Test connection to Hugging Face API\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/system/test/embedding",
+              "host": ["{{baseUrl}}"],
+              "path": ["system", "test", "embedding"]
+            }
+          }
+        },
+        {
+          "name": "Get System Configuration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/system/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["system", "config"]
+            }
+          }
+        },
+        {
+          "name": "Get Processing Pipeline Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/system/pipeline/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["system", "pipeline", "status"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "chunkId",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}
