@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: knowledge-management-service
+
+  datasource:
+      url: jdbc:postgresql://localhost:5432/knowledge_db
+      username: username
+      password: password
+      driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8080
+logging:
+  level:
+    com.team.knowledge: INFO
+    org.hibernate.SQL: DEBUG
