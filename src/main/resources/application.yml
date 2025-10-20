@@ -3,10 +3,10 @@ spring:
     name: knowledge-management-service
 
   datasource:
-      url: jdbc:postgresql://localhost:5432/knowledge_db
-      username: postgres
-      password: postgres
-      driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/knowledge_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
