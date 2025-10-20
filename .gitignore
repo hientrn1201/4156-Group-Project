@@ -3,5 +3,3 @@
 .DS_Store
 target/
 .env
-
-check-style.xml
