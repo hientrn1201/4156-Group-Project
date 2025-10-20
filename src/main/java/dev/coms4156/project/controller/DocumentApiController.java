@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,4 +189,105 @@ public class DocumentApiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
+  @GetMapping("/documents")
+  public ResponseEntity<?> getAllDocuments() {
+
+    try {
+
+      List<Document> documents = documentService.getAllDocuments();
+      Map<String, Object> response = new HashMap<>();
+      response.put("documents", documents);
+      response.put("count", documents.size());
+      response.put("message", "Documents retrieved");
+      return ResponseEntity.ok(response);
+
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);
+    }
+  }
+
+  @DeleteMapping("/documents/{id}")
+  public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
+    if (documentService.getDocumentById(id).isEmpty()) {
+      Map<String, String> error = new HashMap<>();
+      error.put("error", "Document not found");
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    documentService.deleteDocument(id);
+    
+    return ResponseEntity.ok(Map.of("documentId", id, "message", "Document deleted successfully"));
+  }
+
+    /**
+     * GET /api/v1/documents/summaries 
+     *  Get docs with summaries
+     */
+  @GetMapping("/documents/summaries")
+  public ResponseEntity<Map<String, Object>> getDocumentsWithSummaries() {
+      List<Document> all = documentService.getAllDocuments();
+      List<Document> documents = new ArrayList<>();
+
+      for (Document d : all) {
+          String s = d.getSummary();
+          if (s != null && !s.isBlank()) {
+              documents.add(d);
+          }
+      }
+
+      Map<String, Object> body = new HashMap<>();
+      body.put("documents", documents);
+      body.put("count", documents.size());
+      return ResponseEntity.ok(body);
+  }
+
+  @GetMapping("/documents/stats")
+public ResponseEntity<?> getProcessingStatistics() {
+    List<Document> allDocuments = documentService.getAllDocuments();
+    long total = allDocuments.size();
+
+    long uploaded = 0;
+    long textExtracted = 0;
+    long chunked = 0;
+    long embeddingsGenerated = 0;
+    long summarized = 0;
+    long completed = 0;
+    long failed = 0;
+
+    for (Document doc : allDocuments) {
+        Document.ProcessingStatus status = doc.getProcessingStatus();
+        if(status == Document.ProcessingStatus.UPLOADED){uploaded++;
+        } else if(status ==Document.ProcessingStatus.TEXT_EXTRACTED) {textExtracted++;
+        } else if (status== Document.ProcessingStatus.CHUNKED) {
+            chunked++;
+        } else if(status ==Document.ProcessingStatus.EMBEDDINGS_GENERATED) {embeddingsGenerated++;
+        } else if(status == Document.ProcessingStatus.SUMMARIZED) {
+            summarized++;
+        } else if(status ==Document.ProcessingStatus.COMPLETED) {
+            completed++;
+        } else if(status ==Document.ProcessingStatus.FAILED) {
+            failed++;
+        }}
+    Map<String, Long> statusCounts = new HashMap<>();
+    statusCounts.put("UPLOADED",uploaded);
+    statusCounts.put("TEXT_EXTRACTED", textExtracted);
+    statusCounts.put("CHUNKED", chunked);
+    statusCounts.put("EMBEDDINGS_GENERATED", embeddingsGenerated);
+    statusCounts.put("SUMMARIZED", summarized);
+    statusCounts.put("COMPLETED", completed);
+    statusCounts.put("FAILED", failed);
+
+    double completionRate;
+    double failureRate;
+
+    if (total >0) {
+        completionRate =(double) completed / (double) total;
+        failureRate = (double) failed / (double) total;
+    } else {
+        completionRate =0.0;
+        failureRate=0.0;
+    }
+    return ResponseEntity.ok(Map.of("total", total,"byStatus",statusCounts,"completionRate", completionRate, "failureRate", failureRate));
+}
+
+      
 }
