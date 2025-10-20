@@ -1,11 +1,23 @@
 package dev.coms4156.project.model;
 
-import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.LocalDateTime;
 
+/**
+ * Entity representing a document with extracted text and processing status.
+ */
 @Entity
 @Table(name = "documents")
 public class Document {
@@ -48,6 +60,9 @@ public class Document {
     this.processingStatus = ProcessingStatus.UPLOADED;
   }
 
+  /**
+   * Enum representing the processing status of a document.
+   */
   public enum ProcessingStatus {
     UPLOADED,
     TEXT_EXTRACTED,
