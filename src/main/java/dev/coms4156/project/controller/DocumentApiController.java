@@ -4,6 +4,7 @@ import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
+import dev.coms4156.project.service.RagService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,14 @@ public class DocumentApiController {
 
     private final DocumentService documentService;
     private final DocumentSummarizationService summarizationService;
+    private final RagService ragService;
 
     public DocumentApiController(DocumentService documentService,
-            DocumentSummarizationService summarizationService) {
+            DocumentSummarizationService summarizationService,
+            RagService ragService) {
         this.documentService = documentService;
         this.summarizationService = summarizationService;
+        this.ragService = ragService;
     }
 
     /**
@@ -38,6 +42,9 @@ public class DocumentApiController {
         try {
             System.out.println("Received file upload: " + file.getOriginalFilename());
             Document document = documentService.processDocument(file);
+
+            // Skip RAG vector store ingestion - use existing document_chunks table instead
+            // The document_chunks table already contains the embeddings for RAG operations
 
             Map<String, Object> response = new HashMap<>();
             response.put("documentId", document.getId());
@@ -178,6 +185,121 @@ public class DocumentApiController {
             System.err.println("Search error: " + e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", "Search failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * POST /api/v1/chat
+     * Chat with RAG context retrieval from uploaded documents
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<?> chatWithRag(@RequestBody Map<String, String> request) {
+        try {
+            String question = request.get("question");
+            if (question == null || question.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Question cannot be empty");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            System.out.println("Processing RAG chat query: " + question);
+            String response = ragService.queryWithRag(question);
+
+            Map<String, Object> chatResponse = new HashMap<>();
+            chatResponse.put("question", question);
+            chatResponse.put("response", response);
+            chatResponse.put("timestamp", java.time.Instant.now());
+
+            return ResponseEntity.ok(chatResponse);
+
+        } catch (Exception e) {
+            System.err.println("RAG chat error: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Chat failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * POST /api/v1/chat/direct
+     * Direct chat without RAG context
+     */
+    @PostMapping("/chat/direct")
+    public ResponseEntity<?> chatDirect(@RequestBody Map<String, String> request) {
+        try {
+            String question = request.get("question");
+            if (question == null || question.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Question cannot be empty");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            System.out.println("Processing direct chat query: " + question);
+            String response = ragService.queryDirect(question);
+
+            Map<String, Object> chatResponse = new HashMap<>();
+            chatResponse.put("question", question);
+            chatResponse.put("response", response);
+            chatResponse.put("timestamp", java.time.Instant.now());
+
+            return ResponseEntity.ok(chatResponse);
+
+        } catch (Exception e) {
+            System.err.println("Direct chat error: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Chat failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * GET /api/v1/rag/search
+     * Search similar documents using RAG vector store
+     */
+    @GetMapping("/rag/search")
+    public ResponseEntity<?> searchRagDocuments(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "5") int topK) {
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Query cannot be empty");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            System.out.println("Performing RAG search for: " + query);
+            List<DocumentChunk> documents = ragService.searchSimilarDocuments(query, topK);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("query", query);
+            response.put("results", documents);
+            response.put("count", documents.size());
+            response.put("message", "RAG search completed successfully");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("RAG search error: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "RAG search failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * GET /api/v1/rag/stats
+     * Get RAG vector store statistics
+     */
+    @GetMapping("/rag/stats")
+    public ResponseEntity<?> getRagStats() {
+        try {
+            Map<String, Object> stats = ragService.getVectorStoreStats();
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            System.err.println("RAG stats error: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to get RAG statistics: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

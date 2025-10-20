@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 /**
- * Embedding service using PostgresML for local embedding generation
- * Uses distilbert-base-uncased model for 768-dimensional embeddings
+ * Embedding service using Spring AI with Ollama for local embedding generation
+ * Uses llama3.2 model for 4096-dimensional embeddings
  */
 @Service
 public class SimpleEmbeddingService {
@@ -29,7 +29,7 @@ public class SimpleEmbeddingService {
     }
 
     /**
-     * Generate embedding using PostgresML
+     * Generate embedding using Spring AI with Ollama
      */
     @Transactional
     public DocumentChunk generateEmbedding(DocumentChunk chunk) {
@@ -39,7 +39,7 @@ public class SimpleEmbeddingService {
 
         try {
             String text = chunk.getTextContent();
-            float[] embeddingArray = generatePostgresMLEmbeddingArray(text);
+            float[] embeddingArray = generateOllamaEmbeddingArray(text);
 
             // Convert to string format for native SQL
             String embeddingString = convertFloatArrayToVectorString(embeddingArray);
@@ -76,7 +76,7 @@ public class SimpleEmbeddingService {
         for (DocumentChunk chunk : chunks) {
             if (chunk.getTextContent() != null && !chunk.getTextContent().trim().isEmpty()) {
                 try {
-                    float[] embeddingArray = generatePostgresMLEmbeddingArray(chunk.getTextContent());
+                    float[] embeddingArray = generateOllamaEmbeddingArray(chunk.getTextContent());
                     String embeddingString = convertFloatArrayToVectorString(embeddingArray);
 
                     // Use native SQL to insert with proper vector casting
@@ -104,9 +104,9 @@ public class SimpleEmbeddingService {
     }
 
     /**
-     * Generate embedding using PostgresML EmbeddingModel
+     * Generate embedding using Spring AI Ollama EmbeddingModel
      */
-    private float[] generatePostgresMLEmbeddingArray(String text) {
+    private float[] generateOllamaEmbeddingArray(String text) {
         try {
             System.out.println(
                     "Generating embedding for text: " + text.substring(0, Math.min(100, text.length())) + "...");
@@ -118,11 +118,11 @@ public class SimpleEmbeddingService {
                 System.out.println("Successfully generated embedding with " + embedding.length + " dimensions");
                 return embedding;
             } else {
-                throw new RuntimeException("No embedding result returned from PostgresML");
+                throw new RuntimeException("No embedding result returned from Ollama");
             }
         } catch (Exception e) {
-            System.err.println("Failed to generate PostgresML embedding: " + e.getMessage());
-            throw new RuntimeException("Failed to generate PostgresML embedding: " + e.getMessage(), e);
+            System.err.println("Failed to generate Ollama embedding: " + e.getMessage());
+            throw new RuntimeException("Failed to generate Ollama embedding: " + e.getMessage(), e);
         }
     }
 
@@ -155,7 +155,7 @@ public class SimpleEmbeddingService {
 
         try {
             // Generate embedding for the query text
-            float[] queryEmbeddingArray = generatePostgresMLEmbeddingArray(queryText);
+            float[] queryEmbeddingArray = generateOllamaEmbeddingArray(queryText);
             String queryEmbedding = convertFloatArrayToVectorString(queryEmbeddingArray);
 
             System.out.println("Search query embedding dimensions: " + queryEmbeddingArray.length);
@@ -245,9 +245,9 @@ public class SimpleEmbeddingService {
             stats.put("totalChunks", totalChunks);
             stats.put("chunksWithEmbeddings", chunksWithEmbeddings);
             stats.put("embeddingCoverage", totalChunks > 0 ? (double) chunksWithEmbeddings / totalChunks : 0.0);
-            stats.put("model", "distilbert-base-uncased");
-            stats.put("dimensions", 768);
-            stats.put("provider", "PostgresML");
+            stats.put("model", "llama3.2");
+            stats.put("dimensions", 4096);
+            stats.put("provider", "Ollama");
 
         } catch (Exception e) {
             stats.put("error", "Failed to get embedding statistics: " + e.getMessage());
@@ -271,24 +271,24 @@ public class SimpleEmbeddingService {
     }
 
     /**
-     * Test PostgresML connection
+     * Test Ollama connection
      */
     public Map<String, Object> testConnection() {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String testText = "This is a test for PostgresML embedding generation.";
-            float[] embeddingArray = generatePostgresMLEmbeddingArray(testText);
+            String testText = "This is a test for Ollama embedding generation.";
+            float[] embeddingArray = generateOllamaEmbeddingArray(testText);
 
             result.put("status", "success");
-            result.put("message", "PostgresML connection successful");
+            result.put("message", "Ollama connection successful");
             result.put("testText", testText);
             result.put("embeddingGenerated", embeddingArray != null && embeddingArray.length > 0);
             result.put("embeddingDimensions", embeddingArray != null ? embeddingArray.length : 0);
 
         } catch (Exception e) {
             result.put("status", "error");
-            result.put("message", "PostgresML connection failed: " + e.getMessage());
+            result.put("message", "Ollama connection failed: " + e.getMessage());
         }
 
         return result;

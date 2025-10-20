@@ -36,7 +36,7 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Lo
     @Query(value = "SELECT COUNT(*) FROM document_chunks WHERE embedding IS NOT NULL", nativeQuery = true)
     Long countByEmbeddingIsNotNull();
 
-    @Query(value = "SELECT * FROM document_chunks WHERE embedding IS NOT NULL ORDER BY embedding <-> :queryEmbedding::vector LIMIT :limit", nativeQuery = true)
+    @Query(value = "SELECT * FROM document_chunks WHERE embedding IS NOT NULL ORDER BY embedding <-> CAST(:queryEmbedding AS vector) LIMIT :limit", nativeQuery = true)
     List<DocumentChunk> findSimilarChunks(@Param("queryEmbedding") String queryEmbedding, @Param("limit") int limit);
 
     @Modifying
