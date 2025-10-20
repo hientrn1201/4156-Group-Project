@@ -3,6 +3,7 @@ package dev.coms4156.project.controller;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
+import dev.coms4156.project.service.RagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -19,13 +20,15 @@ class DocumentApiControllerTest {
 
     private DocumentService documentService;
     private DocumentSummarizationService summarizationService;
+    private RagService ragService;
     private DocumentApiController controller;
 
     @BeforeEach
     void setUp() {
         documentService = mock(DocumentService.class);
         summarizationService = mock(DocumentSummarizationService.class);
-        controller = new DocumentApiController(documentService, summarizationService);
+        ragService = mock(RagService.class);
+        controller = new DocumentApiController(documentService, summarizationService, ragService);
     }
 
     @Test

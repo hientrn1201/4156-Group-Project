@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,10 +27,14 @@ public class DocumentChunk {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
+    @JsonIgnore
     private Document document;
 
     @Column(name = "chunk_index", nullable = false)
     private Integer chunkIndex;
+
+    @Column(name = "document_id", insertable = false, updatable = false)
+    private Long documentId;
 
     @Column(name = "text_content", columnDefinition = "TEXT", nullable = false)
     private String textContent;
@@ -43,8 +48,9 @@ public class DocumentChunk {
     @Column(name = "end_position")
     private Integer endPosition;
 
-    @Column(name = "embedding", columnDefinition = "vector(768)")
+    @Column(name = "embedding", columnDefinition = "vector(3072)")
     @Convert(converter = FloatArrayToPgVectorConverter.class)
+    @JsonIgnore
     private float[] embedding;
 
     @Column(name = "metadata", columnDefinition = "JSONB")
@@ -59,8 +65,10 @@ public class DocumentChunk {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "sourceChunk", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<DocumentRelationship> sourceRelationships;
 
     @OneToMany(mappedBy = "targetChunk", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<DocumentRelationship> targetRelationships;
 }

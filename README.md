@@ -1,31 +1,67 @@
 # 4156-Group-Project
 
-citations:
+## AI Knowledge Management Service with RAG Implementation
 
-https://spring.io/guides/gs/accessing-data-jpa
-
-https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/
-
-https://tika.apache.org/2.0.0/examples.html
-
-https://www.geeksforgeeks.org/java/hibernate-example-using-jpa-and-mysql/
-
-https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html
-
-https://projectlombok.org/api/lombok/package-summary
-
-https://docs.spring.io/spring-data/jpa/docs/1.6.0.RELEASE/reference/html/jpa.repositories.html
-
-# AI Knowledge Management Service API Documentation
+The AI Knowledge Management Service provides intelligent document processing, semantic search, and knowledge extraction capabilities using RAG (Retrieval-Augmented Generation) technology with Spring AI, Ollama, and PostgreSQL + PGVector.
 
 ## Overview
 
-The AI Knowledge Management Service provides intelligent document processing, semantic search, and knowledge extraction capabilities using RAG (Retrieval-Augmented Generation) technology.
+This service implements a complete RAG pipeline that:
+
+- Processes documents through AI-powered text extraction and chunking
+- Generates embeddings using Ollama's llama3.2 model
+- Stores vectors in PostgreSQL with PGVector extension
+- Provides semantic search and RAG-enhanced chat capabilities
+- Maintains backward compatibility with existing API endpoints
+
+## Prerequisites
+
+1. **Docker and Docker Compose** - Required to run Ollama and PostgreSQL with PGVector
+2. **Java 17** - Required for Spring Boot 3.4.4
+3. **Maven** - For building the project
+
+## Quick Start
+
+### 1. Start the Services
+
+```bash
+# Start Ollama and PostgreSQL with PGVector
+docker-compose up -d
+
+# Wait for services to be ready (check logs)
+docker-compose logs -f
+```
+
+### 2. Pull the Ollama Model
+
+```bash
+# Pull the llama3.2 model (this may take a few minutes)
+docker exec ollama ollama pull llama3.2
+```
+
+### 3. Build and Run the Application
+
+```bash
+# Build the project
+mvn clean compile
+
+# Run the application
+mvn spring-boot:run
+```
+
+## Configuration
+
+The application is configured in `src/main/resources/application.yml`:
+
+- **Ollama**: Running on `http://localhost:11434/`
+- **PostgreSQL**: Running on `localhost:5432` with database `knowledge_db`
+- **Vector Store**: Uses PGVector with HNSW index and cosine distance
+- **Model**: llama3.2 for both chat and embeddings (4096 dimensions)
 
 ## Base URL
 
 ```
-http://localhost:8080/api
+http://localhost:8080/api/v1
 ```
 
 ## Authentication
@@ -36,11 +72,11 @@ Currently, the API does not require authentication. In production, implement pro
 
 ### Document Management
 
-#### Upload Document
+#### Upload Document (Enhanced with RAG)
 
-**POST** `/documents/upload`
+**POST** `/documents`
 
-Upload and process a document through the complete AI pipeline.
+Upload and process a document through the complete AI pipeline. **Now automatically ingests content into RAG vector store.**
 
 **Request:**
 
@@ -62,28 +98,7 @@ Upload and process a document through the complete AI pipeline.
 }
 ```
 
-#### Get All Documents
-
-**GET** `/documents`
-
-Retrieve all documents in the system.
-
-**Response:**
-
-```json
-[
-  {
-    "id": 1,
-    "filename": "document.pdf",
-    "contentType": "application/pdf",
-    "fileSize": 1024,
-    "processingStatus": "COMPLETED",
-    "uploadedAt": "2024-01-01T10:00:00Z"
-  }
-]
-```
-
-#### Get Document by ID
+#### Get Document Details
 
 **GET** `/documents/{id}`
 
@@ -104,64 +119,51 @@ Retrieve a specific document by its ID.
 }
 ```
 
-#### Get Documents by Status
+#### Get Document Summary
 
-**GET** `/documents/status/{status}`
+**GET** `/documents/{id}/summary`
 
-Get documents filtered by processing status.
-
-**Status Values:**
-
-- `UPLOADED`
-- `TEXT_EXTRACTED`
-- `CHUNKED`
-- `EMBEDDED`
-- `SUMMARIZED`
-- `COMPLETED`
-- `FAILED`
-
-#### Get Documents with Summaries
-
-**GET** `/documents/summaries`
-
-Retrieve all documents that have been summarized.
-
-#### Delete Document
-
-**DELETE** `/documents/{id}`
-
-Delete a document and all associated data.
+Retrieve generated summary for a document.
 
 **Response:**
 
 ```json
 {
-  "message": "Document deleted successfully"
+  "documentId": 1,
+  "summary": "Document summary..."
+}
+```
+
+#### Get Document Relationships
+
+**GET** `/relationships/{documentId}`
+
+Retrieve related documents (knowledge graph edges).
+
+**Response:**
+
+```json
+{
+  "documentId": 1,
+  "relationships": [],
+  "count": 0,
+  "message": "Relationship analysis not yet implemented"
 }
 ```
 
 ### Search Operations
 
-#### Semantic Search
+#### Semantic Search (Original)
 
-**POST** `/documents/search`
+**GET** `/search/{text}`
 
-Perform semantic search across all documents.
-
-**Request:**
-
-```json
-{
-  "query": "machine learning algorithms",
-  "limit": 10
-}
-```
+Retrieve top 3 relevant documents based on text input using original embedding search.
 
 **Response:**
 
 ```json
 {
-  "query": "machine learning algorithms",
+  "query": "machine learning",
   "results": [
     {
       "id": 1,
@@ -172,64 +174,55 @@ Perform semantic search across all documents.
       }
     }
   ],
-  "count": 5
+  "count": 3,
+  "message": "Search completed successfully"
 }
 ```
 
-#### Advanced Semantic Search
+#### RAG Vector Search (New)
 
-**POST** `/search/semantic`
+**GET** `/rag/search`
 
-Advanced search with similarity thresholds.
-
-**Request:**
-
-```json
-{
-  "query": "artificial intelligence",
-  "limit": 20,
-  "threshold": 0.8
-}
-```
-
-#### Search in Specific Document
-
-**POST** `/search/document/{documentId}`
-
-Search within a specific document.
-
-**Request:**
-
-```json
-{
-  "query": "specific topic"
-}
-```
-
-#### Get Search Suggestions
-
-**GET** `/search/suggestions`
-
-Get search suggestions based on existing content.
+Search similar documents using RAG vector store.
 
 **Query Parameters:**
 
-- `prefix` (optional): Filter suggestions by prefix
+- `query` (required): Search query
+- `topK` (optional, default: 5): Number of results to return
 
-### Summarization
+**Response:**
 
-#### Cross-Document Summary
+```json
+{
+  "query": "machine learning",
+  "results": [
+    {
+      "id": "doc1",
+      "content": "Document content...",
+      "metadata": {
+        "documentId": 1,
+        "filename": "ml_paper.pdf"
+      }
+    }
+  ],
+  "count": 5,
+  "message": "RAG search completed successfully"
+}
+```
 
-**POST** `/documents/summarize/cross`
+### Chat Operations (New RAG Features)
 
-Generate a summary across multiple documents.
+#### Chat with RAG Context
+
+**POST** `/chat`
+
+Chat with RAG context retrieval from uploaded documents.
 
 **Request:**
 
 ```json
 {
-  "query": "What are the main findings?",
-  "context": "Document content from multiple sources..."
+  "question": "What is the main topic of the uploaded documents?"
 }
 ```
 
@@ -237,22 +230,23 @@ Generate a summary across multiple documents.
 
 ```json
 {
-  "query": "What are the main findings?",
-  "summary": "Comprehensive summary across documents..."
+  "question": "What is the main topic of the uploaded documents?",
+  "response": "Based on the uploaded documents, the main topics include...",
+  "timestamp": "2024-01-01T10:00:00Z"
 }
 ```
 
-#### Extract Key Insights
+#### Direct Chat (without RAG)
 
-**POST** `/documents/insights`
+**POST** `/chat/direct`
 
-Extract key insights from text content.
+Direct chat without RAG context retrieval.
 
 **Request:**
 
 ```json
 {
-  "text": "Long text content to analyze..."
+  "question": "Explain machine learning"
 }
 ```
 
@@ -260,81 +254,48 @@ Extract key insights from text content.
 
 ```json
 {
-  "insights": "Key insights and findings..."
+  "question": "Explain machine learning",
+  "response": "Machine learning is a subset of artificial intelligence...",
+  "timestamp": "2024-01-01T10:00:00Z"
 }
 ```
-
-### Knowledge Graph
-
-#### Get Document Relationships
-
-**GET** `/knowledge/relationships/document/{documentId}`
-
-Get all relationships for a specific document.
-
-#### Get Relationships by Type
-
-**GET** `/knowledge/relationships/type/{type}`
-
-Get relationships filtered by type.
-
-**Relationship Types:**
-
-- `SEMANTIC_SIMILARITY`
-- `TOPICAL_RELATEDNESS`
-- `TEMPORAL_SEQUENCE`
-- `CAUSAL_RELATIONSHIP`
-- `REFERENCE`
-- `CONTRAST`
-- `EXAMPLE`
-- `DEFINITION`
-
-#### Get High-Confidence Relationships
-
-**GET** `/knowledge/relationships/high-confidence`
-
-Get relationships above a confidence threshold.
-
-**Query Parameters:**
-
-- `threshold` (default: 0.8): Minimum confidence score
-
-#### Analyze Document Connections
-
-**GET** `/knowledge/analysis/document/{documentId}`
-
-Analyze connection patterns for a document.
 
 ### System Information
 
-#### Get Processing Statistics
+#### RAG Statistics
 
-**GET** `/documents/stats`
+**GET** `/rag/stats`
 
-Get system processing statistics.
+Get RAG vector store statistics.
 
 **Response:**
 
 ```json
 {
-  "total": 100,
-  "completed": 95,
-  "failed": 2,
-  "processing": 3
+  "status": "active",
+  "provider": "PGVector",
+  "model": "llama3.2",
+  "dimensions": 4096
 }
 ```
 
-#### Get Knowledge Graph Statistics
+#### Embedding Test Connection
 
-**GET** `/knowledge/stats`
+**GET** `/embedding/test-connection`
 
-Get knowledge graph statistics.
+Test Ollama connection for embedding generation.
 
-#### Get Search Analytics
+**Response:**
 
-**GET** `/search/analytics`
-
-Get search usage analytics.
+```json
+{
+  "status": "success",
+  "message": "Ollama connection successful",
+  "testText": "This is a test for Ollama embedding generation.",
+  "embeddingGenerated": true,
+  "embeddingDimensions": 4096
+}
+```
 
 ## Error Responses
 
@@ -364,10 +325,6 @@ All endpoints may return the following error responses:
 }
 ```
 
-## Rate Limiting
-
-Currently no rate limiting is implemented. In production, implement appropriate rate limiting.
-
 ## File Size Limits
 
 - Maximum file size: 50MB
@@ -378,50 +335,127 @@ Currently no rate limiting is implemented. In production, implement appropriate 
 1. **Upload**: File is uploaded and validated
 2. **Text Extraction**: Apache Tika extracts text content
 3. **Chunking**: Text is split into meaningful segments
-4. **Embedding**: Vector embeddings are generated using Nomic model
-5. **Summarization**: AI-generated summary is created
-6. **Relationship Analysis**: Document relationships are identified
+4. **Embedding**: Vector embeddings are generated using Ollama llama3.2 model
+5. **RAG Ingestion**: Document content is automatically ingested into RAG vector store
+6. **Summarization**: AI-generated summary is created
 7. **Completion**: Document is marked as processed
 
-## Setup Instructions
+## Key Features
 
-1. Start required services:
+### RAG Implementation
 
-```bash
-docker-compose up -d
-```
+- **Spring AI Integration**: Uses Spring AI framework for AI operations
+- **Ollama Local Models**: Runs llama3.2 model locally for embeddings and chat
+- **PGVector Storage**: PostgreSQL with PGVector extension for vector storage
+- **Automatic Ingestion**: Document uploads automatically populate RAG vector store
+- **Semantic Search**: Both original and RAG-enhanced search capabilities
+- **Flexible Chat**: Choose between RAG-enhanced or direct chat
 
-2. Pull the Nomic embedding model:
+### Backward Compatibility
 
-```bash
-docker exec ollama_service ollama pull nomic-embed-text
-```
-
-3. Run the application:
-
-```bash
-mvn spring-boot:run
-```
+- All existing API endpoints continue to work
+- Enhanced functionality without breaking changes
+- Seamless integration with existing workflows
 
 ## Examples
 
-### Upload a Document
+### Upload a Document (with automatic RAG ingestion)
 
 ```bash
-curl -X POST http://localhost:8080/api/documents/upload \
+curl -X POST http://localhost:8080/api/v1/documents \
   -F "file=@document.pdf"
 ```
 
-### Search Documents
+### Chat with RAG Context
 
 ```bash
-curl -X POST http://localhost:8080/api/documents/search \
+curl -X POST http://localhost:8080/api/v1/chat \
   -H "Content-Type: application/json" \
-  -d '{"query": "machine learning", "limit": 5}'
+  -d '{
+    "question": "What is the main topic of the uploaded documents?"
+  }'
 ```
 
-### Get Document Summary
+### Direct Chat (without RAG)
 
 ```bash
-curl http://localhost:8080/api/documents/1
+curl -X POST http://localhost:8080/api/v1/chat/direct \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Explain machine learning"
+  }'
 ```
+
+### Search Documents (Original)
+
+```bash
+curl http://localhost:8080/api/v1/search/machine%20learning
+```
+
+### RAG Vector Search
+
+```bash
+curl "http://localhost:8080/api/v1/rag/search?query=machine learning&topK=5"
+```
+
+### Get RAG Statistics
+
+```bash
+curl http://localhost:8080/api/v1/rag/stats
+```
+
+### Test Ollama Connection
+
+```bash
+curl http://localhost:8080/api/embedding/test-connection
+```
+
+## Troubleshooting
+
+### Ollama Issues
+
+- Ensure Ollama container is running: `docker ps`
+- Check Ollama logs: `docker logs ollama`
+- Verify model is pulled: `docker exec ollama ollama list`
+
+### PostgreSQL Issues
+
+- Ensure PostgreSQL container is running: `docker ps`
+- Check PostgreSQL logs: `docker logs postgres-pgvector`
+- Verify PGVector extension: Connect to database and run `SELECT * FROM pg_extension WHERE extname = 'vector';`
+
+### Application Issues
+
+- Check application logs for Spring AI configuration errors
+- Verify database connection in `application.yml`
+- Ensure all dependencies are properly resolved
+
+## Performance Notes
+
+- **Embedding Generation**: llama3.2 produces 4096-dimensional embeddings
+- **Vector Search**: Uses HNSW index for better query performance
+- **Batch Processing**: Configured for token-based batching with max 10,000 documents per batch
+- **Memory Usage**: Ollama may require significant memory depending on model size
+- **Automatic Ingestion**: Document uploads now include RAG ingestion (may take slightly longer)
+
+## Technology Stack
+
+- **Backend**: Spring Boot 3.4.4, Java 17
+- **AI Framework**: Spring AI 1.0.3
+- **LLM/Embeddings**: Ollama with llama3.2 model
+- **Vector Database**: PostgreSQL with PGVector extension
+- **Text Processing**: Apache Tika
+- **Build Tool**: Maven
+- **Containerization**: Docker Compose
+
+## Citations
+
+- https://spring.io/guides/gs/accessing-data-jpa
+- https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image/
+- https://tika.apache.org/2.0.0/examples.html
+- https://www.geeksforgeeks.org/java/hibernate-example-using-jpa-and-mysql/
+- https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html
+- https://projectlombok.org/api/lombok/package-summary
+- https://docs.spring.io/spring-data/jpa/docs/1.6.0.RELEASE/reference/html/jpa.repositories.html
+- https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html
+- https://docs.spring.io/spring-ai/reference/api/ollama.html

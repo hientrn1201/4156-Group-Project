@@ -3,6 +3,7 @@ package dev.coms4156.project.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,11 +23,13 @@ public class Document {
   private Long fileSize;
 
   @Lob
-  @Column(name = "extracted_text")
+  @Column(name = "extracted_text", columnDefinition = "TEXT")
+  @JsonIgnore
   private String extractedText;
 
   @Lob
-  @Column(name = "summary")
+  @Column(name = "summary", columnDefinition = "TEXT")
+  @JsonIgnore
   private String summary;
 
   @Enumerated(EnumType.STRING)

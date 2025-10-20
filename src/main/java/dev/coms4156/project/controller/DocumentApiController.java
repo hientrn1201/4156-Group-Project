@@ -4,6 +4,7 @@ import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
+import dev.coms4156.project.service.RagService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,14 @@ public class DocumentApiController {
 
     private final DocumentService documentService;
     private final DocumentSummarizationService summarizationService;
+    private final RagService ragService;
 
     public DocumentApiController(DocumentService documentService,
-            DocumentSummarizationService summarizationService) {
+            DocumentSummarizationService summarizationService,
+            RagService ragService) {
         this.documentService = documentService;
         this.summarizationService = summarizationService;
+        this.ragService = ragService;
     }
 
     /**
@@ -38,6 +42,9 @@ public class DocumentApiController {
         try {
             System.out.println("Received file upload: " + file.getOriginalFilename());
             Document document = documentService.processDocument(file);
+
+            // Skip RAG vector store ingestion - use existing document_chunks table instead
+            // The document_chunks table already contains the embeddings for RAG operations
 
             Map<String, Object> response = new HashMap<>();
             response.put("documentId", document.getId());
