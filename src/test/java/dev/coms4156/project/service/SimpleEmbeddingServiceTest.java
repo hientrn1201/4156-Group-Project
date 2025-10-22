@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import java.util.Arrays;
@@ -42,8 +43,16 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testGenerateEmbedding() {
     // Given
+    Document doc = new Document();
+    doc.setId(1L);
+    
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
+        .document(doc)
+        .chunkIndex(0)
+        .chunkSize(100)
+        .startPosition(0)
+        .endPosition(100)
         .textContent("This is a test document about machine learning and artificial intelligence.")
         .build();
 
@@ -53,7 +62,6 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
-    when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk);
 
     // When
     DocumentChunk result = embeddingService.generateEmbedding(chunk);
@@ -67,13 +75,26 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testGenerateEmbeddings() {
     // Given
+    Document doc = new Document();
+    doc.setId(1L);
+    
     DocumentChunk chunk1 = DocumentChunk.builder()
         .id(1L)
+        .document(doc)
+        .chunkIndex(0)
+        .chunkSize(50)
+        .startPosition(0)
+        .endPosition(50)
         .textContent("First chunk about machine learning.")
         .build();
 
     DocumentChunk chunk2 = DocumentChunk.builder()
         .id(2L)
+        .document(doc)
+        .chunkIndex(1)
+        .chunkSize(50)
+        .startPosition(50)
+        .endPosition(100)
         .textContent("Second chunk about artificial intelligence.")
         .build();
 
@@ -85,7 +106,6 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
-    when(documentChunkRepository.saveAll(any(List.class))).thenReturn(chunks);
 
     // When
     List<DocumentChunk> result = embeddingService.generateEmbeddings(chunks);
