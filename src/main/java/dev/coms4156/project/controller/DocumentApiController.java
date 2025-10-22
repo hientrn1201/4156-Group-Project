@@ -42,8 +42,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-                               DocumentSummarizationService summarizationService,
-                               RagService ragService) {
+      DocumentSummarizationService summarizationService,
+      RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -207,16 +207,23 @@ public class DocumentApiController {
 
   /**
    * GET /api/v1/documents.
-   * Retrieve all documents.
+   * Retrieve documents.
+   *
+   * @param filename Optional filename to match on.
    *
    * @return ResponseEntity containing list of all documents
    */
   @GetMapping("/documents")
-  public ResponseEntity<?> getAllDocuments() {
+  public ResponseEntity<?> getAllDocuments(
+      @RequestParam(required = false) String filename) {
 
     try {
-
-      List<Document> documents = documentService.getAllDocuments();
+      List<Document> documents;
+      if (filename == null || filename.trim().isEmpty()) {
+        documents = documentService.getAllDocuments();
+      } else {
+        documents = documentService.getDocumentsByFilename(filename);
+      }
       Map<String, Object> response = new HashMap<>();
       response.put("documents", documents);
       response.put("count", documents.size());

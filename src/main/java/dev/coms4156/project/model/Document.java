@@ -1,6 +1,5 @@
 package dev.coms4156.project.model;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +10,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,6 +24,10 @@ import org.hibernate.annotations.UpdateTimestamp;
  */
 @Entity
 @Table(name = "documents")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Document {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +54,7 @@ public class Document {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "processing_status", nullable = false)
-  private ProcessingStatus processingStatus;
+  private ProcessingStatus processingStatus = ProcessingStatus.UPLOADED;
 
   @CreationTimestamp
   @Column(name = "uploaded_at")
@@ -55,10 +63,6 @@ public class Document {
   @UpdateTimestamp
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
-
-  public Document() {
-    this.processingStatus = ProcessingStatus.UPLOADED;
-  }
 
   /**
    * Enum representing the processing status of a document.
@@ -71,78 +75,5 @@ public class Document {
     SUMMARIZED,
     COMPLETED,
     FAILED
-  }
-
-  // Getters and Setters
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getFilename() {
-    return filename;
-  }
-
-  public void setFilename(String filename) {
-    this.filename = filename;
-  }
-
-  public String getContentType() {
-    return contentType;
-  }
-
-  public void setContentType(String contentType) {
-    this.contentType = contentType;
-  }
-
-  public Long getFileSize() {
-    return fileSize;
-  }
-
-  public void setFileSize(Long fileSize) {
-    this.fileSize = fileSize;
-  }
-
-  public String getExtractedText() {
-    return extractedText;
-  }
-
-  public void setExtractedText(String extractedText) {
-    this.extractedText = extractedText;
-  }
-
-  public String getSummary() {
-    return summary;
-  }
-
-  public void setSummary(String summary) {
-    this.summary = summary;
-  }
-
-  public ProcessingStatus getProcessingStatus() {
-    return processingStatus;
-  }
-
-  public void setProcessingStatus(ProcessingStatus processingStatus) {
-    this.processingStatus = processingStatus;
-  }
-
-  public LocalDateTime getUploadedAt() {
-    return uploadedAt;
-  }
-
-  public void setUploadedAt(LocalDateTime uploadedAt) {
-    this.uploadedAt = uploadedAt;
-  }
-
-  public LocalDateTime getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(LocalDateTime updatedAt) {
-    this.updatedAt = updatedAt;
   }
 }

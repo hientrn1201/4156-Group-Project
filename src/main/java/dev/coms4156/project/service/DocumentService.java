@@ -156,6 +156,15 @@ public class DocumentService {
   }
 
   /**
+   * Retrieves all documents matching a given filename.
+   *
+   * @return a list of all matching {@link Document} entities.
+   */
+  public List<Document> getDocumentsByFilename(String filename) {
+    return documentRepository.findByFilenameContaining(filename);
+  }
+
+  /**
    * Retrieves all documents that match a specific processing status.
    *
    * @param status the {@link Document.ProcessingStatus} filter.

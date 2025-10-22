@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import java.util.Arrays;
@@ -21,7 +22,6 @@ import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
-
 
 @ExtendWith(MockitoExtension.class)
 class SimpleEmbeddingServiceTest {
@@ -42,18 +42,22 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testGenerateEmbedding() {
     // Given
+    Document doc = Document.builder()
+        .id(1L)
+        .build();
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
+        .document(doc)
         .textContent("This is a test document about machine learning and artificial intelligence.")
         .build();
 
     // Mock the embedding model response
-    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
+    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
-    when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk);
+    // when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk);
 
     // When
     DocumentChunk result = embeddingService.generateEmbedding(chunk);
@@ -67,25 +71,29 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testGenerateEmbeddings() {
     // Given
+    Document doc = Document.builder()
+        .id(1L)
+        .build();
     DocumentChunk chunk1 = DocumentChunk.builder()
         .id(1L)
+        .document(doc)
         .textContent("First chunk about machine learning.")
         .build();
 
     DocumentChunk chunk2 = DocumentChunk.builder()
         .id(2L)
+        .document(doc)
         .textContent("Second chunk about artificial intelligence.")
         .build();
 
     List<DocumentChunk> chunks = Arrays.asList(chunk1, chunk2);
 
     // Mock the embedding model response
-    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
+    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
-    when(documentChunkRepository.saveAll(any(List.class))).thenReturn(chunks);
 
     // When
     List<DocumentChunk> result = embeddingService.generateEmbeddings(chunks);
@@ -100,8 +108,8 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testCalculateSimilarity() {
     // Given
-    float[] embedding1 = {1.0f, 0.0f, 0.0f};
-    float[] embedding2 = {1.0f, 0.0f, 0.0f};
+    float[] embedding1 = { 1.0f, 0.0f, 0.0f };
+    float[] embedding2 = { 1.0f, 0.0f, 0.0f };
 
     // When
     double similarity = embeddingService.calculateSimilarity(embedding1, embedding2);
@@ -113,7 +121,7 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testTestConnection() {
     // Given
-    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
+    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
