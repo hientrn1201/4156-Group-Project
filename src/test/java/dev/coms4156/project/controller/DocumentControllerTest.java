@@ -21,12 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.apache.catalina.connector.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
-
 
 class DocumentControllerTest {
 
@@ -44,7 +45,7 @@ class DocumentControllerTest {
   }
 
   private Document makeDoc(Long id, String filename, String contentType, long size,
-                           Document.ProcessingStatus status, String summary) {
+      Document.ProcessingStatus status, String summary) {
     Document d = new Document();
     d.setId(id);
     d.setFilename(filename);
@@ -107,8 +108,7 @@ class DocumentControllerTest {
     // Given
     Long documentId = 1L;
     Document document = makeDoc(documentId, "test.pdf", "application/pdf", 1024L,
-        Document.ProcessingStatus.COMPLETED, "Test summary"
-    );
+        Document.ProcessingStatus.COMPLETED, "Test summary");
 
     when(documentService.getDocumentById(documentId)).thenReturn(Optional.of(document));
 
@@ -187,28 +187,43 @@ class DocumentControllerTest {
 
   // @Test
   // void testSearchDocuments() {
-  //     // Given
-  //     String searchText = "machine learning";
+  // // Given
+  // String searchText = "machine learning";
 
-  //     // When
-  //     ResponseEntity<?> response = controller.searchDocuments(searchText);
+  // // When
+  // ResponseEntity<?> response = controller.searchDocuments(searchText);
 
-  //     // Then
-  //     assertEquals(HttpStatus.OK, response.getStatusCode());
-  //     assertNotNull(response.getBody());
-  //     Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-  //     assertEquals(searchText, responseBody.get("query"));
-  //     assertEquals(0, responseBody.get("count"));
-  //     assertEquals("Search functionality not yet implemented", responseBody.get("message"));
+  // // Then
+  // assertEquals(HttpStatus.OK, response.getStatusCode());
+  // assertNotNull(response.getBody());
+  // Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+  // assertEquals(searchText, responseBody.get("query"));
+  // assertEquals(0, responseBody.get("count"));
+  // assertEquals("Search functionality not yet implemented",
+  // responseBody.get("message"));
   // }
   @Test
   void testGetAllDocuments_Success() {
     List<Document> docs = List.of(
         makeDoc(1L, "a.pdf", "application/pdf", 1, Document.ProcessingStatus.UPLOADED, null),
-        makeDoc(2L, "b.pdf", "application/pdf", 2, Document.ProcessingStatus.COMPLETED, "sum")
-    );
+        makeDoc(2L, "b.pdf", "application/pdf", 2, Document.ProcessingStatus.COMPLETED, "sum"));
     when(documentService.getAllDocuments()).thenReturn(docs);
-    ResponseEntity<?> response = controller.getAllDocuments();
+    ResponseEntity<?> response = controller.getAllDocuments("");
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<String, Object> body = (Map<String, Object>) response.getBody();
+    assertEquals(2, body.get("count"));
+    assertEquals(docs, body.get("documents"));
+    assertEquals("Documents retrieved", body.get("message"));
+  }
+
+  @Test
+  void testGetDocumentsByFilename_Success() {
+    List<Document> docs = List.of(
+        makeDoc(1L, "doc1.pdf", "application/pdf", 1, Document.ProcessingStatus.UPLOADED, null),
+        makeDoc(2L, "doc2.pdf", "application/pdf", 2, Document.ProcessingStatus.UPLOADED, null));
+    String queryString = "doc";
+    when(documentService.getDocumentsByFilename(queryString)).thenReturn(docs);
+    ResponseEntity<?> response = controller.getAllDocuments(queryString);
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(2, body.get("count"));
@@ -224,8 +239,7 @@ class DocumentControllerTest {
         makeDoc(4L, "d", "t", 1, Document.ProcessingStatus.EMBEDDINGS_GENERATED, null),
         makeDoc(5L, "e", "t", 1, Document.ProcessingStatus.SUMMARIZED, null),
         makeDoc(6L, "f", "t", 1, Document.ProcessingStatus.COMPLETED, null),
-        makeDoc(7L, "g", "t", 1, Document.ProcessingStatus.FAILED, null)
-    );
+        makeDoc(7L, "g", "t", 1, Document.ProcessingStatus.FAILED, null));
     when(documentService.getAllDocuments()).thenReturn(all);
 
     ResponseEntity<?> response = controller.getProcessingStatistics();
@@ -326,6 +340,5 @@ class DocumentControllerTest {
     assertTrue(ids.contains(2L));
     assertFalse(ids.contains(4L));
   }
-
 
 }
