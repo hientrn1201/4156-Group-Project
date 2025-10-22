@@ -45,9 +45,14 @@ class SimpleEmbeddingServiceTest {
     Document doc = Document.builder()
         .id(1L)
         .build();
+    
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
         .document(doc)
+        .chunkIndex(0)
+        .chunkSize(100)
+        .startPosition(0)
+        .endPosition(100)
         .textContent("This is a test document about machine learning and artificial intelligence.")
         .build();
 
@@ -57,7 +62,6 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
-    // when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk);
 
     // When
     DocumentChunk result = embeddingService.generateEmbedding(chunk);
@@ -74,15 +78,24 @@ class SimpleEmbeddingServiceTest {
     Document doc = Document.builder()
         .id(1L)
         .build();
+    
     DocumentChunk chunk1 = DocumentChunk.builder()
         .id(1L)
         .document(doc)
+        .chunkIndex(0)
+        .chunkSize(50)
+        .startPosition(0)
+        .endPosition(50)
         .textContent("First chunk about machine learning.")
         .build();
 
     DocumentChunk chunk2 = DocumentChunk.builder()
         .id(2L)
         .document(doc)
+        .chunkIndex(1)
+        .chunkSize(50)
+        .startPosition(50)
+        .endPosition(100)
         .textContent("Second chunk about artificial intelligence.")
         .build();
 
