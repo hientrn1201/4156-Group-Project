@@ -15,7 +15,8 @@ public class DocumentSummarizationService {
   private final DocumentRepository documentRepository;
   private final ChatClient chatClient;
 
-  public DocumentSummarizationService(DocumentRepository documentRepository, ChatClient chatClient) {
+  public DocumentSummarizationService(DocumentRepository documentRepository,
+                                      ChatClient chatClient) {
     this.documentRepository = documentRepository;
     this.chatClient = chatClient;
   }
@@ -34,7 +35,7 @@ public class DocumentSummarizationService {
     }
 
     try {
-      String summary = generateAISummary(text);
+      String summary = generateAiSummary(text);
 
       // Update document with summary
       document.setSummary(summary);
@@ -53,7 +54,7 @@ public class DocumentSummarizationService {
   /**
    * Generate an AI-powered summary using Ollama.
    */
-  public String generateAISummary(String text) {
+  public String generateAiSummary(String text) {
     System.out.println("Generating AI summary from text of length: " + text.length());
 
     try {
@@ -62,10 +63,10 @@ public class DocumentSummarizationService {
           .user("Please provide a concise summary of this document (maximum 200 words): " + text)
           .call()
           .content();
-      
+
       System.out.println("Generated AI summary of length: " + summary.length());
       return summary;
-      
+
     } catch (Exception e) {
       System.err.println("Error generating AI summary: " + e.getMessage());
       // Fallback to simple summary if AI fails

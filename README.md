@@ -1,18 +1,19 @@
 # 4156-Group-Project
 
-## AI Knowledge Management Service with RAG Implementation
+## AI Knowledge Management Service
 
-The AI Knowledge Management Service provides intelligent document processing, semantic search, and knowledge extraction capabilities using RAG (Retrieval-Augmented Generation) technology with Spring AI, Ollama, and PostgreSQL + PGVector.
+The AI Knowledge Management Service provides intelligent document processing, semantic search, and knowledge extraction capabilities using Spring AI, Ollama, and PostgreSQL + PGVector.
 
 ## Overview
 
-This service implements a complete RAG pipeline that:
+This service implements a complete AI-powered document processing pipeline that:
 
 - Processes documents through AI-powered text extraction and chunking
 - Generates embeddings using Ollama's llama3.2 model
 - Stores vectors in PostgreSQL with PGVector extension
-- Provides semantic search and RAG-enhanced chat capabilities
-- Maintains backward compatibility with existing API endpoints
+- Provides semantic search capabilities across document chunks
+- Generates AI-powered document summaries
+- Offers comprehensive document management operations
 
 ## Prerequisites
 
@@ -72,11 +73,11 @@ Currently, the API does not require authentication. In production, implement pro
 
 ### Document Management
 
-#### Upload Document (Enhanced with RAG)
+#### Upload Document
 
 **POST** `/documents`
 
-Upload and process a document through the complete AI pipeline. **Now automatically ingests content into RAG vector store.**
+Upload and process a document through the complete AI pipeline.
 
 **Request:**
 
@@ -98,6 +99,37 @@ Upload and process a document through the complete AI pipeline. **Now automatica
 }
 ```
 
+#### Get All Documents
+
+**GET** `/documents`
+
+Retrieve all documents or filter by filename.
+
+**Query Parameters:**
+
+- `filename` (optional): Filter documents by filename
+
+**Response:**
+
+```json
+{
+  "documents": [
+    {
+      "id": 1,
+      "filename": "document.pdf",
+      "contentType": "application/pdf",
+      "fileSize": 1024,
+      "processingStatus": "COMPLETED",
+      "summary": "Document summary...",
+      "uploadedAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:05:00Z"
+    }
+  ],
+  "count": 1,
+  "message": "Documents retrieved"
+}
+```
+
 #### Get Document Details
 
 **GET** `/documents/{id}`
@@ -112,10 +144,10 @@ Retrieve a specific document by its ID.
   "filename": "document.pdf",
   "contentType": "application/pdf",
   "fileSize": 1024,
-  "extractedText": "Document content...",
-  "summary": "Document summary...",
   "processingStatus": "COMPLETED",
-  "uploadedAt": "2024-01-01T10:00:00Z"
+  "summary": "Document summary...",
+  "uploadedAt": "2024-01-01T10:00:00Z",
+  "updatedAt": "2024-01-01T10:05:00Z"
 }
 ```
 
@@ -131,6 +163,68 @@ Retrieve generated summary for a document.
 {
   "documentId": 1,
   "summary": "Document summary..."
+}
+```
+
+#### Get Documents with Summaries
+
+**GET** `/documents/summaries`
+
+Retrieve all documents that have summaries generated.
+
+**Response:**
+
+```json
+{
+  "documents": [
+    {
+      "id": 1,
+      "filename": "document.pdf",
+      "summary": "Document summary...",
+      "processingStatus": "COMPLETED"
+    }
+  ],
+  "count": 1
+}
+```
+
+#### Get Processing Statistics
+
+**GET** `/documents/stats`
+
+Get processing statistics for all documents.
+
+**Response:**
+
+```json
+{
+  "total": 10,
+  "byStatus": {
+    "UPLOADED": 1,
+    "TEXT_EXTRACTED": 2,
+    "CHUNKED": 2,
+    "EMBEDDINGS_GENERATED": 2,
+    "SUMMARIZED": 1,
+    "COMPLETED": 2,
+    "FAILED": 0
+  },
+  "completionRate": 0.2,
+  "failureRate": 0.0
+}
+```
+
+#### Delete Document
+
+**DELETE** `/documents/{id}`
+
+Delete a document by its ID.
+
+**Response:**
+
+```json
+{
+  "documentId": 1,
+  "message": "Document deleted successfully"
 }
 ```
 
@@ -153,11 +247,11 @@ Retrieve related documents (knowledge graph edges).
 
 ### Search Operations
 
-#### Semantic Search (Original)
+#### Semantic Search
 
 **GET** `/search/{text}`
 
-Retrieve top 3 relevant documents based on text input using original embedding search.
+Retrieve top 3 relevant document chunks based on text input using embedding similarity search.
 
 **Response:**
 
@@ -179,122 +273,18 @@ Retrieve top 3 relevant documents based on text input using original embedding s
 }
 ```
 
-#### RAG Vector Search (New)
-
-**GET** `/rag/search`
-
-Search similar documents using RAG vector store.
-
-**Query Parameters:**
-
-- `query` (required): Search query
-- `topK` (optional, default: 5): Number of results to return
-
-**Response:**
-
-```json
-{
-  "query": "machine learning",
-  "results": [
-    {
-      "id": "doc1",
-      "content": "Document content...",
-      "metadata": {
-        "documentId": 1,
-        "filename": "ml_paper.pdf"
-      }
-    }
-  ],
-  "count": 5,
-  "message": "RAG search completed successfully"
-}
-```
-
-### Chat Operations (New RAG Features)
-
-#### Chat with RAG Context
-
-**POST** `/chat`
-
-Chat with RAG context retrieval from uploaded documents.
-
-**Request:**
-
-```json
-{
-  "question": "What is the main topic of the uploaded documents?"
-}
-```
-
-**Response:**
-
-```json
-{
-  "question": "What is the main topic of the uploaded documents?",
-  "response": "Based on the uploaded documents, the main topics include...",
-  "timestamp": "2024-01-01T10:00:00Z"
-}
-```
-
-#### Direct Chat (without RAG)
-
-**POST** `/chat/direct`
-
-Direct chat without RAG context retrieval.
-
-**Request:**
-
-```json
-{
-  "question": "Explain machine learning"
-}
-```
-
-**Response:**
-
-```json
-{
-  "question": "Explain machine learning",
-  "response": "Machine learning is a subset of artificial intelligence...",
-  "timestamp": "2024-01-01T10:00:00Z"
-}
-```
-
 ### System Information
 
-#### RAG Statistics
+#### Welcome Message
 
-**GET** `/rag/stats`
+**GET** `/api` or `/api/`
 
-Get RAG vector store statistics.
+Get the welcome message for the Knowledge Management Service.
 
 **Response:**
 
-```json
-{
-  "status": "active",
-  "provider": "PGVector",
-  "model": "llama3.2",
-  "dimensions": 4096
-}
 ```
-
-#### Embedding Test Connection
-
-**GET** `/embedding/test-connection`
-
-Test Ollama connection for embedding generation.
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "message": "Ollama connection successful",
-  "testText": "This is a test for Ollama embedding generation.",
-  "embeddingGenerated": true,
-  "embeddingDimensions": 4096
-}
+Welcome to Knowledge Management Service Powered by AI!
 ```
 
 ## Error Responses
@@ -336,78 +326,88 @@ All endpoints may return the following error responses:
 2. **Text Extraction**: Apache Tika extracts text content
 3. **Chunking**: Text is split into meaningful segments
 4. **Embedding**: Vector embeddings are generated using Ollama llama3.2 model
-5. **RAG Ingestion**: Document content is automatically ingested into RAG vector store
-6. **Summarization**: AI-generated summary is created
-7. **Completion**: Document is marked as processed
+5. **Summarization**: AI-generated summary is created
+6. **Completion**: Document is marked as processed
 
 ## Key Features
 
-### RAG Implementation
+### AI-Powered Document Processing
 
 - **Spring AI Integration**: Uses Spring AI framework for AI operations
-- **Ollama Local Models**: Runs llama3.2 model locally for embeddings and chat
+- **Ollama Local Models**: Runs llama3.2 model locally for embeddings
 - **PGVector Storage**: PostgreSQL with PGVector extension for vector storage
-- **Automatic Ingestion**: Document uploads automatically populate RAG vector store
-- **Semantic Search**: Both original and RAG-enhanced search capabilities
-- **Flexible Chat**: Choose between RAG-enhanced or direct chat
+- **Semantic Search**: Embedding-based similarity search across document chunks
+- **Intelligent Summarization**: AI-generated document summaries
+- **Multi-format Support**: Handles PDF, DOC, DOCX, TXT, HTML, PPT, PPTX, RTF, ODT, ODP
 
-### Backward Compatibility
+### Document Management
 
-- All existing API endpoints continue to work
-- Enhanced functionality without breaking changes
-- Seamless integration with existing workflows
+- **Complete CRUD Operations**: Upload, retrieve, update, and delete documents
+- **Processing Status Tracking**: Monitor document processing pipeline status
+- **Batch Operations**: Process multiple documents efficiently
+- **Statistics and Analytics**: Comprehensive processing statistics and metrics
 
 ## Examples
 
-### Upload a Document (with automatic RAG ingestion)
+### Upload a Document
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/documents \
   -F "file=@document.pdf"
 ```
 
-### Chat with RAG Context
+### Get All Documents
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "What is the main topic of the uploaded documents?"
-  }'
+curl http://localhost:8080/api/v1/documents
 ```
 
-### Direct Chat (without RAG)
+### Get Document by ID
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/chat/direct \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "Explain machine learning"
-  }'
+curl http://localhost:8080/api/v1/documents/1
 ```
 
-### Search Documents (Original)
+### Get Document Summary
+
+```bash
+curl http://localhost:8080/api/v1/documents/1/summary
+```
+
+### Get Documents with Summaries
+
+```bash
+curl http://localhost:8080/api/v1/documents/summaries
+```
+
+### Get Processing Statistics
+
+```bash
+curl http://localhost:8080/api/v1/documents/stats
+```
+
+### Delete Document
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/documents/1
+```
+
+### Search Documents
 
 ```bash
 curl http://localhost:8080/api/v1/search/machine%20learning
 ```
 
-### RAG Vector Search
+### Get Document Relationships
 
 ```bash
-curl "http://localhost:8080/api/v1/rag/search?query=machine learning&topK=5"
+curl http://localhost:8080/api/v1/relationships/1
 ```
 
-### Get RAG Statistics
+### Get Welcome Message
 
 ```bash
-curl http://localhost:8080/api/v1/rag/stats
-```
-
-### Test Ollama Connection
-
-```bash
-curl http://localhost:8080/api/embedding/test-connection
+curl http://localhost:8080/api
 ```
 
 ## Troubleshooting
@@ -434,9 +434,9 @@ curl http://localhost:8080/api/embedding/test-connection
 
 - **Embedding Generation**: llama3.2 produces 4096-dimensional embeddings
 - **Vector Search**: Uses HNSW index for better query performance
-- **Batch Processing**: Configured for token-based batching with max 10,000 documents per batch
+- **Batch Processing**: Configured for efficient document processing
 - **Memory Usage**: Ollama may require significant memory depending on model size
-- **Automatic Ingestion**: Document uploads now include RAG ingestion (may take slightly longer)
+- **Database Optimization**: PostgreSQL with PGVector extension for optimal vector operations
 
 ## Testing
 
@@ -445,6 +445,7 @@ Our unit tests are located under the directory `src/test`. To run our project's 
 From there, you can right-click any of the classes present in the src/test directory and click run to see the results.
 
 To run all tests from the terminal:
+
 ```bash
 mvn clean test
 ```
@@ -452,6 +453,7 @@ mvn clean test
 ### Coverage Analysis
 
 To generate test coverage:
+
 ```bash
 mvn test jacoco:report
 ```
@@ -463,7 +465,7 @@ This repository achieves 58% branch coverage (exceeds 55% requirement).
 ### Test Files
 
 - `DocumentControllerTest.java`: API endpoint testing
-- `SimpleEmbeddingServiceTest.java`: Embedding service with mocked dependencies  
+- `SimpleEmbeddingServiceTest.java`: Embedding service with mocked dependencies
 - `DocumentServiceTest.java`: Document processing pipeline verification
 - `DocumentChunkTest.java`: Model validation and equals/hashCode testing
 - `DocumentRelationshipTest.java`: Relationship model testing
@@ -478,6 +480,7 @@ This repository achieves 58% branch coverage (exceeds 55% requirement).
 **API Testing:** Spring Boot Test with MockMvc
 
 **Test Structure:**
+
 - Controller Tests: `src/test/java/dev/coms4156/project/controller/`
 - Service Tests: `src/test/java/dev/coms4156/project/service/`
 - Model Tests: `src/test/java/dev/coms4156/project/model/`
@@ -510,7 +513,7 @@ This project includes an automated CI pipeline that runs on pushes and pull requ
 ### Pipeline Triggers
 
 - Push to `main` branch
-- Pull requests to `main` branch  
+- Pull requests to `main` branch
 
 ### Database Testing
 
