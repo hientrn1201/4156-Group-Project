@@ -144,7 +144,8 @@ class DocumentServiceTest {
         .thenReturn(Arrays.asList(doc));
 
     // When
-    List<Document> result = documentService.getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
+    List<Document> result =
+        documentService.getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
 
     // Then
     assertEquals(1, result.size());
@@ -232,8 +233,9 @@ class DocumentServiceTest {
   @Test
   void testProcessDocument_EmptyFile() {
     when(multipartFile.isEmpty()).thenReturn(true);
-    
-    assertThrows(IllegalArgumentException.class, () -> documentService.processDocument(multipartFile));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> documentService.processDocument(multipartFile));
   }
 
   @Test
@@ -241,7 +243,7 @@ class DocumentServiceTest {
     when(documentRepository.findById(1L)).thenReturn(Optional.empty());
 
     Optional<Document> result = documentService.getDocumentById(1L);
-    
+
     assertTrue(result.isEmpty());
   }
 }
