@@ -452,13 +452,11 @@ mvn clean test
 
 ### Coverage Analysis
 
-To generate test coverage:
+An existing coverage report can be viewed by opening `target/site/jacoco/index.html` in the browser, however if you would like to re-generate it, run the following command:
 
 ```bash
 mvn test jacoco:report
 ```
-
-View results: Open `target/site/jacoco/index.html` in browser
 
 This repository achieves 58% branch coverage (exceeds 55% requirement).
 
