@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DocumentSummarizationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Knowledge Management Service</a> &gt; <a href="index.source.html" class="el_package">dev.coms4156.project.service</a> &gt; <span class="el_source">DocumentSummarizationService.java</span></div><h1>DocumentSummarizationService.java</h1><pre class="source lang-java linenums">package dev.coms4156.project.service;
+
+import dev.coms4156.project.model.Document;
+import dev.coms4156.project.repository.DocumentRepository;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Service for generating document summarization.
+ */
+@Service
+public class DocumentSummarizationService {
+
+  private final DocumentRepository documentRepository;
+  private final ChatClient chatClient;
+
+  public DocumentSummarizationService(DocumentRepository documentRepository,
+<span class="fc" id="L19">                                      ChatClient chatClient) {</span>
+<span class="fc" id="L20">    this.documentRepository = documentRepository;</span>
+<span class="fc" id="L21">    this.chatClient = chatClient;</span>
+<span class="fc" id="L22">  }</span>
+
+  /**
+   * Generate a simple summary for a document.
+   */
+  @Transactional
+  public String generateSummary(Document document) {
+<span class="fc" id="L29">    System.out.println(&quot;Generating summary for document: &quot; + document.getFilename());</span>
+
+<span class="fc" id="L31">    String text = document.getExtractedText();</span>
+<span class="pc bpc" id="L32" title="2 of 4 branches missed.">    if (text == null || text.trim().isEmpty()) {</span>
+<span class="nc" id="L33">      System.err.println(&quot;No text content available for summarization: &quot; + document.getId());</span>
+<span class="nc" id="L34">      return null;</span>
+    }
+
+    try {
+<span class="fc" id="L38">      String summary = generateAiSummary(text);</span>
+
+      // Update document with summary
+<span class="fc" id="L41">      document.setSummary(summary);</span>
+<span class="fc" id="L42">      documentRepository.save(document);</span>
+
+<span class="fc" id="L44">      System.out.println(&quot;Successfully generated summary for document: &quot; + document.getFilename());</span>
+<span class="fc" id="L45">      return summary;</span>
+
+<span class="nc" id="L47">    } catch (Exception e) {</span>
+<span class="nc" id="L48">      System.err.println(</span>
+<span class="nc" id="L49">          &quot;Error generating summary for document &quot; + document.getId() + &quot;: &quot; + e.getMessage());</span>
+<span class="nc" id="L50">      throw new RuntimeException(&quot;Failed to generate summary&quot;, e);</span>
+    }
+  }
+
+  /**
+   * Generate an AI-powered summary using Ollama.
+   */
+  public String generateAiSummary(String text) {
+<span class="fc" id="L58">    System.out.println(&quot;Generating AI summary from text of length: &quot; + text.length());</span>
+
+    try {
+      // Use Ollama to generate a real AI summary
+<span class="fc" id="L62">      String summary = chatClient.prompt()</span>
+<span class="nc" id="L63">          .user(&quot;Please provide a concise summary of this document (maximum 200 words): &quot; + text)</span>
+<span class="nc" id="L64">          .call()</span>
+<span class="nc" id="L65">          .content();</span>
+
+<span class="nc" id="L67">      System.out.println(&quot;Generated AI summary of length: &quot; + summary.length());</span>
+<span class="nc" id="L68">      return summary;</span>
+
+<span class="fc" id="L70">    } catch (Exception e) {</span>
+<span class="fc" id="L71">      System.err.println(&quot;Error generating AI summary: &quot; + e.getMessage());</span>
+      // Fallback to simple summary if AI fails
+<span class="fc" id="L73">      return generateSimpleSummary(text);</span>
+    }
+  }
+
+  /**
+   * Generate a simple summary by extracting the first few sentences (fallback).
+   */
+  public String generateSimpleSummary(String text) {
+<span class="fc" id="L81">    System.out.println(&quot;Generating simple summary from text of length: &quot; + text.length());</span>
+
+    // Simple summarization: take first 200 characters
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">    if (text.length() &lt;= 200) {</span>
+<span class="fc" id="L85">      return text;</span>
+    }
+
+<span class="nc" id="L88">    String summary = text.substring(0, 200) + &quot;...&quot;;</span>
+<span class="nc" id="L89">    System.out.println(&quot;Generated summary of length: &quot; + summary.length());</span>
+<span class="nc" id="L90">    return summary;</span>
+  }
+
+  /**
+   * Get summary for a document.
+   */
+  public String getDocumentSummary(Long documentId) {
+<span class="fc" id="L97">    return documentRepository.findById(documentId)</span>
+<span class="fc" id="L98">        .map(Document::getSummary)</span>
+<span class="fc" id="L99">        .orElse(null);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

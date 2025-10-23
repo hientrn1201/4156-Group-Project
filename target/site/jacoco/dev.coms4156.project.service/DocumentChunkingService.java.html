@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DocumentChunkingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Knowledge Management Service</a> &gt; <a href="index.source.html" class="el_package">dev.coms4156.project.service</a> &gt; <span class="el_source">DocumentChunkingService.java</span></div><h1>DocumentChunkingService.java</h1><pre class="source lang-java linenums">package dev.coms4156.project.service;
+
+import dev.coms4156.project.model.Document;
+import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.repository.DocumentChunkRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Service responsible for dividing document text into smaller, semantically meaningful chunks.
+ */
+@Service
+public class DocumentChunkingService {
+
+  private final DocumentChunkRepository documentChunkRepository;
+
+  // Default chunking parameters
+  private static final int DEFAULT_CHUNK_SIZE = 1000;
+  private static final int DEFAULT_OVERLAP_SIZE = 200;
+<span class="fc" id="L23">  private static final Pattern SENTENCE_END_PATTERN = Pattern.compile(&quot;[.!?]+\\s+&quot;);</span>
+
+  /**
+   * Constructs a new {@code DocumentChunkingService} with the given repository.
+   *
+   * @param documentChunkRepository the {@link DocumentChunkRepository} instance for database ops.
+   */
+<span class="fc" id="L30">  public DocumentChunkingService(DocumentChunkRepository documentChunkRepository) {</span>
+<span class="fc" id="L31">    this.documentChunkRepository = documentChunkRepository;</span>
+<span class="fc" id="L32">  }</span>
+
+  /**
+   * Chunk document text into smaller pieces.
+   *
+   * @param document    The document to chunk
+   * @param chunkSize   Maximum size of each chunk (default: 1000)
+   * @param overlapSize Number of characters to overlap between chunks (default:
+   *                    200)
+   * @return List of created document chunks
+   */
+  @Transactional
+  public List&lt;DocumentChunk&gt; chunkDocument(Document document, Integer chunkSize,
+                                           Integer overlapSize) {
+<span class="pc bpc" id="L46" title="1 of 4 branches missed.">    if (document == null || document.getExtractedText() == null</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        || document.getExtractedText().trim().isEmpty()) {</span>
+<span class="fc" id="L48">      throw new IllegalArgumentException(&quot;Document or extracted text cannot be null or empty&quot;);</span>
+    }
+
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">    int actualChunkSize = chunkSize != null ? chunkSize : DEFAULT_CHUNK_SIZE;</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">    int actualOverlapSize = overlapSize != null ? overlapSize : DEFAULT_OVERLAP_SIZE;</span>
+
+<span class="fc" id="L54">    String text = document.getExtractedText();</span>
+<span class="fc" id="L55">    List&lt;DocumentChunk&gt; chunks = new ArrayList&lt;&gt;();</span>
+
+    // Delete existing chunks for this document
+<span class="fc" id="L58">    documentChunkRepository.deleteByDocument(document);</span>
+
+<span class="fc" id="L60">    int startIndex = 0;</span>
+<span class="fc" id="L61">    int chunkIndex = 0;</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    while (startIndex &lt; text.length()) {</span>
+<span class="fc" id="L64">      int endIndex = Math.min(startIndex + actualChunkSize, text.length());</span>
+
+      // Try to break at sentence boundaries
+<span class="fc bfc" id="L67" title="All 2 branches covered.">      if (endIndex &lt; text.length()) {</span>
+<span class="fc" id="L68">        String chunkText = text.substring(startIndex, endIndex);</span>
+<span class="fc" id="L69">        int lastSentenceEnd = findLastSentenceEnd(chunkText);</span>
+
+        // Only break at sentence if it's not too short
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (lastSentenceEnd &gt; actualChunkSize * 0.7) {</span>
+<span class="fc" id="L73">          endIndex = startIndex + lastSentenceEnd;</span>
+        }
+      }
+
+<span class="fc" id="L77">      String chunkContent = text.substring(startIndex, endIndex).trim();</span>
+
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">      if (!chunkContent.isEmpty()) {</span>
+<span class="fc" id="L80">        DocumentChunk chunk = DocumentChunk.builder()</span>
+<span class="fc" id="L81">            .document(document)</span>
+<span class="fc" id="L82">            .chunkIndex(chunkIndex)</span>
+<span class="fc" id="L83">            .textContent(chunkContent)</span>
+<span class="fc" id="L84">            .chunkSize(chunkContent.length())</span>
+<span class="fc" id="L85">            .startPosition(startIndex)</span>
+<span class="fc" id="L86">            .endPosition(endIndex)</span>
+<span class="fc" id="L87">            .embedding(null)</span>
+<span class="fc" id="L88">            .build();</span>
+
+<span class="fc" id="L90">        chunks.add(chunk); // Don't save yet - will save after embedding generation</span>
+<span class="fc" id="L91">        chunkIndex++;</span>
+      }
+
+      // Move start index with overlap
+<span class="fc" id="L95">      startIndex = Math.max(startIndex + actualChunkSize - actualOverlapSize, endIndex);</span>
+
+      // Prevent infinite loop
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">      if (startIndex &gt;= endIndex) {</span>
+<span class="fc" id="L99">        startIndex = endIndex;</span>
+      }
+<span class="fc" id="L101">    }</span>
+
+<span class="fc" id="L103">    return chunks;</span>
+  }
+
+  /**
+   * Chunk document with default parameters.
+   *
+   * @param document The document to chunk
+   * @return List of created document chunks
+   */
+  @Transactional
+  public List&lt;DocumentChunk&gt; chunkDocument(Document document) {
+<span class="fc" id="L114">    return chunkDocument(document, DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP_SIZE);</span>
+  }
+
+  /**
+   * Find the last sentence end in the given text.
+   *
+   * @param text The text to search
+   * @return Position of the last sentence end, or -1 if not found
+   */
+  private int findLastSentenceEnd(String text) {
+<span class="fc" id="L124">    java.util.regex.Matcher matcher = SENTENCE_END_PATTERN.matcher(text);</span>
+<span class="fc" id="L125">    int lastEnd = -1;</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">    while (matcher.find()) {</span>
+<span class="fc" id="L128">      lastEnd = matcher.end();</span>
+    }
+
+<span class="fc" id="L131">    return lastEnd;</span>
+  }
+
+  /**
+   * Get chunks for a specific document.
+   *
+   * @param document The document
+   * @return List of document chunks
+   */
+  public List&lt;DocumentChunk&gt; getChunksForDocument(Document document) {
+<span class="fc" id="L141">    return documentChunkRepository.findByDocumentOrderByChunkIndex(document);</span>
+  }
+
+  /**
+   * Get chunks for a specific document ID.
+   *
+   * @param documentId The document ID
+   * @return List of document chunks
+   */
+  public List&lt;DocumentChunk&gt; getChunksForDocument(Long documentId) {
+<span class="nc" id="L151">    return documentChunkRepository.findByDocumentIdOrderByChunkIndex(documentId);</span>
+  }
+
+  /**
+   * Delete all chunks for a document.
+   *
+   * @param document The document
+   */
+  @Transactional
+  public void deleteChunksForDocument(Document document) {
+<span class="fc" id="L161">    documentChunkRepository.deleteByDocument(document);</span>
+<span class="fc" id="L162">  }</span>
+
+  /**
+   * Get chunk statistics for a document.
+   *
+   * @param document The document
+   * @return Chunk statistics
+   */
+  public ChunkStatistics getChunkStatistics(Document document) {
+<span class="fc" id="L171">    List&lt;DocumentChunk&gt; chunks = getChunksForDocument(document);</span>
+
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">    if (chunks.isEmpty()) {</span>
+<span class="nc" id="L174">      return new ChunkStatistics(0, 0, 0, 0, 0);</span>
+    }
+
+<span class="fc" id="L177">    int totalChunks = chunks.size();</span>
+<span class="fc" id="L178">    int totalCharacters = chunks.stream().mapToInt(DocumentChunk::getChunkSize).sum();</span>
+<span class="fc" id="L179">    int averageChunkSize = totalCharacters / totalChunks;</span>
+<span class="fc" id="L180">    int minChunkSize = chunks.stream().mapToInt(DocumentChunk::getChunkSize).min().orElse(0);</span>
+<span class="fc" id="L181">    int maxChunkSize = chunks.stream().mapToInt(DocumentChunk::getChunkSize).max().orElse(0);</span>
+
+<span class="fc" id="L183">    return new ChunkStatistics(totalChunks, totalCharacters, averageChunkSize, minChunkSize,</span>
+        maxChunkSize);
+  }
+
+  /**
+   * Statistics about document chunks.
+   */
+  public static class ChunkStatistics {
+    private final int totalChunks;
+    private final int totalCharacters;
+    private final int averageChunkSize;
+    private final int minChunkSize;
+    private final int maxChunkSize;
+
+    /**
+     * Initialize ChunkStatistics.
+     */
+    public ChunkStatistics(int totalChunks, int totalCharacters, int averageChunkSize,
+                           int minChunkSize,
+<span class="fc" id="L202">                           int maxChunkSize) {</span>
+<span class="fc" id="L203">      this.totalChunks = totalChunks;</span>
+<span class="fc" id="L204">      this.totalCharacters = totalCharacters;</span>
+<span class="fc" id="L205">      this.averageChunkSize = averageChunkSize;</span>
+<span class="fc" id="L206">      this.minChunkSize = minChunkSize;</span>
+<span class="fc" id="L207">      this.maxChunkSize = maxChunkSize;</span>
+<span class="fc" id="L208">    }</span>
+
+    // Getters
+
+    /**
+     * Get total number of chunks generated.
+     */
+    public int getTotalChunks() {
+<span class="fc" id="L216">      return totalChunks;</span>
+    }
+
+    /**
+     * Get total number of characters across all chunks.
+     */
+    public int getTotalCharacters() {
+<span class="fc" id="L223">      return totalCharacters;</span>
+    }
+
+    /**
+     * Get average chunk size in characters.
+     */
+    public int getAverageChunkSize() {
+<span class="fc" id="L230">      return averageChunkSize;</span>
+    }
+
+    /**
+     * Get minimum chunk size encountered.
+     */
+    public int getMinChunkSize() {
+<span class="fc" id="L237">      return minChunkSize;</span>
+    }
+
+    /**
+     * Get maximum chunk size encountered.
+     */
+    public int getMaxChunkSize() {
+<span class="fc" id="L244">      return maxChunkSize;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

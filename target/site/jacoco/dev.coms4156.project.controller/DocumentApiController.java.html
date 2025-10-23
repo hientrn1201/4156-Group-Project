@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DocumentApiController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Knowledge Management Service</a> &gt; <a href="index.source.html" class="el_package">dev.coms4156.project.controller</a> &gt; <span class="el_source">DocumentApiController.java</span></div><h1>DocumentApiController.java</h1><pre class="source lang-java linenums">package dev.coms4156.project.controller;
+
+import dev.coms4156.project.model.Document;
+import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.service.DocumentService;
+import dev.coms4156.project.service.DocumentSummarizationService;
+import dev.coms4156.project.service.RagService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * REST controller for document management and RAG operations.
+ */
+@RestController
+@RequestMapping(&quot;/api/v1&quot;)
+public class DocumentApiController {
+
+  private final DocumentService documentService;
+  private final DocumentSummarizationService summarizationService;
+  private final RagService ragService;
+
+  /**
+   * Constructor for DocumentApiController.
+   *
+   * @param documentService      The document service
+   * @param summarizationService The summarization service
+   * @param ragService           The RAG service
+   */
+  public DocumentApiController(DocumentService documentService,
+      DocumentSummarizationService summarizationService,
+<span class="fc" id="L46">      RagService ragService) {</span>
+<span class="fc" id="L47">    this.documentService = documentService;</span>
+<span class="fc" id="L48">    this.summarizationService = summarizationService;</span>
+<span class="fc" id="L49">    this.ragService = ragService;</span>
+<span class="fc" id="L50">  }</span>
+
+  /**
+   * POST /api/v1/documents.
+   * Upload a document for processing -- extract text, chunking and embedded.
+   */
+  @PostMapping(value = &quot;/documents&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity&lt;?&gt; uploadDocument(@RequestParam(&quot;file&quot;) MultipartFile file) {
+    try {
+<span class="fc" id="L59">      System.out.println(&quot;Received file upload: &quot; + file.getOriginalFilename());</span>
+<span class="fc" id="L60">      Document document = documentService.processDocument(file);</span>
+
+      // Skip RAG vector store ingestion - use existing document_chunks table instead
+      // The document_chunks table already contains the embeddings for RAG operations
+
+<span class="fc" id="L65">      Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L66">      response.put(&quot;documentId&quot;, document.getId());</span>
+<span class="fc" id="L67">      response.put(&quot;filename&quot;, document.getFilename());</span>
+<span class="fc" id="L68">      response.put(&quot;status&quot;, document.getProcessingStatus());</span>
+<span class="fc" id="L69">      response.put(&quot;message&quot;, &quot;Document uploaded and processed successfully&quot;);</span>
+
+<span class="fc" id="L71">      return ResponseEntity.ok(response);</span>
+
+<span class="fc" id="L73">    } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L74">      System.err.println(&quot;Invalid file upload: &quot; + e.getMessage());</span>
+<span class="fc" id="L75">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L76">      error.put(&quot;error&quot;, e.getMessage());</span>
+<span class="fc" id="L77">      return ResponseEntity.badRequest().body(error);</span>
+
+<span class="nc" id="L79">    } catch (IOException e) {</span>
+<span class="nc" id="L80">      System.err.println(&quot;File upload error: &quot; + e.getMessage());</span>
+<span class="nc" id="L81">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L82">      error.put(&quot;error&quot;, &quot;File upload failed&quot;);</span>
+<span class="nc" id="L83">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+
+<span class="nc" id="L85">    } catch (Exception e) {</span>
+<span class="nc" id="L86">      System.err.println(&quot;Document processing error: &quot; + e.getMessage());</span>
+<span class="nc" id="L87">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L88">      error.put(&quot;error&quot;, &quot;Document processing failed&quot;);</span>
+<span class="nc" id="L89">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+  }
+
+  /**
+   * GET /api/v1/documents/{id}.
+   * Retrieve document metadata, summaries, and processing status.
+   */
+  @GetMapping(&quot;/documents/{id}&quot;)
+  public ResponseEntity&lt;?&gt; getDocument(@PathVariable Long id) {
+    try {
+<span class="fc" id="L100">      Optional&lt;Document&gt; document = documentService.getDocumentById(id);</span>
+
+<span class="fc bfc" id="L102" title="All 2 branches covered.">      if (document.isPresent()) {</span>
+<span class="fc" id="L103">        Document doc = document.get();</span>
+<span class="fc" id="L104">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L105">        response.put(&quot;id&quot;, doc.getId());</span>
+<span class="fc" id="L106">        response.put(&quot;filename&quot;, doc.getFilename());</span>
+<span class="fc" id="L107">        response.put(&quot;contentType&quot;, doc.getContentType());</span>
+<span class="fc" id="L108">        response.put(&quot;fileSize&quot;, doc.getFileSize());</span>
+<span class="fc" id="L109">        response.put(&quot;processingStatus&quot;, doc.getProcessingStatus());</span>
+<span class="fc" id="L110">        response.put(&quot;summary&quot;, doc.getSummary());</span>
+<span class="fc" id="L111">        response.put(&quot;uploadedAt&quot;, doc.getUploadedAt());</span>
+<span class="fc" id="L112">        response.put(&quot;updatedAt&quot;, doc.getUpdatedAt());</span>
+
+<span class="fc" id="L114">        return ResponseEntity.ok(response);</span>
+      } else {
+<span class="fc" id="L116">        return ResponseEntity.notFound().build();</span>
+      }
+
+<span class="nc" id="L119">    } catch (Exception e) {</span>
+<span class="nc" id="L120">      System.err.println(&quot;Error retrieving document &quot; + id + &quot;: &quot; + e.getMessage());</span>
+<span class="nc" id="L121">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L122">      error.put(&quot;error&quot;, &quot;Failed to retrieve document&quot;);</span>
+<span class="nc" id="L123">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+  }
+
+  /**
+   * GET /api/v1/relationships/{documentId}.
+   * Retrieve related documents (knowledge graph edges).
+   */
+  @GetMapping(&quot;/relationships/{documentId}&quot;)
+  public ResponseEntity&lt;?&gt; getDocumentRelationships(@PathVariable Long documentId) {
+    try {
+      // For now, return empty relationships - this would be implemented with actual
+      // relationship analysis
+<span class="fc" id="L136">      Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L137">      response.put(&quot;documentId&quot;, documentId);</span>
+<span class="fc" id="L138">      response.put(&quot;relationships&quot;, List.of());</span>
+<span class="fc" id="L139">      response.put(&quot;count&quot;, 0);</span>
+<span class="fc" id="L140">      response.put(&quot;message&quot;, &quot;Relationship analysis not yet implemented&quot;);</span>
+
+<span class="fc" id="L142">      return ResponseEntity.ok(response);</span>
+
+<span class="nc" id="L144">    } catch (Exception e) {</span>
+<span class="nc" id="L145">      System.err.println(&quot;Error getting document relationships: &quot; + e.getMessage());</span>
+<span class="nc" id="L146">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L147">      error.put(&quot;error&quot;, &quot;Failed to get document relationships&quot;);</span>
+<span class="nc" id="L148">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+  }
+
+  /**
+   * GET /api/v1/documents/{id}/summary.
+   * Retrieve generated summary.
+   */
+  @GetMapping(&quot;/documents/{id}/summary&quot;)
+  public ResponseEntity&lt;?&gt; getDocumentSummary(@PathVariable Long id) {
+    try {
+<span class="fc" id="L159">      String summary = summarizationService.getDocumentSummary(id);</span>
+
+<span class="fc bfc" id="L161" title="All 2 branches covered.">      if (summary != null) {</span>
+<span class="fc" id="L162">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L163">        response.put(&quot;documentId&quot;, id);</span>
+<span class="fc" id="L164">        response.put(&quot;summary&quot;, summary);</span>
+<span class="fc" id="L165">        return ResponseEntity.ok(response);</span>
+      } else {
+<span class="fc" id="L167">        Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L168">        error.put(&quot;error&quot;, &quot;Summary not found for document&quot;);</span>
+<span class="fc" id="L169">        return ResponseEntity.notFound().build();</span>
+      }
+
+<span class="nc" id="L172">    } catch (Exception e) {</span>
+<span class="nc" id="L173">      System.err.println(&quot;Error retrieving summary for document &quot; + id + &quot;: &quot; + e.getMessage());</span>
+<span class="nc" id="L174">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L175">      error.put(&quot;error&quot;, &quot;Failed to retrieve summary&quot;);</span>
+<span class="nc" id="L176">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+  }
+
+  /**
+   * GET /api/v1/search/{text}.
+   * Retrieve top 3 relevant documents based on text input.
+   */
+  @GetMapping(&quot;/search/{text}&quot;)
+  public ResponseEntity&lt;?&gt; searchDocuments(@PathVariable String text) {
+    try {
+<span class="nc" id="L187">      System.out.println(&quot;Performing search for: &quot; + text);</span>
+
+      // Use the document service to find similar chunks
+<span class="nc" id="L190">      List&lt;DocumentChunk&gt; similarChunks = documentService.findSimilarChunks(text, 3);</span>
+
+<span class="nc" id="L192">      Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L193">      response.put(&quot;query&quot;, text);</span>
+<span class="nc" id="L194">      response.put(&quot;results&quot;, similarChunks);</span>
+<span class="nc" id="L195">      response.put(&quot;count&quot;, similarChunks.size());</span>
+<span class="nc" id="L196">      response.put(&quot;message&quot;, &quot;Search completed successfully&quot;);</span>
+
+<span class="nc" id="L198">      return ResponseEntity.ok(response);</span>
+
+<span class="nc" id="L200">    } catch (Exception e) {</span>
+<span class="nc" id="L201">      System.err.println(&quot;Search error: &quot; + e.getMessage());</span>
+<span class="nc" id="L202">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L203">      error.put(&quot;error&quot;, &quot;Search failed: &quot; + e.getMessage());</span>
+<span class="nc" id="L204">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+  }
+
+  /**
+   * GET /api/v1/documents.
+   * Retrieve documents.
+   *
+   * @param filename Optional filename to match on.
+   *
+   * @return ResponseEntity containing list of all documents
+   */
+  @GetMapping(&quot;/documents&quot;)
+  public ResponseEntity&lt;?&gt; getAllDocuments(
+      @RequestParam(required = false) String filename) {
+
+    try {
+      List&lt;Document&gt; documents;
+<span class="pc bpc" id="L222" title="1 of 4 branches missed.">      if (filename == null || filename.trim().isEmpty()) {</span>
+<span class="fc" id="L223">        documents = documentService.getAllDocuments();</span>
+      } else {
+<span class="fc" id="L225">        documents = documentService.getDocumentsByFilename(filename);</span>
+      }
+<span class="fc" id="L227">      Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L228">      response.put(&quot;documents&quot;, documents);</span>
+<span class="fc" id="L229">      response.put(&quot;count&quot;, documents.size());</span>
+<span class="fc" id="L230">      response.put(&quot;message&quot;, &quot;Documents retrieved&quot;);</span>
+<span class="fc" id="L231">      return ResponseEntity.ok(response);</span>
+
+<span class="nc" id="L233">    } catch (Exception e) {</span>
+<span class="nc" id="L234">      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);</span>
+    }
+  }
+
+  /**
+   * DELETE /api/v1/documents/{id}.
+   * Delete a document by ID.
+   *
+   * @param id The document ID to delete
+   * @return ResponseEntity indicating success or failure
+   */
+  @DeleteMapping(&quot;/documents/{id}&quot;)
+  public ResponseEntity&lt;?&gt; deleteDocument(@PathVariable Long id) {
+<span class="fc bfc" id="L247" title="All 2 branches covered.">    if (documentService.getDocumentById(id).isEmpty()) {</span>
+<span class="fc" id="L248">      Map&lt;String, String&gt; error = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L249">      error.put(&quot;error&quot;, &quot;Document not found&quot;);</span>
+<span class="fc" id="L250">      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);</span>
+    }
+<span class="fc" id="L252">    documentService.deleteDocument(id);</span>
+
+<span class="fc" id="L254">    return ResponseEntity.ok(Map.of(&quot;documentId&quot;, id, &quot;message&quot;, &quot;Document deleted successfully&quot;));</span>
+  }
+
+  /**
+   * GET /api/v1/documents/summaries.
+   * Get docs with summaries.
+   */
+  @GetMapping(&quot;/documents/summaries&quot;)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getDocumentsWithSummaries() {
+<span class="fc" id="L263">    List&lt;Document&gt; all = documentService.getAllDocuments();</span>
+<span class="fc" id="L264">    List&lt;Document&gt; documents = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L266" title="All 2 branches covered.">    for (Document d : all) {</span>
+<span class="fc" id="L267">      String s = d.getSummary();</span>
+<span class="pc bpc" id="L268" title="1 of 4 branches missed.">      if (s != null &amp;&amp; !s.isBlank()) {</span>
+<span class="fc" id="L269">        documents.add(d);</span>
+      }
+<span class="fc" id="L271">    }</span>
+
+<span class="fc" id="L273">    Map&lt;String, Object&gt; body = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L274">    body.put(&quot;documents&quot;, documents);</span>
+<span class="fc" id="L275">    body.put(&quot;count&quot;, documents.size());</span>
+<span class="fc" id="L276">    return ResponseEntity.ok(body);</span>
+  }
+
+  /**
+   * GET /api/v1/documents/stat.
+   * Get docs with their statistics.
+   */
+  @GetMapping(&quot;/documents/stats&quot;)
+  public ResponseEntity&lt;?&gt; getProcessingStatistics() {
+<span class="fc" id="L285">    List&lt;Document&gt; allDocuments = documentService.getAllDocuments();</span>
+<span class="fc" id="L286">    final long total = allDocuments.size();</span>
+
+<span class="fc" id="L288">    long uploaded = 0;</span>
+<span class="fc" id="L289">    long textExtracted = 0;</span>
+<span class="fc" id="L290">    long chunked = 0;</span>
+<span class="fc" id="L291">    long embeddingsGenerated = 0;</span>
+<span class="fc" id="L292">    long summarized = 0;</span>
+<span class="fc" id="L293">    long completed = 0;</span>
+<span class="fc" id="L294">    long failed = 0;</span>
+
+<span class="fc bfc" id="L296" title="All 2 branches covered.">    for (Document doc : allDocuments) {</span>
+<span class="fc" id="L297">      Document.ProcessingStatus status = doc.getProcessingStatus();</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">      if (status == Document.ProcessingStatus.UPLOADED) {</span>
+<span class="fc" id="L299">        uploaded++;</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">      } else if (status == Document.ProcessingStatus.TEXT_EXTRACTED) {</span>
+<span class="fc" id="L301">        textExtracted++;</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">      } else if (status == Document.ProcessingStatus.CHUNKED) {</span>
+<span class="fc" id="L303">        chunked++;</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">      } else if (status == Document.ProcessingStatus.EMBEDDINGS_GENERATED) {</span>
+<span class="fc" id="L305">        embeddingsGenerated++;</span>
+<span class="fc bfc" id="L306" title="All 2 branches covered.">      } else if (status == Document.ProcessingStatus.SUMMARIZED) {</span>
+<span class="fc" id="L307">        summarized++;</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">      } else if (status == Document.ProcessingStatus.COMPLETED) {</span>
+<span class="fc" id="L309">        completed++;</span>
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">      } else if (status == Document.ProcessingStatus.FAILED) {</span>
+<span class="fc" id="L311">        failed++;</span>
+      }
+<span class="fc" id="L313">    }</span>
+<span class="fc" id="L314">    Map&lt;String, Long&gt; statusCounts = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L315">    statusCounts.put(&quot;UPLOADED&quot;, uploaded);</span>
+<span class="fc" id="L316">    statusCounts.put(&quot;TEXT_EXTRACTED&quot;, textExtracted);</span>
+<span class="fc" id="L317">    statusCounts.put(&quot;CHUNKED&quot;, chunked);</span>
+<span class="fc" id="L318">    statusCounts.put(&quot;EMBEDDINGS_GENERATED&quot;, embeddingsGenerated);</span>
+<span class="fc" id="L319">    statusCounts.put(&quot;SUMMARIZED&quot;, summarized);</span>
+<span class="fc" id="L320">    statusCounts.put(&quot;COMPLETED&quot;, completed);</span>
+<span class="fc" id="L321">    statusCounts.put(&quot;FAILED&quot;, failed);</span>
+
+    double completionRate;
+    double failureRate;
+
+<span class="fc bfc" id="L326" title="All 2 branches covered.">    if (total &gt; 0) {</span>
+<span class="fc" id="L327">      completionRate = (double) completed / (double) total;</span>
+<span class="fc" id="L328">      failureRate = (double) failed / (double) total;</span>
+    } else {
+<span class="fc" id="L330">      completionRate = 0.0;</span>
+<span class="fc" id="L331">      failureRate = 0.0;</span>
+    }
+<span class="fc" id="L333">    return ResponseEntity.ok(</span>
+<span class="fc" id="L334">        Map.of(&quot;total&quot;, total, &quot;byStatus&quot;, statusCounts, &quot;completionRate&quot;, completionRate,</span>
+<span class="fc" id="L335">            &quot;failureRate&quot;, failureRate));</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

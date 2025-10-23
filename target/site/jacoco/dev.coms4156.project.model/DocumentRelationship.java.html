@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DocumentRelationship.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Knowledge Management Service</a> &gt; <a href="index.source.html" class="el_package">dev.coms4156.project.model</a> &gt; <span class="el_source">DocumentRelationship.java</span></div><h1>DocumentRelationship.java</h1><pre class="source lang-java linenums">package dev.coms4156.project.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+/**
+ * Entity representing relationship between documents.
+ */
+@Entity
+@Table(name = &quot;document_relationships&quot;)
+<span class="pc bpc" id="L26" title="33 of 70 branches missed.">@Data</span>
+<span class="fc" id="L27">@NoArgsConstructor</span>
+<span class="nc" id="L28">@AllArgsConstructor</span>
+<span class="nc" id="L29">@Builder</span>
+public class DocumentRelationship {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+<span class="fc" id="L34">  private Long id;</span>
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = &quot;source_chunk_id&quot;, nullable = false)
+<span class="fc" id="L38">  private DocumentChunk sourceChunk;</span>
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = &quot;target_chunk_id&quot;, nullable = false)
+<span class="fc" id="L42">  private DocumentChunk targetChunk;</span>
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = &quot;relationship_type&quot;, nullable = false)
+<span class="fc" id="L46">  private RelationshipType relationshipType;</span>
+
+  @Column(name = &quot;similarity_score&quot;)
+<span class="fc" id="L49">  private Double similarityScore;</span>
+
+  @Column(name = &quot;confidence_score&quot;)
+<span class="fc" id="L52">  private Double confidenceScore;</span>
+
+  @Column(name = &quot;metadata&quot;, columnDefinition = &quot;JSONB&quot;)
+<span class="fc" id="L55">  private String metadata;</span>
+
+  @CreationTimestamp
+  @Column(name = &quot;created_at&quot;)
+<span class="fc" id="L59">  private LocalDateTime createdAt;</span>
+
+  /**
+   * RelationshipType Enum.
+   */
+<span class="fc" id="L64">  public enum RelationshipType {</span>
+<span class="fc" id="L65">    SEMANTIC_SIMILARITY,</span>
+<span class="fc" id="L66">    TOPICAL_RELATEDNESS,</span>
+<span class="fc" id="L67">    TEMPORAL_SEQUENCE,</span>
+<span class="fc" id="L68">    CAUSAL_RELATIONSHIP,</span>
+<span class="fc" id="L69">    REFERENCE,</span>
+<span class="fc" id="L70">    CONTRAST,</span>
+<span class="fc" id="L71">    EXAMPLE,</span>
+<span class="fc" id="L72">    DEFINITION</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
