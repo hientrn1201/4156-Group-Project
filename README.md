@@ -448,6 +448,32 @@ curl http://localhost:8080/api/embedding/test-connection
 - **Build Tool**: Maven
 - **Containerization**: Docker Compose
 
+## CI/CD Pipeline
+
+This project includes an automated CI pipeline that runs on pushes and pull requests to the main branch.
+
+### What the Pipeline Does
+
+1. **Builds the project** with Java 17 and Maven
+2. **Runs unit tests** against PostgreSQL with PGVector (skips tests that require Ollama)
+3. **Runs quality checks** Checkstyle, PMD, JaCoCo coverage
+4. **Generates artifacts** (test results, coverage reports, application JAR)
+
+### Pipeline Triggers
+
+- Push to `main` branch
+- Pull requests to `main` branch  
+
+### Database Testing
+
+Uses PostgreSQL with PGVector extension for testing database connectivity and basic operations.
+
+### Artifacts Generated
+
+- Test results from Surefire reports
+- Coverage reports from JaCoCo
+- Application JAR file
+
 ## Citations
 
 - https://spring.io/guides/gs/accessing-data-jpa
