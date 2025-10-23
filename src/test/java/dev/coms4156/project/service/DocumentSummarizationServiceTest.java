@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.client.ChatClient;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentSummarizationServiceTest {
@@ -24,9 +25,12 @@ class DocumentSummarizationServiceTest {
 
   private DocumentSummarizationService summarizationService;
 
+  @Mock
+  private ChatClient chatClient;
+
   @BeforeEach
   void setUp() {
-    summarizationService = new DocumentSummarizationService(documentRepository);
+    summarizationService = new DocumentSummarizationService(documentRepository, chatClient);
   }
 
   @Test
