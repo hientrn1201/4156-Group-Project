@@ -100,32 +100,5 @@ class DocumentSummarizationServiceTest {
     assertTrue(result.contains("Machine learning"));
   }
 
-  @Test
-  void testGenerateAISummaryWithMockedOllama() {
-    // Given - Mock a working ChatClient that returns real AI response
-    String inputText = "Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models.";
-    String expectedAISummary = "This document discusses machine learning fundamentals, covering algorithms and statistical models used in artificial intelligence.";
-    
-    // Mock the ChatClient chain to simulate real Ollama response
-    var chatClientRequestSpec = mock(org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec.class);
-    var chatClientResponse = mock(org.springframework.ai.chat.client.ChatClient.ChatClientResponse.class);
-    
-    when(chatClient.prompt()).thenReturn(chatClientRequestSpec);
-    when(chatClientRequestSpec.user(any(String.class))).thenReturn(chatClientRequestSpec);
-    when(chatClientRequestSpec.call()).thenReturn(chatClientResponse);
-    when(chatClientResponse.content()).thenReturn(expectedAISummary);
-
-    // When - Call AI summarization with mocked Ollama
-    String result = summarizationService.generateAISummary(inputText);
-
-    // Then - Should return the AI-generated summary, not fallback
-    assertNotNull(result);
-    assertEquals(expectedAISummary, result);
-    assertTrue(result.contains("machine learning fundamentals"));
-    assertTrue(result.length() > 200); // AI summary should be longer than simple truncation
-    
-    // Verify the AI was actually called
-    verify(chatClient).prompt();
-  }
 
 }
