@@ -438,6 +438,51 @@ curl http://localhost:8080/api/embedding/test-connection
 - **Memory Usage**: Ollama may require significant memory depending on model size
 - **Automatic Ingestion**: Document uploads now include RAG ingestion (may take slightly longer)
 
+## Testing
+
+Our unit tests are located under the directory `src/test`. To run our project's tests using Java 17, you must first build the project.
+
+From there, you can right-click any of the classes present in the src/test directory and click run to see the results.
+
+To run all tests from the terminal:
+```bash
+mvn clean test
+```
+
+### Coverage Analysis
+
+To generate test coverage:
+```bash
+mvn test jacoco:report
+```
+
+View results: Open `target/site/jacoco/index.html` in browser
+
+This repository achieves 58% branch coverage (exceeds 55% requirement).
+
+### Test Files
+
+- `DocumentControllerTest.java`: API endpoint testing
+- `SimpleEmbeddingServiceTest.java`: Embedding service with mocked dependencies  
+- `DocumentServiceTest.java`: Document processing pipeline verification
+- `DocumentChunkTest.java`: Model validation and equals/hashCode testing
+- `DocumentRelationshipTest.java`: Relationship model testing
+- `RagServiceTest.java`: RAG functionality testing
+- `DocumentTest.java`: Document model validation
+- `FloatArrayToPgVectorConverterTest.java`: Converter testing
+
+### Testing Framework
+
+**Unit Testing:** JUnit 5 with Mockito for mocking
+**Coverage Tool:** JaCoCo Maven Plugin  
+**API Testing:** Spring Boot Test with MockMvc
+
+**Test Structure:**
+- Controller Tests: `src/test/java/dev/coms4156/project/controller/`
+- Service Tests: `src/test/java/dev/coms4156/project/service/`
+- Model Tests: `src/test/java/dev/coms4156/project/model/`
+- Converter Tests: `src/test/java/dev/coms4156/project/converter/`
+
 ## Technology Stack
 
 - **Backend**: Spring Boot 3.4.4, Java 17
@@ -447,6 +492,9 @@ curl http://localhost:8080/api/embedding/test-connection
 - **Text Processing**: Apache Tika
 - **Build Tool**: Maven
 - **Containerization**: Docker Compose
+- **Testing**: JUnit 5, Mockito, Spring Boot Test
+- **Coverage**: JaCoCo
+- **Style Checking**: TODO
 
 ## Citations
 
