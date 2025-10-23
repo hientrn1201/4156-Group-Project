@@ -35,7 +35,7 @@ public class DocumentSummarizationService {
     }
 
     try {
-      String summary = generateAISummary(text);
+      String summary = generateAiSummary(text);
 
       // Update document with summary
       document.setSummary(summary);
