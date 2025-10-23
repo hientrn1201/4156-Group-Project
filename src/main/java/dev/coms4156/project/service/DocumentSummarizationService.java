@@ -2,6 +2,7 @@ package dev.coms4156.project.service;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.repository.DocumentRepository;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class DocumentSummarizationService {
 
   private final DocumentRepository documentRepository;
+  private final ChatClient chatClient;
 
-  public DocumentSummarizationService(DocumentRepository documentRepository) {
+  public DocumentSummarizationService(DocumentRepository documentRepository, ChatClient chatClient) {
     this.documentRepository = documentRepository;
+    this.chatClient = chatClient;
   }
 
   /**
@@ -31,7 +34,7 @@ public class DocumentSummarizationService {
     }
 
     try {
-      String summary = generateSimpleSummary(text);
+      String summary = generateAISummary(text);
 
       // Update document with summary
       document.setSummary(summary);
@@ -48,7 +51,30 @@ public class DocumentSummarizationService {
   }
 
   /**
-   * Generate a simple summary by extracting the first few sentences.
+   * Generate an AI-powered summary using Ollama.
+   */
+  public String generateAISummary(String text) {
+    System.out.println("Generating AI summary from text of length: " + text.length());
+
+    try {
+      // Use Ollama to generate a real AI summary
+      String summary = chatClient.prompt()
+          .user("Please provide a concise summary of this document (maximum 200 words): " + text)
+          .call()
+          .content();
+      
+      System.out.println("Generated AI summary of length: " + summary.length());
+      return summary;
+      
+    } catch (Exception e) {
+      System.err.println("Error generating AI summary: " + e.getMessage());
+      // Fallback to simple summary if AI fails
+      return generateSimpleSummary(text);
+    }
+  }
+
+  /**
+   * Generate a simple summary by extracting the first few sentences (fallback).
    */
   public String generateSimpleSummary(String text) {
     System.out.println("Generating simple summary from text of length: " + text.length());
