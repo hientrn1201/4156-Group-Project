@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.client.ChatClient;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentSummarizationServiceTest {
@@ -24,9 +26,12 @@ class DocumentSummarizationServiceTest {
 
   private DocumentSummarizationService summarizationService;
 
+  @Mock
+  private ChatClient chatClient;
+
   @BeforeEach
   void setUp() {
-    summarizationService = new DocumentSummarizationService(documentRepository);
+    summarizationService = new DocumentSummarizationService(documentRepository, chatClient);
   }
 
   @Test
@@ -80,5 +85,20 @@ class DocumentSummarizationServiceTest {
     // Then
     assertEquals("Test summary", result);
   }
+
+  @Test
+  void testGenerateAISummary() {
+    // Given
+    String inputText = "Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models.";
+    
+    // When - Call AI summarization (will fallback if AI not available)
+    String result = summarizationService.generateAISummary(inputText);
+
+    // Then - Should return a valid summary
+    assertNotNull(result);
+    assertTrue(result.length() > 0);
+    assertTrue(result.contains("Machine learning"));
+  }
+
 
 }
