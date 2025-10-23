@@ -64,7 +64,6 @@ jobs:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/knowledge_db
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: postgres
-      continue-on-error: true
 
     - name: Run code quality checks
       run: |
