@@ -16,4 +16,20 @@ class ControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals("Welcome to Knowledge Management Service Powered by AI!", response.getBody());
   }
+
+  @Test
+  void test_index_multiple_calls() {
+    ResponseEntity<String> response1 = controller.index();
+    ResponseEntity<String> response2 = controller.index();
+    assertEquals(response1.getStatusCode(), response2.getStatusCode());
+    assertEquals(response1.getBody(), response2.getBody());
+  }
+
+  @Test
+  void test_index_response_not_null() {
+    ResponseEntity<String> response = controller.index();
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals("Welcome to Knowledge Management Service Powered by AI!", response.getBody());
+  }
+  
 }

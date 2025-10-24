@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
+import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
@@ -126,6 +127,18 @@ class DocumentControllerTest {
   }
 
   @Test
+  void testUploadDocument_ServiceException() throws Exception {
+    MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.processDocument(file)).thenThrow(new RuntimeException("Processing failed"));
+    
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
+
+  @Test
   void testGetDocument_Success() {
     // Given
     Long documentId = 1L;
@@ -161,6 +174,13 @@ class DocumentControllerTest {
   }
 
   @Test
+  void testGetDocument_ServiceException() {
+    when(documentService.getDocumentById(1L)).thenThrow(new RuntimeException("Database error"));
+    ResponseEntity<?> response = controller.getDocument(1L);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
+
+  @Test
   void testGetDocumentRelationships() {
     // Given
     Long documentId = 1L;
@@ -176,6 +196,18 @@ class DocumentControllerTest {
     assertEquals(documentId, responseBody.get("documentId"));
     assertEquals(0, responseBody.get("count"));
     assertEquals("Relationship analysis not yet implemented", responseBody.get("message"));
+  }
+
+  @Test
+  void testGetDocumentRelationships_LargeId() {
+    ResponseEntity<?> response = controller.getDocumentRelationships(999999L);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  void testGetDocumentRelationships_NullId() {
+    ResponseEntity<?> response = controller.getDocumentRelationships(null);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
   }
 
   @Test
@@ -210,23 +242,83 @@ class DocumentControllerTest {
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 
-  // @Test
-  // void testSearchDocuments() {
-  // // Given
-  // String searchText = "machine learning";
+  @Test
+  void testGetDocumentSummary_ServiceException() {
+    when(summarizationService.getDocumentSummary(1L)).thenThrow(new RuntimeException("Service error"));
+    ResponseEntity<?> response = controller.getDocumentSummary(1L);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
 
-  // // When
-  // ResponseEntity<?> response = controller.searchDocuments(searchText);
+  @Test
+  void testSearchDocuments_Success() {
+    // Given
+    String searchText = "machine learning";
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent("Machine learning algorithms")
+        .build();
+    when(documentService.findSimilarChunks(searchText, 3)).thenReturn(List.of(chunk));
 
-  // // Then
-  // assertEquals(HttpStatus.OK, response.getStatusCode());
-  // assertNotNull(response.getBody());
-  // Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-  // assertEquals(searchText, responseBody.get("query"));
-  // assertEquals(0, responseBody.get("count"));
-  // assertEquals("Search functionality not yet implemented",
-  // responseBody.get("message"));
-  // }
+    // When
+    ResponseEntity<?> response = controller.searchDocuments(searchText, request);
+
+    // Then
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
+    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+    assertEquals(searchText, responseBody.get("query"));
+    assertEquals(1, responseBody.get("count"));
+    assertEquals("Search completed successfully", responseBody.get("message"));
+    assertNotNull(responseBody.get("results"));
+  }
+
+  @Test
+  void testSearchDocuments_EmptyQuery() {
+    // Given
+    String searchText = "";
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks(searchText, 3)).thenReturn(List.of());
+
+    // When
+    ResponseEntity<?> response = controller.searchDocuments(searchText, request);
+
+    // Then
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
+    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+    assertEquals(searchText, responseBody.get("query"));
+    assertEquals(0, responseBody.get("count"));
+    assertEquals("Search completed successfully", responseBody.get("message"));
+  }
+
+  @Test
+  void testSearchDocuments_ServiceException() {
+    // Given
+    String searchText = "test query";
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks(searchText, 3))
+        .thenThrow(new RuntimeException("Search error"));
+
+    // When
+    ResponseEntity<?> response = controller.searchDocuments(searchText, request);
+
+    // Then
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
+    Map<String, String> responseBody = (Map<String, String>) response.getBody();
+    assertEquals("Search failed: Search error", responseBody.get("error"));
+  }
+
   @Test
   void testGetAllDocuments_Success() {
     List<Document> docs = List.of(
@@ -235,6 +327,7 @@ class DocumentControllerTest {
     when(documentService.getAllDocuments()).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments("");
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(2, body.get("count"));
     assertEquals(docs, body.get("documents"));
@@ -250,10 +343,18 @@ class DocumentControllerTest {
     when(documentService.getDocumentsByFilename(queryString)).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments(queryString);
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(2, body.get("count"));
     assertEquals(docs, body.get("documents"));
     assertEquals("Documents retrieved", body.get("message"));
+  }
+
+  @Test
+  void testGetAllDocuments_ServiceException() {
+    when(documentService.getAllDocuments()).thenThrow(new RuntimeException("Database error"));
+    ResponseEntity<?> response = controller.getAllDocuments("");
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
 
   @Test
@@ -269,8 +370,10 @@ class DocumentControllerTest {
 
     ResponseEntity<?> response = controller.getProcessingStatistics();
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(7L, body.get("total"));
+    @SuppressWarnings("unchecked")
     Map<String, Long> byStatus = (Map<String, Long>) body.get("byStatus");
     assertEquals(1L, byStatus.get("UPLOADED"));
     assertEquals(1L, byStatus.get("TEXT_EXTRACTED"));
@@ -296,6 +399,16 @@ class DocumentControllerTest {
     assertEquals(0L, body.get("total"));
     assertEquals(0.0, (double) body.get("completionRate"));
     assertEquals(0.0, (double) body.get("failureRate"));
+  }
+
+  @Test
+  void testGetProcessingStatistics_ServiceException() {
+    when(documentService.getAllDocuments()).thenThrow(new RuntimeException("Database error"));
+    try {
+      controller.getProcessingStatistics();
+    } catch (RuntimeException e) {
+      assertEquals("Database error", e.getMessage());
+    }
   }
 
   @Test
@@ -325,6 +438,14 @@ class DocumentControllerTest {
     Map<String, String> body = (Map<String, String>) response.getBody();
     assertEquals("Document not found", body.get("error"));
     verify(documentService, never()).deleteDocument(anyLong());
+  }
+
+  @Test
+  void testDeleteDocument_ServiceException() {
+    when(documentService.getDocumentById(1L)).thenReturn(Optional.of(new Document()));
+    doNothing().when(documentService).deleteDocument(1L);
+    ResponseEntity<?> response = controller.deleteDocument(1L);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
   }
 
   @Test
@@ -369,6 +490,16 @@ class DocumentControllerTest {
     assertTrue(ids.contains(3L));
     assertTrue(ids.contains(2L));
     assertFalse(ids.contains(4L));
+  }
+
+  @Test
+  void testGetDocumentsWithSummaries_ServiceException() {
+    when(documentService.getAllDocuments()).thenThrow(new RuntimeException("Database error"));
+    try {
+      controller.getDocumentsWithSummaries();
+    } catch (RuntimeException e) {
+      assertEquals("Database error", e.getMessage());
+    }
   }
 
 }
