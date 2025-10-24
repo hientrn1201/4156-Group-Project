@@ -53,6 +53,7 @@ public class Document {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "processing_status", nullable = false)
+  @Builder.Default
   private ProcessingStatus processingStatus = ProcessingStatus.UPLOADED;
 
   @CreationTimestamp
