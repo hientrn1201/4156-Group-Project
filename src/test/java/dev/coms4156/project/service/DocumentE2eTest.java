@@ -16,7 +16,6 @@ import dev.coms4156.project.repository.DocumentRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,22 +59,14 @@ class DocumentE2eTest {
   @MockBean
   private DocumentSummarizationService summarizationService;
 
-  @BeforeEach
-  void setUp() {
-    // Clear any existing test data
-    documentChunkRepository.deleteAll();
-    documentRepository.deleteAll();
-  }
-
   @Test
   void testDocumentWriteThenRead_CompleteCycle() throws Exception {
     // Given - Mock AI services to return predictable responses
-    String mockExtractedText =
-        "This is a test document about machine learning and artificial intelligence. "
-            + "It contains multiple sentences "
-            + "to test the chunking and summarization functionality. "
-            + "The document discusses various AI techniques and "
-            + "their applications in real-world scenarios.";
+    String mockExtractedText = "This is a test document about machine learning and artificial intelligence. "
+        + "It contains multiple sentences "
+        + "to test the chunking and summarization functionality. "
+        + "The document discusses various AI techniques and "
+        + "their applications in real-world scenarios.";
 
     byte[] mockContent = "Mock PDF content".getBytes();
     MultipartFile mockFile = new MockMultipartFile(
@@ -112,10 +103,9 @@ class DocumentE2eTest {
     // Note: DocumentService uses its own generateSummary() method, not
     // DocumentSummarizationService
     // The actual summary will be the first 200 characters of the extracted text
-    final String expectedSummary =
-        "This is a test document about machine learning and artificial intelligence. "
-            + "It contains multiple sentences to "
-            + "test the chunking and summarization functionality.";
+    final String expectedSummary = "This is a test document about machine learning and artificial intelligence. "
+        + "It contains multiple sentences to "
+        + "test the chunking and summarization functionality.";
 
     // When - Step 1: Upload and process document (WRITE)
     Document savedDocument = documentService.processDocument(mockFile);
@@ -134,8 +124,7 @@ class DocumentE2eTest {
     // Note: DocumentService.processDocument() creates chunks but doesn't save them
     // to database
     // The chunks are only used for embedding generation, not persisted
-    List<DocumentChunk> savedChunks =
-        documentChunkRepository.findByDocumentId(savedDocument.getId());
+    List<DocumentChunk> savedChunks = documentChunkRepository.findByDocumentId(savedDocument.getId());
     assertEquals(0,
         savedChunks.size()); // No chunks are saved to database in current implementation
 
@@ -168,7 +157,7 @@ class DocumentE2eTest {
   @Test
   void testDocumentWriteThenRead_MultipleDocuments() throws Exception {
     // Given - Create multiple documents
-    String[] filenames = {"doc1.pdf", "doc2.pdf", "doc3.pdf"};
+    String[] filenames = { "doc1.pdf", "doc2.pdf", "doc3.pdf" };
     String[] extractedTexts = {
         "First document about AI and machine learning.",
         "Second document about data science and analytics.",
@@ -252,12 +241,10 @@ class DocumentE2eTest {
     Document savedDoc = documentService.processDocument(mockFile);
 
     // Then - Verify status filtering works
-    List<Document> completedDocs =
-        documentService.getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
+    List<Document> completedDocs = documentService.getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
     assertTrue(completedDocs.stream().anyMatch(doc -> doc.getId().equals(savedDoc.getId())));
 
-    List<Document> uploadedDocs =
-        documentService.getDocumentsByStatus(Document.ProcessingStatus.UPLOADED);
+    List<Document> uploadedDocs = documentService.getDocumentsByStatus(Document.ProcessingStatus.UPLOADED);
     assertFalse(uploadedDocs.stream().anyMatch(doc -> doc.getId().equals(savedDoc.getId())));
   }
 }
