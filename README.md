@@ -456,6 +456,21 @@ To run all tests from the terminal:
 mvn clean test
 ```
 
+### Style Checking
+Follows standard Java coding conventions under Google Java Style Guide : 
+
+https://google.github.io/styleguide/javaguide.html
+
+Run this: 
+
+`mvn checkstyle:check`
+
+`mvn checkstyle:checkstyle`
+
+**Style check report:**
+
+![Style check](reports/checkstyle.png)
+
 ### Coverage Analysis
 
 An existing coverage report can be viewed by opening `target/site/jacoco/index.html` in the browser, however if you would like to re-generate it, run the following command:
@@ -463,6 +478,10 @@ An existing coverage report can be viewed by opening `target/site/jacoco/index.h
 ```bash
 mvn test jacoco:report
 ```
+
+**PMD Report:**
+
+![pmd report](reports/coverage.png)
 
 This repository achieves 58% branch coverage (exceeds 55% requirement).
 
@@ -541,11 +560,9 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 - https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html
 - https://docs.spring.io/spring-ai/reference/api/ollama.html
 
-## AI usage documentation:
+## AI usage documentation
 
 **Tools : ChatGPT Free plan**
-
-**Used in:**
 
 **Examples**
 - **Help with Docker and config files to properly set up docker and host locally**
@@ -557,10 +574,15 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
   ERROR: Cannot create container for service app: Mounts denied: path … not found
 
 - **Helping with refining phrasing in Java docs/ API/test documentation**
+- **Also reformatting parts of README.md**
 
   Reason: AI can propose better, concise documentation that help the code to be more clear (use as references)
 
-  Prompt (similar to this): Here is a Javadoc, make it more clear and concise
+  Prompt (similar to this): Here is a Javadoc, make it more clear and concise. 
+  /**
+  *Query the LLM using RAG.
+  *
+  */
 
 - **help with REGEX**
 
@@ -568,13 +590,13 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 
   Prompt: how to clean raw text by removing whitespace and normalize line break using regex
 
-- **Write testing script – feel like a nice automation (not related to main codebase)**
+- **Write testing script (test-setup.sh) – feel like a nice automation (not related to main codebase)**
 
   Reason: this is entirely optional and a nice thing to have when development 
 
   Prompt: write me a short bash script to run tests using the README
 
-- **Debugging Spring AI / RAG retrieval not successful because log statement was lengthy**
+- **Help/debugging Spring AI/RAG retrieval not successful because log statement was lengthy**
 
   Reason: We are new to Spring AI and RAG retrieve in Java so when the error log was long, we were confused because we thought we did everything right.
   We used it to help with Spring AI implementations and errors associated when building out.
