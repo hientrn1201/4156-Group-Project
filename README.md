@@ -540,3 +540,43 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 - https://docs.spring.io/spring-data/jpa/docs/1.6.0.RELEASE/reference/html/jpa.repositories.html
 - https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html
 - https://docs.spring.io/spring-ai/reference/api/ollama.html
+
+## AI usage documentation:
+
+**Tools : ChatGPT Free plan**
+
+**Used in:**
+
+**Examples**
+- **Help with Docker and config files to properly set up docker and host locally**
+
+  Reason: We are new to Docker and try to follow resources online but does not work out
+
+  Prompt: I’m running docker compose up -d and I get:
+
+  ERROR: Cannot create container for service app: Mounts denied: path … not found
+
+- **Helping with refining phrasing in Java docs/ API/test documentation**
+
+  Reason: AI can propose better, concise documentation that help the code to be more clear (use as references)
+
+  Prompt (similar to this): Here is a Javadoc, make it more clear and concise
+
+- **help with REGEX**
+
+  Reason: REGEX is painful to deal with and AI is extremely helpful with this
+
+  Prompt: how to clean raw text by removing whitespace and normalize line break using regex
+
+- **Write testing script – feel like a nice automation (not related to main codebase)**
+
+  Reason: this is entirely optional and a nice thing to have when development 
+
+  Prompt: write me a short bash script to run tests using the README
+
+- **Debugging Spring AI / RAG retrieval not successful because log statement was lengthy**
+
+  Reason: We are new to Spring AI and RAG retrieve in Java so when the error log was long, we were confused because we thought we did everything right.
+  We used it to help with Spring AI implementations and errors associated when building out.
+
+  Prompt: I got this error [long error log] when retrieve relevant text using RAG
