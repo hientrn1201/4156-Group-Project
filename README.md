@@ -4,6 +4,12 @@
 
 The AI Knowledge Management Service provides intelligent document processing, semantic search, and knowledge extraction capabilities using Spring AI, Ollama, and PostgreSQL + PGVector.
 
+## Project Management
+
+We used JIRA for the project management part which can be seen in the link below:
+
+https://cn2673.atlassian.net/jira/software/projects/KAN/boards/1
+
 ## Overview
 
 This service implements a complete AI-powered document processing pipeline that:
@@ -57,7 +63,7 @@ The application is configured in `src/main/resources/application.yml`:
 - **Ollama**: Running on `http://localhost:11434/`
 - **PostgreSQL**: Running on `localhost:5432` with database `knowledge_db`
 - **Vector Store**: Uses PGVector with HNSW index and cosine distance
-- **Model**: llama3.2 for both chat and embeddings (4096 dimensions)
+- **Model**: llama3.2 for both chat and embeddings (3072 dimensions)
 
 ## Base URL
 
@@ -432,7 +438,7 @@ curl http://localhost:8080/api
 
 ## Performance Notes
 
-- **Embedding Generation**: llama3.2 produces 4096-dimensional embeddings
+- **Embedding Generation**: llama3.2 produces 3072-dimensional embeddings
 - **Vector Search**: Uses HNSW index for better query performance
 - **Batch Processing**: Configured for efficient document processing
 - **Memory Usage**: Ollama may require significant memory depending on model size
@@ -489,7 +495,7 @@ This repository achieves 58% branch coverage (exceeds 55% requirement).
 ## Technology Stack
 
 - **Backend**: Spring Boot 3.4.4, Java 17
-- **AI Framework**: Spring AI 1.0.3
+- **AI Framework**: Spring AI 1.0.0
 - **LLM/Embeddings**: Ollama with llama3.2 model
 - **Vector Database**: PostgreSQL with PGVector extension
 - **Text Processing**: Apache Tika
@@ -497,8 +503,8 @@ This repository achieves 58% branch coverage (exceeds 55% requirement).
 - **Containerization**: Docker Compose
 - **Testing**: JUnit 5, Mockito, Spring Boot Test
 - **Coverage**: JaCoCo
-- **Style Checking**: TODO
-
+- **Style Checking**: Style Checking:Checkstyle with Google Java Style
+- **Static Analysis**: PMD
 ## CI/CD Pipeline
 
 This project includes an automated CI pipeline that runs on pushes and pull requests to the main branch.

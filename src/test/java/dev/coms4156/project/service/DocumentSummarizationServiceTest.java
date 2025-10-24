@@ -70,7 +70,6 @@ class DocumentSummarizationServiceTest {
     assertTrue(result.length() > 0);
   }
 
-
   @Test
   void testGetDocumentSummary() {
     // Given
@@ -89,8 +88,9 @@ class DocumentSummarizationServiceTest {
   @Test
   void testGenerateAiSummary() {
     // Given
-    String inputText = "Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models.";
-    
+    String inputText = "Machine learning is a subset of artificial intelligence that focuses"
+        + " on algorithms and statistical models.";
+
     // When - Call AI summarization (will fallback if AI not available)
     String result = summarizationService.generateAiSummary(inputText);
 
@@ -99,6 +99,5 @@ class DocumentSummarizationServiceTest {
     assertTrue(result.length() > 0);
     assertTrue(result.contains("Machine learning"));
   }
-
 
 }
