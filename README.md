@@ -75,6 +75,14 @@ http://localhost:8080/api/v1
 
 Currently, the API does not require authentication. In production, implement proper security measures.
 
+## API Testing Tool (PostMan)
+
+postman_collection json is in the project root.
+
+documentation log:
+
+https://documenter.getpostman.com/view/48798844/2sB3Wjy3kr
+
 ## API Endpoints
 
 ### Document Management
@@ -590,9 +598,9 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 
   Prompt: how to clean raw text by removing whitespace and normalize line break using regex
 
-- **Write testing script (test-setup.sh) – feel like a nice automation (not related to main codebase)**
+- **Helping with test cases and testing script (test-setup.sh) – feel like a nice automation (not related to main codebase)**
 
-  Reason: this is entirely optional and a nice thing to have when development 
+  Reason: this is entirely optional and a nice thing to have when development. Test cases to help in case we miss an edge case too.
 
   Prompt: write me a short bash script to run tests using the README
 
