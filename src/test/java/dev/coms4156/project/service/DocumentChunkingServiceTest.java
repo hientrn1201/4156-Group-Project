@@ -57,7 +57,7 @@ class DocumentChunkingServiceTest {
     // Given
     Document document = new Document();
     document.setId(1L);
-    
+
     // Create text longer than default chunk size (1000 chars)
     StringBuilder longText = new StringBuilder();
     for (int i = 0; i < 50; i++) {
@@ -82,7 +82,7 @@ class DocumentChunkingServiceTest {
     // Given
     Document document = new Document();
     document.setId(1L);
-    
+
     // Create text with clear sentence boundaries
     StringBuilder textWithSentences = new StringBuilder();
     for (int i = 0; i < 20; i++) {
@@ -186,7 +186,7 @@ class DocumentChunkingServiceTest {
   @Test
   void testChunkStatistics_Constructor() {
     // When
-    DocumentChunkingService.ChunkStatistics stats = 
+    DocumentChunkingService.ChunkStatistics stats =
         new DocumentChunkingService.ChunkStatistics(5, 1000, 200, 150, 250);
 
     // Then

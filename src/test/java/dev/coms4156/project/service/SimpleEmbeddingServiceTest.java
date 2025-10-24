@@ -45,7 +45,7 @@ class SimpleEmbeddingServiceTest {
     Document doc = Document.builder()
         .id(1L)
         .build();
-    
+
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
         .document(doc)
@@ -57,7 +57,7 @@ class SimpleEmbeddingServiceTest {
         .build();
 
     // Mock the embedding model response
-    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
@@ -78,7 +78,7 @@ class SimpleEmbeddingServiceTest {
     Document doc = Document.builder()
         .id(1L)
         .build();
-    
+
     DocumentChunk chunk1 = DocumentChunk.builder()
         .id(1L)
         .document(doc)
@@ -102,7 +102,7 @@ class SimpleEmbeddingServiceTest {
     List<DocumentChunk> chunks = Arrays.asList(chunk1, chunk2);
 
     // Mock the embedding model response
-    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
@@ -121,8 +121,8 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testCalculateSimilarity() {
     // Given
-    float[] embedding1 = { 1.0f, 0.0f, 0.0f };
-    float[] embedding2 = { 1.0f, 0.0f, 0.0f };
+    float[] embedding1 = {1.0f, 0.0f, 0.0f};
+    float[] embedding2 = {1.0f, 0.0f, 0.0f};
 
     // When
     double similarity = embeddingService.calculateSimilarity(embedding1, embedding2);
@@ -134,7 +134,7 @@ class SimpleEmbeddingServiceTest {
   @Test
   void testTestConnection() {
     // Given
-    float[] mockEmbedding = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 

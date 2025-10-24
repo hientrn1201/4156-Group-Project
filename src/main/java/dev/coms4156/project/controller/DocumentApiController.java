@@ -2,15 +2,20 @@ package dev.coms4156.project.controller;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
 import dev.coms4156.project.service.RagService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +35,14 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1")
 public class DocumentApiController {
 
+  private static final Logger logger = LoggerFactory.getLogger(DocumentApiController.class);
+
   private final DocumentService documentService;
   private final DocumentSummarizationService summarizationService;
   private final RagService ragService;
+
+  @Autowired
+  private ApiLoggingService apiLoggingService;
 
   /**
    * Constructor for DocumentApiController.
@@ -42,8 +52,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-      DocumentSummarizationService summarizationService,
-      RagService ragService) {
+                               DocumentSummarizationService summarizationService,
+                               RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -54,9 +64,17 @@ public class DocumentApiController {
    * Upload a document for processing -- extract text, chunking and embedded.
    */
   @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file) {
+  public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file,
+                                          HttpServletRequest request) {
+    String requestId = apiLoggingService.generateRequestId();
+    String clientId = apiLoggingService.getClientId(
+        request.getHeader("X-Client-ID"),
+        request.getRemoteAddr());
+
     try {
-      System.out.println("Received file upload: " + file.getOriginalFilename());
+      logger.info("Received file upload: {} from client: {} (requestId: {})",
+          file.getOriginalFilename(), clientId, requestId);
+
       Document document = documentService.processDocument(file);
 
       // Skip RAG vector store ingestion - use existing document_chunks table instead
@@ -68,22 +86,25 @@ public class DocumentApiController {
       response.put("status", document.getProcessingStatus());
       response.put("message", "Document uploaded and processed successfully");
 
+      logger.info("Successfully processed document: {} for client: {}",
+          document.getFilename(), clientId);
+
       return ResponseEntity.ok(response);
 
     } catch (IllegalArgumentException e) {
-      System.err.println("Invalid file upload: " + e.getMessage());
+      logger.error("Invalid file upload from client: {} - {}", clientId, e.getMessage());
       Map<String, String> error = new HashMap<>();
       error.put("error", e.getMessage());
       return ResponseEntity.badRequest().body(error);
 
     } catch (IOException e) {
-      System.err.println("File upload error: " + e.getMessage());
+      logger.error("File upload error from client: {} - {}", clientId, e.getMessage());
       Map<String, String> error = new HashMap<>();
       error.put("error", "File upload failed");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
 
     } catch (Exception e) {
-      System.err.println("Document processing error: " + e.getMessage());
+      logger.error("Document processing error from client: {} - {}", clientId, e.getMessage(), e);
       Map<String, String> error = new HashMap<>();
       error.put("error", "Document processing failed");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
@@ -182,9 +203,16 @@ public class DocumentApiController {
    * Retrieve top 3 relevant documents based on text input.
    */
   @GetMapping("/search/{text}")
-  public ResponseEntity<?> searchDocuments(@PathVariable String text) {
+  public ResponseEntity<?> searchDocuments(@PathVariable String text,
+                                           HttpServletRequest request) {
+    String requestId = apiLoggingService.generateRequestId();
+    String clientId = apiLoggingService.getClientId(
+        request.getHeader("X-Client-ID"),
+        request.getRemoteAddr());
+
     try {
-      System.out.println("Performing search for: " + text);
+      logger.info("Performing search for: '{}' from client: {} (requestId: {})", text, clientId,
+          requestId);
 
       // Use the document service to find similar chunks
       List<DocumentChunk> similarChunks = documentService.findSimilarChunks(text, 3);
@@ -195,10 +223,13 @@ public class DocumentApiController {
       response.put("count", similarChunks.size());
       response.put("message", "Search completed successfully");
 
+      logger.info("Search completed for client: {} - found {} results", clientId,
+          similarChunks.size());
+
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      System.err.println("Search error: " + e.getMessage());
+      logger.error("Search error from client: {} - {}", clientId, e.getMessage(), e);
       Map<String, String> error = new HashMap<>();
       error.put("error", "Search failed: " + e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
@@ -210,7 +241,6 @@ public class DocumentApiController {
    * Retrieve documents.
    *
    * @param filename Optional filename to match on.
-   *
    * @return ResponseEntity containing list of all documents
    */
   @GetMapping("/documents")

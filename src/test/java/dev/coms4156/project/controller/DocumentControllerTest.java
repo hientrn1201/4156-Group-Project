@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -12,9 +13,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
+import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
 import dev.coms4156.project.service.RagService;
+import jakarta.servlet.http.HttpServletRequest;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -32,18 +36,30 @@ class DocumentControllerTest {
   private DocumentService documentService;
   private DocumentSummarizationService summarizationService;
   private RagService ragService;
+  private ApiLoggingService apiLoggingService;
   private DocumentApiController controller;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     documentService = mock(DocumentService.class);
     summarizationService = mock(DocumentSummarizationService.class);
     ragService = mock(RagService.class);
+    apiLoggingService = mock(ApiLoggingService.class);
     controller = new DocumentApiController(documentService, summarizationService, ragService);
+
+    // Inject the mocked ApiLoggingService using reflection
+    Field apiLoggingServiceField =
+        DocumentApiController.class.getDeclaredField("apiLoggingService");
+    apiLoggingServiceField.setAccessible(true);
+    apiLoggingServiceField.set(controller, apiLoggingService);
+
+    // Mock the ApiLoggingService methods
+    when(apiLoggingService.generateRequestId()).thenReturn("test-request-id");
+    when(apiLoggingService.getClientId(any(), any())).thenReturn("test-client-id");
   }
 
   private Document makeDoc(Long id, String filename, String contentType, long size,
-      Document.ProcessingStatus status, String summary) {
+                           Document.ProcessingStatus status, String summary) {
     Document d = new Document();
     d.setId(id);
     d.setFilename(filename);
@@ -60,9 +76,12 @@ class DocumentControllerTest {
   void testUploadDocument_Success() throws Exception {
     // Given
     MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
     when(file.getOriginalFilename()).thenReturn("test.pdf");
     when(file.getSize()).thenReturn(1024L);
     when(file.getContentType()).thenReturn("application/pdf");
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 
     Document document = new Document();
     document.setId(1L);
@@ -72,11 +91,12 @@ class DocumentControllerTest {
     when(documentService.processDocument(file)).thenReturn(document);
 
     // When
-    ResponseEntity<?> response = controller.uploadDocument(file);
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
 
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
     Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
     assertEquals(1L, responseBody.get("documentId"));
     assertEquals("test.pdf", responseBody.get("filename"));
@@ -87,16 +107,20 @@ class DocumentControllerTest {
   void testUploadDocument_EmptyFile() throws Exception {
     // Given
     MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
     when(file.isEmpty()).thenReturn(true);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
     when(documentService.processDocument(file)).thenThrow(
         new IllegalArgumentException("File is empty"));
 
     // When
-    ResponseEntity<?> response = controller.uploadDocument(file);
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
 
     // Then
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
     Map<String, String> responseBody = (Map<String, String>) response.getBody();
     assertEquals("File is empty", responseBody.get("error"));
   }
@@ -116,6 +140,7 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
     Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
     assertEquals(documentId, responseBody.get("id"));
     assertEquals("test.pdf", responseBody.get("filename"));
@@ -146,6 +171,7 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
     Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
     assertEquals(documentId, responseBody.get("documentId"));
     assertEquals(0, responseBody.get("count"));
@@ -165,6 +191,7 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
+    @SuppressWarnings("unchecked")
     Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
     assertEquals(documentId, responseBody.get("documentId"));
     assertEquals(summary, responseBody.get("summary"));
@@ -264,6 +291,7 @@ class DocumentControllerTest {
     ResponseEntity<?> response = controller.getProcessingStatistics();
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(0L, body.get("total"));
     assertEquals(0.0, (double) body.get("completionRate"));
@@ -281,6 +309,7 @@ class DocumentControllerTest {
     ResponseEntity<?> response = controller.deleteDocument(28L);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, Object> body = (Map<String, Object>) response.getBody();
     assertEquals(28L, body.get("documentId"));
     assertEquals("Document deleted successfully", body.get("message"));
@@ -292,6 +321,7 @@ class DocumentControllerTest {
     when(documentService.getDocumentById(77L)).thenReturn(Optional.empty());
     ResponseEntity<?> response = controller.deleteDocument(77L);
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    @SuppressWarnings("unchecked")
     Map<String, String> body = (Map<String, String>) response.getBody();
     assertEquals("Document not found", body.get("error"));
     verify(documentService, never()).deleteDocument(anyLong());
@@ -307,6 +337,7 @@ class DocumentControllerTest {
     assertNotNull(body);
 
     assertEquals(0, body.get("count"));
+    @SuppressWarnings("unchecked")
     List<Document> docs = (List<Document>) body.get("documents");
     assertNotNull(docs);
     assertTrue(docs.isEmpty());
@@ -327,6 +358,7 @@ class DocumentControllerTest {
     assertNotNull(body);
 
     assertEquals(3, body.get("count"));
+    @SuppressWarnings("unchecked")
     List<Document> docs = (List<Document>) body.get("documents");
     assertEquals(3, docs.size());
     Set<Long> ids = new HashSet<>();
