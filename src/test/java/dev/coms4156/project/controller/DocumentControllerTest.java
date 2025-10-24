@@ -132,7 +132,8 @@ class DocumentControllerTest {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader("X-Client-ID")).thenReturn(null);
     when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-    when(documentService.processDocument(file)).thenThrow(new RuntimeException("Processing failed"));
+    when(documentService.processDocument(file)).thenThrow(
+        new RuntimeException("Processing failed"));
     
     ResponseEntity<?> response = controller.uploadDocument(file, request);
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -244,7 +245,8 @@ class DocumentControllerTest {
 
   @Test
   void testGetDocumentSummary_ServiceException() {
-    when(summarizationService.getDocumentSummary(1L)).thenThrow(new RuntimeException("Service error"));
+    when(summarizationService.getDocumentSummary(
+      1L)).thenThrow(new RuntimeException("Service error"));
     ResponseEntity<?> response = controller.getDocumentSummary(1L);
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
