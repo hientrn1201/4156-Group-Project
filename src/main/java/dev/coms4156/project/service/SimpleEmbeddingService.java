@@ -36,7 +36,7 @@ public class SimpleEmbeddingService {
    * @param chunk the {@link DocumentChunk} containing text content to embed.
    * @return the same {@link DocumentChunk} with its embedding field populated.
    * @throws IllegalArgumentException if the chunk or its text content is null or empty.
-   * @throws RuntimeException if embedding generation or database insertion fails.
+   * @throws RuntimeException         if embedding generation or database insertion fails.
    */
   @Transactional
   public DocumentChunk generateEmbedding(DocumentChunk chunk) {
@@ -172,7 +172,7 @@ public class SimpleEmbeddingService {
    * Finds document chunks that are semantically similar to a given query text.
    *
    * @param queryText the input text used to find similar chunks.
-   * @param limit the maximum number of similar chunks to return.
+   * @param limit     the maximum number of similar chunks to return.
    * @return a list of similar {@link DocumentChunk} results, or an empty list if none found.
    */
   public List<DocumentChunk> findSimilarChunks(String queryText, int limit) {

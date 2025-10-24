@@ -44,7 +44,7 @@ class RagServiceTest {
   void testQueryWithRag() {
     // Given
     String question = "What is machine learning?";
-    
+
     DocumentChunk chunk1 = DocumentChunk.builder()
         .id(1L)
         .textContent("Machine learning is a subset of artificial intelligence.")
@@ -55,7 +55,7 @@ class RagServiceTest {
         .build();
 
     List<DocumentChunk> relevantChunks = Arrays.asList(chunk1, chunk2);
-    
+
     when(embeddingService.findSimilarChunks(question, 5)).thenReturn(relevantChunks);
     when(chatClient.prompt()).thenReturn(requestSpec);
     when(requestSpec.user(anyString())).thenReturn(requestSpec);
@@ -74,7 +74,7 @@ class RagServiceTest {
     // Given
     String query = "machine learning algorithms";
     int topK = 3;
-    
+
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
         .textContent("Advanced machine learning algorithms for data analysis.")

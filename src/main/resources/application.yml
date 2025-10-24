@@ -52,8 +52,19 @@ server:
 logging:
   level:
     dev.coms4156.project: INFO
+    API_LOGS: INFO
     org.hibernate.SQL: DEBUG
     org.springframework.ai: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/api-logs.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 1GB
 
 # Custom application properties
 app:
