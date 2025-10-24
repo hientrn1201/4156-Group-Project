@@ -1,0 +1,21 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Knowledge Management Service,dev.coms4156.project.service,SimpleEmbeddingService,218,333,27,31,55,77,26,14,3,8
+Knowledge Management Service,dev.coms4156.project.service,DocumentSummarizationService,45,83,3,3,14,23,3,5,0,5
+Knowledge Management Service,dev.coms4156.project.service,DocumentTextExtractionService,26,127,12,30,7,31,12,15,1,5
+Knowledge Management Service,dev.coms4156.project.service,RagService,85,69,2,2,20,14,3,5,2,4
+Knowledge Management Service,dev.coms4156.project.service,DocumentChunkingService.ChunkStatistics,0,33,0,0,0,12,0,6,0,6
+Knowledge Management Service,dev.coms4156.project.service,DocumentChunkingService,16,218,7,17,2,56,8,13,1,8
+Knowledge Management Service,dev.coms4156.project.service,DocumentService,69,239,9,11,16,57,9,13,1,11
+Knowledge Management Service,dev.coms4156.project.converter,FloatArrayToPgVectorConverter,5,76,4,10,2,16,4,6,0,3
+Knowledge Management Service,dev.coms4156.project.model,DocumentRelationship,110,280,33,37,2,10,34,24,7,16
+Knowledge Management Service,dev.coms4156.project.model,DocumentChunk.DocumentChunkBuilder,66,75,0,0,0,1,7,10,7,10
+Knowledge Management Service,dev.coms4156.project.model,DocumentChunk,140,495,57,55,0,18,57,34,10,25
+Knowledge Management Service,dev.coms4156.project.model,DocumentRelationship.DocumentRelationshipBuilder,85,0,0,0,1,0,11,0,11,0
+Knowledge Management Service,dev.coms4156.project.model,Document.DocumentBuilder,63,30,0,0,0,1,9,3,9,3
+Knowledge Management Service,dev.coms4156.project.model,Document,63,375,37,41,0,14,30,34,0,25
+Knowledge Management Service,dev.coms4156.project.model,Document.ProcessingStatus,0,45,0,0,0,8,0,1,0,1
+Knowledge Management Service,dev.coms4156.project.model,DocumentRelationship.RelationshipType,0,51,0,0,0,9,0,1,0,1
+Knowledge Management Service,dev.coms4156.project.controller,Controller,0,6,0,0,0,2,0,2,0,2
+Knowledge Management Service,dev.coms4156.project.controller,DocumentApiController,169,499,3,31,40,114,4,23,1,9
+Knowledge Management Service,dev.coms4156.project.config,RagConfiguration,49,0,0,0,11,0,9,0,9,0
+Knowledge Management Service,dev.coms4156.project,KnowledgeServiceApplication,8,0,0,0,3,0,2,0,2,0
