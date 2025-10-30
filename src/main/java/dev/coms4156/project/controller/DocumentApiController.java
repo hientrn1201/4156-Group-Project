@@ -1,5 +1,15 @@
 package dev.coms4156.project.controller;
 
+import dev.coms4156.project.dtos.ErrorResponse;
+import dev.coms4156.project.dtos.DocumentDTO;
+import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentChunkDTO;
+import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
+import dev.coms4156.project.dtos.DocumentSearchResponse;
+import dev.coms4156.project.dtos.DocumentStatsResponse;
+import dev.coms4156.project.dtos.DocumentStatusCounts;
+import dev.coms4156.project.dtos.DocumentSummaryResponse;
+import dev.coms4156.project.dtos.DocumentUploadResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.ApiLoggingService;
@@ -7,6 +17,11 @@ import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
 import dev.coms4156.project.service.RagService;
 import jakarta.servlet.http.HttpServletRequest;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,8 +67,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-                               DocumentSummarizationService summarizationService,
-                               RagService ragService) {
+      DocumentSummarizationService summarizationService,
+      RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -64,8 +79,13 @@ public class DocumentApiController {
    * Upload a document for processing -- extract text, chunking and embedded.
    */
   @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentUploadResponse.class))),
+      @ApiResponse(responseCode = "400", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+  })
   public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file,
-                                          HttpServletRequest request) {
+      HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -80,11 +100,11 @@ public class DocumentApiController {
       // Skip RAG vector store ingestion - use existing document_chunks table instead
       // The document_chunks table already contains the embeddings for RAG operations
 
-      Map<String, Object> response = new HashMap<>();
-      response.put("documentId", document.getId());
-      response.put("filename", document.getFilename());
-      response.put("status", document.getProcessingStatus());
-      response.put("message", "Document uploaded and processed successfully");
+      DocumentUploadResponse response = new DocumentUploadResponse(
+          document.getId(),
+          document.getFilename(),
+          document.getProcessingStatus(),
+          "Document uploaded and processed successfully");
 
       logger.info("Successfully processed document: {} for client: {}",
           document.getFilename(), clientId);
@@ -93,20 +113,21 @@ public class DocumentApiController {
 
     } catch (IllegalArgumentException e) {
       logger.error("Invalid file upload from client: {} - {}", clientId, e.getMessage());
-      Map<String, String> error = new HashMap<>();
-      error.put("error", e.getMessage());
+      ErrorResponse error = new ErrorResponse(e.getMessage());
+
       return ResponseEntity.badRequest().body(error);
 
     } catch (IOException e) {
       logger.error("File upload error from client: {} - {}", clientId, e.getMessage());
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "File upload failed");
+
+      ErrorResponse error = new ErrorResponse("File upload failed");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
 
     } catch (Exception e) {
       logger.error("Document processing error from client: {} - {}", clientId, e.getMessage(), e);
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "Document processing failed");
+
+      ErrorResponse error = new ErrorResponse("Document processing failed");
+
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
@@ -116,21 +137,19 @@ public class DocumentApiController {
    * Retrieve document metadata, summaries, and processing status.
    */
   @GetMapping("/documents/{id}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentDTO.class))),
+      @ApiResponse(responseCode = "404"),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> getDocument(@PathVariable Long id) {
     try {
       Optional<Document> document = documentService.getDocumentById(id);
 
       if (document.isPresent()) {
         Document doc = document.get();
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", doc.getId());
-        response.put("filename", doc.getFilename());
-        response.put("contentType", doc.getContentType());
-        response.put("fileSize", doc.getFileSize());
-        response.put("processingStatus", doc.getProcessingStatus());
-        response.put("summary", doc.getSummary());
-        response.put("uploadedAt", doc.getUploadedAt());
-        response.put("updatedAt", doc.getUpdatedAt());
+
+        DocumentDTO response = DocumentDTO.fromDocument(doc);
 
         return ResponseEntity.ok(response);
       } else {
@@ -139,8 +158,9 @@ public class DocumentApiController {
 
     } catch (Exception e) {
       System.err.println("Error retrieving document " + id + ": " + e.getMessage());
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "Failed to retrieve document");
+
+      ErrorResponse error = new ErrorResponse("Failed to retrieve document");
+
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
@@ -150,22 +170,28 @@ public class DocumentApiController {
    * Retrieve related documents (knowledge graph edges).
    */
   @GetMapping("/relationships/{documentId}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentRelationshipInfoResponse.class))),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> getDocumentRelationships(@PathVariable Long documentId) {
     try {
       // For now, return empty relationships - this would be implemented with actual
       // relationship analysis
-      Map<String, Object> response = new HashMap<>();
-      response.put("documentId", documentId);
-      response.put("relationships", List.of());
-      response.put("count", 0);
-      response.put("message", "Relationship analysis not yet implemented");
+
+      DocumentRelationshipInfoResponse response = new DocumentRelationshipInfoResponse(
+          documentId,
+          List.of(),
+          0,
+          "Relationship analysis not yet implemented");
 
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
       System.err.println("Error getting document relationships: " + e.getMessage());
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "Failed to get document relationships");
+
+      ErrorResponse error = new ErrorResponse("Failed to get document relationships");
+
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
@@ -175,25 +201,30 @@ public class DocumentApiController {
    * Retrieve generated summary.
    */
   @GetMapping("/documents/{id}/summary")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentSummaryResponse.class))),
+      @ApiResponse(responseCode = "404"),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> getDocumentSummary(@PathVariable Long id) {
     try {
       String summary = summarizationService.getDocumentSummary(id);
 
       if (summary != null) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("documentId", id);
-        response.put("summary", summary);
+        DocumentSummaryResponse response = new DocumentSummaryResponse(
+            id,
+            summary);
+
         return ResponseEntity.ok(response);
       } else {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Summary not found for document");
         return ResponseEntity.notFound().build();
       }
 
     } catch (Exception e) {
       System.err.println("Error retrieving summary for document " + id + ": " + e.getMessage());
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "Failed to retrieve summary");
+
+      ErrorResponse error = new ErrorResponse("Failed to retrieve summary");
+
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
@@ -203,8 +234,12 @@ public class DocumentApiController {
    * Retrieve top 3 relevant documents based on text input.
    */
   @GetMapping("/search/{text}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentSearchResponse.class))),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> searchDocuments(@PathVariable String text,
-                                           HttpServletRequest request) {
+      HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -217,11 +252,11 @@ public class DocumentApiController {
       // Use the document service to find similar chunks
       List<DocumentChunk> similarChunks = documentService.findSimilarChunks(text, 3);
 
-      Map<String, Object> response = new HashMap<>();
-      response.put("query", text);
-      response.put("results", similarChunks);
-      response.put("count", similarChunks.size());
-      response.put("message", "Search completed successfully");
+      DocumentSearchResponse response = new DocumentSearchResponse(
+          text,
+          similarChunks.stream().map(DocumentChunkDTO::fromDocumentChunk).toList(),
+          similarChunks.size(),
+          "Search completed successfully");
 
       logger.info("Search completed for client: {} - found {} results", clientId,
           similarChunks.size());
@@ -230,8 +265,9 @@ public class DocumentApiController {
 
     } catch (Exception e) {
       logger.error("Search error from client: {} - {}", clientId, e.getMessage(), e);
-      Map<String, String> error = new HashMap<>();
-      error.put("error", "Search failed: " + e.getMessage());
+
+      ErrorResponse error = new ErrorResponse("Search failed: " + e.getMessage());
+
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
@@ -244,6 +280,10 @@ public class DocumentApiController {
    * @return ResponseEntity containing list of all documents
    */
   @GetMapping("/documents")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
+      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> getAllDocuments(
       @RequestParam(required = false) String filename) {
 
@@ -254,14 +294,22 @@ public class DocumentApiController {
       } else {
         documents = documentService.getDocumentsByFilename(filename);
       }
-      Map<String, Object> response = new HashMap<>();
-      response.put("documents", documents);
-      response.put("count", documents.size());
-      response.put("message", "Documents retrieved");
+
+      List<DocumentDTO> docsDto = documents.stream()
+          .map(DocumentDTO::fromDocument)
+          .toList();
+
+      DocumentListResponse response = new DocumentListResponse(
+          docsDto,
+          (long) documents.size(),
+          "Documents retrieved successfully");
+
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);
+      System.err.println("Error retrieving documents: " + e.getMessage());
+      ErrorResponse error = new ErrorResponse("Failed to retrieve documents");
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }
 
@@ -273,6 +321,10 @@ public class DocumentApiController {
    * @return ResponseEntity indicating success or failure
    */
   @DeleteMapping("/documents/{id}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200"),
+      @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
   public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
     if (documentService.getDocumentById(id).isEmpty()) {
       Map<String, String> error = new HashMap<>();
@@ -289,7 +341,10 @@ public class DocumentApiController {
    * Get docs with summaries.
    */
   @GetMapping("/documents/summaries")
-  public ResponseEntity<Map<String, Object>> getDocumentsWithSummaries() {
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
+  })
+  public ResponseEntity<?> getDocumentsWithSummaries() {
     List<Document> all = documentService.getAllDocuments();
     List<Document> documents = new ArrayList<>();
 
@@ -300,17 +355,22 @@ public class DocumentApiController {
       }
     }
 
-    Map<String, Object> body = new HashMap<>();
-    body.put("documents", documents);
-    body.put("count", documents.size());
-    return ResponseEntity.ok(body);
+    DocumentListResponse response = new DocumentListResponse(
+        documents.stream().map(DocumentDTO::fromDocument).toList(),
+        (long) documents.size(),
+        "Documents with summaries retrieved successfully");
+
+    return ResponseEntity.ok(response);
   }
 
   /**
-   * GET /api/v1/documents/stat.
+   * GET /api/v1/documents/stats.
    * Get docs with their statistics.
    */
   @GetMapping("/documents/stats")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentStatsResponse.class)))
+  })
   public ResponseEntity<?> getProcessingStatistics() {
     List<Document> allDocuments = documentService.getAllDocuments();
     final long total = allDocuments.size();
@@ -341,14 +401,14 @@ public class DocumentApiController {
         failed++;
       }
     }
-    Map<String, Long> statusCounts = new HashMap<>();
-    statusCounts.put("UPLOADED", uploaded);
-    statusCounts.put("TEXT_EXTRACTED", textExtracted);
-    statusCounts.put("CHUNKED", chunked);
-    statusCounts.put("EMBEDDINGS_GENERATED", embeddingsGenerated);
-    statusCounts.put("SUMMARIZED", summarized);
-    statusCounts.put("COMPLETED", completed);
-    statusCounts.put("FAILED", failed);
+    DocumentStatusCounts statusCounts = new DocumentStatusCounts(
+        uploaded,
+        textExtracted,
+        chunked,
+        embeddingsGenerated,
+        summarized,
+        completed,
+        failed);
 
     double completionRate;
     double failureRate;
@@ -360,9 +420,14 @@ public class DocumentApiController {
       completionRate = 0.0;
       failureRate = 0.0;
     }
-    return ResponseEntity.ok(
-        Map.of("total", total, "byStatus", statusCounts, "completionRate", completionRate,
-            "failureRate", failureRate));
+
+    DocumentStatsResponse response = new DocumentStatsResponse(
+        total,
+        statusCounts,
+        completionRate,
+        failureRate);
+
+    return ResponseEntity.ok(response);
   }
 
 }

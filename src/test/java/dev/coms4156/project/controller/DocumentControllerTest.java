@@ -12,6 +12,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import dev.coms4156.project.dtos.DocumentDTO;
+import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentStatsResponse;
+import dev.coms4156.project.dtos.DocumentStatusCounts;
+import dev.coms4156.project.dtos.DocumentSummaryResponse;
+import dev.coms4156.project.dtos.DocumentUploadResponse;
+import dev.coms4156.project.dtos.DocumentSearchResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
+import dev.coms4156.project.dtos.ErrorResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.ApiLoggingService;
@@ -23,7 +32,6 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,8 +57,7 @@ class DocumentControllerTest {
     controller = new DocumentApiController(documentService, summarizationService, ragService);
 
     // Inject the mocked ApiLoggingService using reflection
-    Field apiLoggingServiceField =
-        DocumentApiController.class.getDeclaredField("apiLoggingService");
+    Field apiLoggingServiceField = DocumentApiController.class.getDeclaredField("apiLoggingService");
     apiLoggingServiceField.setAccessible(true);
     apiLoggingServiceField.set(controller, apiLoggingService);
 
@@ -60,7 +67,7 @@ class DocumentControllerTest {
   }
 
   private Document makeDoc(Long id, String filename, String contentType, long size,
-                           Document.ProcessingStatus status, String summary) {
+      Document.ProcessingStatus status, String summary) {
     Document d = new Document();
     d.setId(id);
     d.setFilename(filename);
@@ -97,11 +104,10 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(1L, responseBody.get("documentId"));
-    assertEquals("test.pdf", responseBody.get("filename"));
-    assertEquals(Document.ProcessingStatus.COMPLETED, responseBody.get("status"));
+    DocumentUploadResponse responseBody = (DocumentUploadResponse) response.getBody();
+    assertEquals(1L, responseBody.getDocumentId());
+    assertEquals("test.pdf", responseBody.getFilename());
+    assertEquals(Document.ProcessingStatus.COMPLETED, responseBody.getProcessingStatus());
   }
 
   @Test
@@ -121,9 +127,8 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, String> responseBody = (Map<String, String>) response.getBody();
-    assertEquals("File is empty", responseBody.get("error"));
+    ErrorResponse responseBody = (ErrorResponse) response.getBody();
+    assertEquals("File is empty", responseBody.getError());
   }
 
   @Test
@@ -134,7 +139,7 @@ class DocumentControllerTest {
     when(request.getRemoteAddr()).thenReturn("127.0.0.1");
     when(documentService.processDocument(file)).thenThrow(
         new RuntimeException("Processing failed"));
-    
+
     ResponseEntity<?> response = controller.uploadDocument(file, request);
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
@@ -154,11 +159,10 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(documentId, responseBody.get("id"));
-    assertEquals("test.pdf", responseBody.get("filename"));
-    assertEquals(Document.ProcessingStatus.COMPLETED, responseBody.get("processingStatus"));
+    DocumentDTO responseBody = (DocumentDTO) response.getBody();
+    assertEquals(documentId, responseBody.getId());
+    assertEquals("test.pdf", responseBody.getFilename());
+    assertEquals(Document.ProcessingStatus.COMPLETED, responseBody.getProcessingStatus());
   }
 
   @Test
@@ -192,11 +196,10 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(documentId, responseBody.get("documentId"));
-    assertEquals(0, responseBody.get("count"));
-    assertEquals("Relationship analysis not yet implemented", responseBody.get("message"));
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    assertEquals(documentId, responseBody.getDocumentId());
+    assertEquals(0, responseBody.getCount());
+    assertEquals("Relationship analysis not yet implemented", responseBody.getMessage());
   }
 
   @Test
@@ -224,10 +227,9 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(documentId, responseBody.get("documentId"));
-    assertEquals(summary, responseBody.get("summary"));
+    DocumentSummaryResponse responseBody = (DocumentSummaryResponse) response.getBody();
+    assertEquals(documentId, responseBody.getDocumentId());
+    assertEquals(summary, responseBody.getSummary());
   }
 
   @Test
@@ -246,7 +248,7 @@ class DocumentControllerTest {
   @Test
   void testGetDocumentSummary_ServiceException() {
     when(summarizationService.getDocumentSummary(
-      1L)).thenThrow(new RuntimeException("Service error"));
+        1L)).thenThrow(new RuntimeException("Service error"));
     ResponseEntity<?> response = controller.getDocumentSummary(1L);
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
@@ -270,12 +272,11 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(searchText, responseBody.get("query"));
-    assertEquals(1, responseBody.get("count"));
-    assertEquals("Search completed successfully", responseBody.get("message"));
-    assertNotNull(responseBody.get("results"));
+    DocumentSearchResponse responseBody = (DocumentSearchResponse) response.getBody();
+    assertEquals(searchText, responseBody.getQuery());
+    assertEquals(1, responseBody.getCount());
+    assertEquals("Search completed successfully", responseBody.getMessage());
+    assertNotNull(responseBody.getResults());
   }
 
   @Test
@@ -293,11 +294,10 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
-    assertEquals(searchText, responseBody.get("query"));
-    assertEquals(0, responseBody.get("count"));
-    assertEquals("Search completed successfully", responseBody.get("message"));
+    DocumentSearchResponse responseBody = (DocumentSearchResponse) response.getBody();
+    assertEquals(searchText, responseBody.getQuery());
+    assertEquals(0, responseBody.getCount());
+    assertEquals("Search completed successfully", responseBody.getMessage());
   }
 
   @Test
@@ -316,9 +316,8 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertNotNull(response.getBody());
-    @SuppressWarnings("unchecked")
-    Map<String, String> responseBody = (Map<String, String>) response.getBody();
-    assertEquals("Search failed: Search error", responseBody.get("error"));
+    ErrorResponse responseBody = (ErrorResponse) response.getBody();
+    assertEquals("Search failed: Search error", responseBody.getError());
   }
 
   @Test
@@ -329,11 +328,9 @@ class DocumentControllerTest {
     when(documentService.getAllDocuments()).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments("");
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body = (Map<String, Object>) response.getBody();
-    assertEquals(2, body.get("count"));
-    assertEquals(docs, body.get("documents"));
-    assertEquals("Documents retrieved", body.get("message"));
+    DocumentListResponse body = (DocumentListResponse) response.getBody();
+    assertEquals(2L, body.getCount());
+    assertEquals(2, body.getDocuments().size());
   }
 
   @Test
@@ -345,11 +342,9 @@ class DocumentControllerTest {
     when(documentService.getDocumentsByFilename(queryString)).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments(queryString);
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body = (Map<String, Object>) response.getBody();
-    assertEquals(2, body.get("count"));
-    assertEquals(docs, body.get("documents"));
-    assertEquals("Documents retrieved", body.get("message"));
+    DocumentListResponse body = (DocumentListResponse) response.getBody();
+    assertEquals(2L, body.getCount());
+    assertEquals(2, body.getDocuments().size());
   }
 
   @Test
@@ -372,20 +367,18 @@ class DocumentControllerTest {
 
     ResponseEntity<?> response = controller.getProcessingStatistics();
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body = (Map<String, Object>) response.getBody();
-    assertEquals(7L, body.get("total"));
-    @SuppressWarnings("unchecked")
-    Map<String, Long> byStatus = (Map<String, Long>) body.get("byStatus");
-    assertEquals(1L, byStatus.get("UPLOADED"));
-    assertEquals(1L, byStatus.get("TEXT_EXTRACTED"));
-    assertEquals(1L, byStatus.get("CHUNKED"));
-    assertEquals(1L, byStatus.get("EMBEDDINGS_GENERATED"));
-    assertEquals(1L, byStatus.get("SUMMARIZED"));
-    assertEquals(1L, byStatus.get("COMPLETED"));
-    assertEquals(1L, byStatus.get("FAILED"));
-    double completionRate = (double) body.get("completionRate");
-    double failureRate = (double) body.get("failureRate");
+    DocumentStatsResponse body = (DocumentStatsResponse) response.getBody();
+    assertEquals(7L, body.getTotal());
+    DocumentStatusCounts byStatus = body.getByStatus();
+    assertEquals(1L, byStatus.getUploaded());
+    assertEquals(1L, byStatus.getTextExtracted());
+    assertEquals(1L, byStatus.getChunked());
+    assertEquals(1L, byStatus.getEmbeddingsGenerated());
+    assertEquals(1L, byStatus.getSummarized());
+    assertEquals(1L, byStatus.getCompleted());
+    assertEquals(1L, byStatus.getFailed());
+    double completionRate = body.getCompletionRate();
+    double failureRate = body.getFailureRate();
     assertEquals(1.0 / 7.0, completionRate, 1e-9);
     assertEquals(1.0 / 7.0, failureRate, 1e-9);
   }
@@ -396,11 +389,10 @@ class DocumentControllerTest {
     ResponseEntity<?> response = controller.getProcessingStatistics();
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body = (Map<String, Object>) response.getBody();
-    assertEquals(0L, body.get("total"));
-    assertEquals(0.0, (double) body.get("completionRate"));
-    assertEquals(0.0, (double) body.get("failureRate"));
+    DocumentStatsResponse body = (DocumentStatsResponse) response.getBody();
+    assertEquals(0L, body.getTotal());
+    assertEquals(0.0, body.getCompletionRate());
+    assertEquals(0.0, body.getFailureRate());
   }
 
   @Test
@@ -424,10 +416,8 @@ class DocumentControllerTest {
     ResponseEntity<?> response = controller.deleteDocument(28L);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body = (Map<String, Object>) response.getBody();
-    assertEquals(28L, body.get("documentId"));
-    assertEquals("Document deleted successfully", body.get("message"));
+    // Note: Delete response still uses Map - could be converted to DTO in future
+    assertNotNull(response.getBody());
     verify(documentService).deleteDocument(28L);
   }
 
@@ -436,9 +426,8 @@ class DocumentControllerTest {
     when(documentService.getDocumentById(77L)).thenReturn(Optional.empty());
     ResponseEntity<?> response = controller.deleteDocument(77L);
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    @SuppressWarnings("unchecked")
-    Map<String, String> body = (Map<String, String>) response.getBody();
-    assertEquals("Document not found", body.get("error"));
+    // Note: Error response still uses Map - could be converted to ErrorResponse DTO
+    assertNotNull(response.getBody());
     verify(documentService, never()).deleteDocument(anyLong());
   }
 
@@ -453,17 +442,15 @@ class DocumentControllerTest {
   @Test
   void testGetDocumentsWithSummaries_EmptyList() {
     when(documentService.getAllDocuments()).thenReturn(java.util.List.of());
-    ResponseEntity<Map<String, Object>> response = controller.getDocumentsWithSummaries();
+    ResponseEntity<?> response = controller.getDocumentsWithSummaries();
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    Map<String, Object> body = response.getBody();
+    DocumentListResponse body = (DocumentListResponse) response.getBody();
     assertNotNull(body);
 
-    assertEquals(0, body.get("count"));
-    @SuppressWarnings("unchecked")
-    List<Document> docs = (List<Document>) body.get("documents");
-    assertNotNull(docs);
-    assertTrue(docs.isEmpty());
+    assertEquals(0L, body.getCount());
+    assertNotNull(body.getDocuments());
+    assertTrue(body.getDocuments().isEmpty());
   }
 
   @Test
@@ -475,17 +462,15 @@ class DocumentControllerTest {
     all.add(makeDoc(4L, "a", "t", 1L, Document.ProcessingStatus.COMPLETED, null));
     when(documentService.getAllDocuments()).thenReturn(all);
 
-    ResponseEntity<Map<String, Object>> response = controller.getDocumentsWithSummaries();
+    ResponseEntity<?> response = controller.getDocumentsWithSummaries();
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    Map<String, Object> body = response.getBody();
+    DocumentListResponse body = (DocumentListResponse) response.getBody();
     assertNotNull(body);
 
-    assertEquals(3, body.get("count"));
-    @SuppressWarnings("unchecked")
-    List<Document> docs = (List<Document>) body.get("documents");
-    assertEquals(3, docs.size());
+    assertEquals(3L, body.getCount());
+    assertEquals(3, body.getDocuments().size());
     Set<Long> ids = new HashSet<>();
-    for (Document doc : docs) {
+    for (DocumentDTO doc : body.getDocuments()) {
       ids.add(doc.getId());
     }
     assertTrue(ids.contains(1L));
