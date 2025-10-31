@@ -59,7 +59,7 @@ jobs:
       run: mvn clean compile
 
     - name: Run unit tests (skip integration tests requiring Ollama)
-      run: mvn test -Dtest='!*IntegrationTest,!*IT'
+      run: mvn test -Dtest='!*IntegrationTest,!*IT,!*E2eTest'
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/knowledge_db
         SPRING_DATASOURCE_USERNAME: postgres
