@@ -1,12 +1,12 @@
 package dev.coms4156.project.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -924,7 +924,8 @@ class DocumentApiIntegrationTest {
               .header("X-Client-ID", "logging-client-1"));
 
       // Verify logging service was called
-      // Note: ApiLoggingService is called multiple times by interceptor (preHandle, afterCompletion)
+      // Note: ApiLoggingService is called multiple times by interceptor
+      // (preHandle, afterCompletion)
       verify(apiLoggingService, atLeast(1)).generateRequestId();
       verify(apiLoggingService, atLeast(1)).getClientId(anyString(), anyString());
     }
