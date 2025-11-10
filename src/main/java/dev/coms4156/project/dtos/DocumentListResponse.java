@@ -14,5 +14,5 @@ public class DocumentListResponse {
 
     private Long count;
 
-    private String messages;
+    private String message;
 }
