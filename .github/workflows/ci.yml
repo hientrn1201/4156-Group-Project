@@ -92,7 +92,7 @@ jobs:
         path: target/site/jacoco/
 
     - name: Build package
-      run: mvn package -DskipTests
+      run: mvn package -DskipTests -DfinalName=app
 
     - name: Upload JAR artifact
       uses: actions/upload-artifact@v4
@@ -111,4 +111,36 @@ jobs:
         echo "  - coverage-report"
         echo "  - application-jar"
         echo "================================"
+
+  deploy:
+    name: Deploy to GCP VM
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download JAR artifact 
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: target/
+
+      - name: Upload JAR to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          source: "target/*.jar"
+          target: "/home/${{ secrets.GCP_VM_USER }}/app/"
+      - name: Restart Spring Boot service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          script: |
+            sudo systemctl stop spring-app || true
+            sudo systemctl start spring-app
+            echo "Deployment completed successfully!"
 
