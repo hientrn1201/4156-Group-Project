@@ -160,7 +160,7 @@ class DocumentApiIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L))
           .andExpect(jsonPath("$.filename").value("test-document.pdf"))
-          .andExpect(jsonPath("$.status").value("COMPLETED"))
+          .andExpect(jsonPath("$.processingStatus").value("COMPLETED"))
           .andExpect(jsonPath("$.message").exists());
 
       // Verify the service was called exactly once
@@ -334,7 +334,7 @@ class DocumentApiIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(2))
           .andExpect(jsonPath("$.documents").isArray())
-          .andExpect(jsonPath("$.message").value("Documents retrieved"));
+          .andExpect(jsonPath("$.message").value("Documents retrieved successfully"));
 
       verify(documentService, times(1)).getAllDocuments();
     }
