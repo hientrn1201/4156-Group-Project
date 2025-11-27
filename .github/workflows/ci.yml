@@ -100,6 +100,9 @@ jobs:
           echo "Running PMD..."
           mvn pmd:check || echo "PMD issues found"
 
+          echo "Running SpotBugs..."
+          mvn spotbugs:spotbugs || echo "SpotBugs issues found"
+
           echo "Generating coverage report..."
           mvn jacoco:report || echo "Coverage report generation failed"
         continue-on-error: true

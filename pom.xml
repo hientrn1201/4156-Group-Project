@@ -163,7 +163,7 @@
             <path>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
-              <version>1.18.30</version>
+              <version>1.18.38</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
@@ -244,6 +244,9 @@
           <rulesets>
             <ruleset>rulesets/java/maven-pmd-plugin-default.xml</ruleset>
             <ruleset>category/java/performance.xml</ruleset>
+            <ruleset>category/java/bestpractices.xml</ruleset>
+            <ruleset>category/java/errorprone.xml</ruleset>
+            <ruleset>category/java/design.xml</ruleset>
           </rulesets>
         </configuration>
         <executions>
@@ -255,7 +258,25 @@
           </execution>
         </executions>
       </plugin>
-
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>4.8.3.1</version>
+        <configuration>
+          <excludeFilterFile>${project.basedir}/spotbugs-exclude.xml</excludeFilterFile>
+          <xmlOutput>true</xmlOutput>
+          <htmlOutput>true</htmlOutput>
+          <outputDirectory>${project.build.directory}/spotbugs-reports</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>spotbugs</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
