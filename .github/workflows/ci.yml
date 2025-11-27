@@ -100,6 +100,9 @@ jobs:
           echo "Running PMD..."
           mvn pmd:check || echo "PMD issues found"
 
+          echo "Running SpotBugs..."
+          mvn spotbugs:spotbugs || echo "SpotBugs issues found"
+
           echo "Generating coverage report..."
           mvn jacoco:report || echo "Coverage report generation failed"
         continue-on-error: true
@@ -119,7 +122,7 @@ jobs:
           path: target/site/jacoco/
 
       - name: Build package
-        run: mvn package -DskipTests
+        run: mvn package -DskipTests -DfinalName=app 
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4

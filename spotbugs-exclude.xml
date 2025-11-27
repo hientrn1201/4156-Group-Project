@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- 
+    ref: https://spotbugs.readthedocs.io/en/stable/filter.html
+  -->
+  <!-- for lombok excludes as lombok handles
+       ref:https://github.com/spotbugs/spotbugs/issues/1251 
+       -->
+  <Match>
+    <Class name="~.*\$.*Builder"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <Match>
+  <Package name="dev.coms4156.project.dtos"/>
+  <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <Match>
+    <Package name="dev.coms4156.project.model"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <Match>
+    <Package name="dev.coms4156.project.service"/>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+  </Match>
+  <Match>
+    <Package name="dev.coms4156.project.controller"/>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+  </Match>
+
+  <!-- Spring autowired fields 
+       ref:https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html -->
+  <Match>
+    <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+  </Match>
+  
+  <!--equals/hashCode methods use safe casting
+       ref:https://projectlombok.org/features/EqualsAndHashCode -->
+  <Match>
+    <Method name="~(equals|hashCode|toString|canEqual)"/>
+    <Bug pattern="BC_UNCONFIRMED_CAST"/>
+  </Match>
+  
+  <!--JPAentity IDs can be null before persistintg 
+       ref:https://docs.jboss.org/hibernate/orm/current/introduction/html_single/Hibernate_Introduction.html 
+       
+       -->
+  <Match>
+    <Class name="dev.coms4156.project.model.Document"/>
+    <Method name="equals"/>
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+  </Match>
+  <Match>
+    <Class name="dev.coms4156.project.model.DocumentChunk"/>
+    <Method name="equals"/>
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+  </Match>
+  <Match>
+    <Class name="dev.coms4156.project.model.DocumentRelationship"/>
+    <Method name="equals"/>
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+  </Match>
+  
+</FindBugsFilter>

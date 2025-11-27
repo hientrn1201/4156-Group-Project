@@ -316,8 +316,8 @@ public class SimpleEmbeddingService {
       result.put("status", "success");
       result.put("message", "Ollama connection successful");
       result.put("testText", testText);
-      result.put("embeddingGenerated", embeddingArray != null && embeddingArray.length > 0);
-      result.put("embeddingDimensions", embeddingArray != null ? embeddingArray.length : 0);
+      result.put("embeddingGenerated", embeddingArray.length > 0);
+      result.put("embeddingDimensions", embeddingArray.length);
 
     } catch (Exception e) {
       result.put("status", "error");
