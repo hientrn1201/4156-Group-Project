@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-  @Value("${app.jwt.secret:your-256-bit-secret-key-change-this-in-production-minimum-32-characters}")
+  @Value(
+      "${app.jwt.secret:your-256-bit-secret-key-change-this-in-production-minimum-32-characters}"
+  )
   private String secretKey;
 
   @Value("${app.jwt.expiration:86400000}") // 24 hours default

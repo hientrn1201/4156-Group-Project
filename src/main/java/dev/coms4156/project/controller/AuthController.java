@@ -40,9 +40,11 @@ public class AuthController {
    * @return ResponseEntity containing authentication response with JWT token
    */
   @PostMapping("/register")
-  @Operation(summary = "Register a new user", description = "Creates a new user account and returns a JWT token")
+  @Operation(summary = "Register a new user",
+      description = "Creates a new user account and returns a JWT token")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "User registered successfully", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+      @ApiResponse(responseCode = "200", description = "User registered successfully",
+          content = @Content(schema = @Schema(implementation = AuthResponse.class))),
       @ApiResponse(responseCode = "400", description = "Invalid request or user already exists")
   })
   public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -65,7 +67,8 @@ public class AuthController {
   @PostMapping("/login")
   @Operation(summary = "Login user", description = "Authenticates a user and returns a JWT token")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Login successful", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+      @ApiResponse(responseCode = "200", description = "Login successful",
+          content = @Content(schema = @Schema(implementation = AuthResponse.class))),
       @ApiResponse(responseCode = "401", description = "Invalid credentials")
   })
   public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {

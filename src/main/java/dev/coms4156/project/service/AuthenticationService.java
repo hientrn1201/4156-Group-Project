@@ -20,9 +20,16 @@ public class AuthenticationService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
 
+  /**
+   * Constructs a new AuthenticationService with required dependencies.
+   *
+   * @param userRepository  the UserRepository for database operations
+   * @param passwordEncoder the PasswordEncoder for password hashing
+   * @param jwtService      the JwtService for token generation and validation
+   */
   public AuthenticationService(UserRepository userRepository,
-                               PasswordEncoder passwordEncoder,
-                               JwtService jwtService) {
+      PasswordEncoder passwordEncoder,
+      JwtService jwtService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;

@@ -4,6 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Response DTO for error messages.
+ * Used to return error information to API clients.
+ */
 @Data
 @AllArgsConstructor
 @Builder

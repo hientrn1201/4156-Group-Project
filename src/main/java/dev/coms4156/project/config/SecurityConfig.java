@@ -1,5 +1,7 @@
 package dev.coms4156.project.config;
 
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -17,9 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Security configuration for the application.
@@ -40,6 +39,14 @@ public class SecurityConfig {
     this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
   }
 
+  /**
+   * Configures the security filter chain for the application.
+   * Sets up JWT authentication, CORS, and endpoint authorization rules.
+   *
+   * @param http the HttpSecurity to configure
+   * @return the configured SecurityFilterChain
+   * @throws Exception if configuration fails
+   */
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -74,6 +81,13 @@ public class SecurityConfig {
     return authConfig.getAuthenticationManager();
   }
 
+  /**
+   * Configures CORS (Cross-Origin Resource Sharing) settings.
+   * Allows all origins, methods, and headers for development.
+   * Should be restricted in production.
+   *
+   * @return the configured CorsConfigurationSource
+   */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();

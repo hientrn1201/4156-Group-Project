@@ -1,19 +1,24 @@
 package dev.coms4156.project.dtos;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.coms4156.project.model.DocumentChunk;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.hibernate.Hibernate;
 
+/**
+ * Data Transfer Object for DocumentChunk entities.
+ * Used to transfer document chunk data between layers while avoiding lazy
+ * loading issues.
+ */
+// CHECKSTYLE.OFF: AbbreviationAsWordInName
 @Data
 @AllArgsConstructor
 @Builder
-public class DocumentChunkDTO {
+public class DocumentChunkDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
 
   private Long id;
 
@@ -44,6 +49,14 @@ public class DocumentChunkDTO {
 
   private List<DocumentRelationshipDTO> targetRelationships;
 
+  /**
+   * Converts a DocumentChunk entity to a DocumentChunkDTO.
+   * Safely handles lazy-loaded collections and relationships to avoid
+   * LazyInitializationException.
+   *
+   * @param dc the DocumentChunk entity to convert
+   * @return the DocumentChunkDTO, or null if the input is null
+   */
   public static DocumentChunkDTO fromDocumentChunk(DocumentChunk dc) {
     if (dc == null) {
       return null;
@@ -51,15 +64,15 @@ public class DocumentChunkDTO {
 
     // Safely handle lazy-loaded collections - check if initialized before accessing
     List<DocumentRelationshipDTO> sourceRelationships = null;
-    if (dc.getSourceRelationships() != null &&
-        Hibernate.isInitialized(dc.getSourceRelationships())) {
+    if (dc.getSourceRelationships() != null
+        && Hibernate.isInitialized(dc.getSourceRelationships())) {
       sourceRelationships = dc.getSourceRelationships().stream()
           .map(DocumentRelationshipDTO::fromDocumentRelationship).toList();
     }
 
     List<DocumentRelationshipDTO> targetRelationships = null;
-    if (dc.getTargetRelationships() != null &&
-        Hibernate.isInitialized(dc.getTargetRelationships())) {
+    if (dc.getTargetRelationships() != null
+        && Hibernate.isInitialized(dc.getTargetRelationships())) {
       targetRelationships = dc.getTargetRelationships().stream()
           .map(DocumentRelationshipDTO::fromDocumentRelationship).toList();
     }

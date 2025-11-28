@@ -1,11 +1,14 @@
 package dev.coms4156.project.dtos;
 
 import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Response DTO for document relationship information.
+ * Contains relationships associated with a document.
+ */
 @Data
 @AllArgsConstructor
 @Builder

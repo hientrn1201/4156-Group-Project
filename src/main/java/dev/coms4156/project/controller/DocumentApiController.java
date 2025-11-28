@@ -1,27 +1,26 @@
 package dev.coms4156.project.controller;
 
-import dev.coms4156.project.dtos.ErrorResponse;
+import dev.coms4156.project.dtos.DocumentChunkDTO;
 import dev.coms4156.project.dtos.DocumentDTO;
 import dev.coms4156.project.dtos.DocumentListResponse;
-import dev.coms4156.project.dtos.DocumentChunkDTO;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
 import dev.coms4156.project.dtos.DocumentStatusCounts;
 import dev.coms4156.project.dtos.DocumentSummaryResponse;
 import dev.coms4156.project.dtos.DocumentUploadResponse;
+import dev.coms4156.project.dtos.ErrorResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
 import dev.coms4156.project.service.RagService;
-import jakarta.servlet.http.HttpServletRequest;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,8 +66,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-      DocumentSummarizationService summarizationService,
-      RagService ragService) {
+                               DocumentSummarizationService summarizationService,
+                               RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -80,12 +79,15 @@ public class DocumentApiController {
    */
   @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentUploadResponse.class))),
-      @ApiResponse(responseCode = "400", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentUploadResponse.class))),
+      @ApiResponse(responseCode = "400",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
   })
   public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file,
-      HttpServletRequest request) {
+                                          HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -138,9 +140,11 @@ public class DocumentApiController {
    */
   @GetMapping("/documents/{id}")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentDTO.class))),
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentDTO.class))),
       @ApiResponse(responseCode = "404"),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> getDocument(@PathVariable Long id) {
     try {
@@ -171,8 +175,13 @@ public class DocumentApiController {
    */
   @GetMapping("/relationships/{documentId}")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentRelationshipInfoResponse.class))),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200",
+          content = @Content(
+              schema = @Schema(implementation = DocumentRelationshipInfoResponse.class)
+          )
+      ),
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> getDocumentRelationships(@PathVariable Long documentId) {
     try {
@@ -202,9 +211,11 @@ public class DocumentApiController {
    */
   @GetMapping("/documents/{id}/summary")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentSummaryResponse.class))),
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentSummaryResponse.class))),
       @ApiResponse(responseCode = "404"),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> getDocumentSummary(@PathVariable Long id) {
     try {
@@ -235,11 +246,13 @@ public class DocumentApiController {
    */
   @GetMapping("/search/{text}")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentSearchResponse.class))),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentSearchResponse.class))),
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> searchDocuments(@PathVariable String text,
-      HttpServletRequest request) {
+                                           HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -281,8 +294,10 @@ public class DocumentApiController {
    */
   @GetMapping("/documents")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
-      @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
+      @ApiResponse(responseCode = "500",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> getAllDocuments(
       @RequestParam(required = false) String filename) {
@@ -323,7 +338,8 @@ public class DocumentApiController {
   @DeleteMapping("/documents/{id}")
   @ApiResponses({
       @ApiResponse(responseCode = "200"),
-      @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
     if (documentService.getDocumentById(id).isEmpty()) {
@@ -342,7 +358,8 @@ public class DocumentApiController {
    */
   @GetMapping("/documents/summaries")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentListResponse.class))),
   })
   public ResponseEntity<?> getDocumentsWithSummaries() {
     List<Document> all = documentService.getAllDocuments();
@@ -369,7 +386,8 @@ public class DocumentApiController {
    */
   @GetMapping("/documents/stats")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DocumentStatsResponse.class)))
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = DocumentStatsResponse.class)))
   })
   public ResponseEntity<?> getProcessingStatistics() {
     List<Document> allDocuments = documentService.getAllDocuments();

@@ -73,14 +73,6 @@ public class DocumentService {
 
   /**
    * Processes an uploaded document through the complete pipeline.
-   *
-   * @param file the uploaded {@link MultipartFile} to process.
-   * @return the processed {@link Document} entity, including extracted text and
-   * summary.
-   * @throws IOException              if reading the uploaded file fails.
-   * @throws IllegalArgumentException if the file is empty or of an unsupported
-   *                                  type.
-   * @throws RuntimeException         if any pipeline step fails.
    */
   @Transactional
   public Document processDocument(MultipartFile file) throws IOException {
@@ -161,10 +153,6 @@ public class DocumentService {
 
   /**
    * Retrieves a document by its unique ID.
-   *
-   * @param id the document ID.
-   * @return an {@link Optional} containing the document if found, or empty if not
-   * found.
    */
   public Optional<Document> getDocumentById(Long id) {
     return documentRepository.findById(id);
@@ -255,8 +243,7 @@ public class DocumentService {
    * including the number of chunks, average chunk length, and overlap ratio.
    *
    * @param documentId the ID of the document to analyze.
-   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing
-   * metrics.
+   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing metrics.
    * @throws IllegalArgumentException if the document is not found.
    */
   public DocumentChunkingService.ChunkStatistics getChunkStatistics(Long documentId) {
@@ -295,8 +282,7 @@ public class DocumentService {
    * now).
    *
    * @param text the extracted text to summarize.
-   * @return a short summary string, or a placeholder message if text is
-   * unavailable.
+   * @return a short summary string, or a placeholder message if text is unavailable.
    */
   private String generateSummary(String text) {
     if (text == null || text.trim().isEmpty()) {
