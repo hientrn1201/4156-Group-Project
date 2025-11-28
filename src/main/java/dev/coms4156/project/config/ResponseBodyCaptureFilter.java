@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
@@ -33,12 +34,17 @@ public class ResponseBodyCaptureFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    // Only wrap API responses
+    // Only wrap API requests/responses
     if (httpRequest.getRequestURI().startsWith("/api/")) {
+      // Wrap request to allow multiple reads of the body
+      ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(httpRequest);
+
+      // Wrap response to capture response body
       ContentCachingResponseWrapper responseWrapper =
           new ContentCachingResponseWrapper(httpResponse);
+
       try {
-        chain.doFilter(request, responseWrapper);
+        chain.doFilter(requestWrapper, responseWrapper);
       } finally {
         // Copy the cached content to the original response
         responseWrapper.copyBodyToResponse();

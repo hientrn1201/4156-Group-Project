@@ -3,6 +3,7 @@ package dev.coms4156.project.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -11,7 +12,9 @@ import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
 import dev.coms4156.project.repository.DocumentChunkRepository;
+import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +49,9 @@ class DocumentE2eTest {
 
   @Autowired
   private DocumentChunkRepository documentChunkRepository;
+
+  @Autowired
+  private DocumentRelationshipRepository documentRelationshipRepository;
 
   @MockBean
   private DocumentTextExtractionService textExtractionService;
@@ -251,5 +257,66 @@ class DocumentE2eTest {
     List<Document> uploadedDocs =
         documentService.getDocumentsByStatus(Document.ProcessingStatus.UPLOADED);
     assertFalse(uploadedDocs.stream().anyMatch(doc -> doc.getId().equals(savedDoc.getId())));
+  }
+
+  @Test
+  void testDeleteDocument_WithChunksAndRelationships_ShouldSucceed() {
+    // Given - Create a document with chunks and relationships
+    Document document = Document.builder()
+        .filename("test-delete.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .extractedText("Test document content for deletion test.")
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    document = documentRepository.save(document);
+
+    // Create chunks for the document
+    DocumentChunk chunk1 = DocumentChunk.builder()
+        .document(document)
+        .chunkIndex(0)
+        .textContent("First chunk content")
+        .chunkSize(20)
+        .startPosition(0)
+        .endPosition(20)
+        .build();
+    chunk1 = documentChunkRepository.save(chunk1);
+
+    DocumentChunk chunk2 = DocumentChunk.builder()
+        .document(document)
+        .chunkIndex(1)
+        .textContent("Second chunk content")
+        .chunkSize(21)
+        .startPosition(20)
+        .endPosition(41)
+        .build();
+    chunk2 = documentChunkRepository.save(chunk2);
+
+    // Create a relationship between chunks
+    DocumentRelationship relationship = DocumentRelationship.builder()
+        .sourceChunk(chunk1)
+        .targetChunk(chunk2)
+        .relationshipType(DocumentRelationship.RelationshipType.SEMANTIC_SIMILARITY)
+        .similarityScore(0.85)
+        .confidenceScore(0.90)
+        .build();
+    relationship = documentRelationshipRepository.save(relationship);
+
+    // Verify entities exist before deletion
+    assertTrue(documentRepository.findById(document.getId()).isPresent());
+    assertEquals(2, documentChunkRepository.findByDocumentId(document.getId()).size());
+    assertEquals(1, documentRelationshipRepository.findByDocumentId(document.getId()).size());
+
+    // When - Delete the document
+    // This should succeed after the fix, or throw an exception before the fix
+    documentService.deleteDocument(document.getId());
+
+    // Then - Verify document and all related entities are deleted
+    assertFalse(documentRepository.findById(document.getId()).isPresent(),
+        "Document should be deleted");
+    assertEquals(0, documentChunkRepository.findByDocumentId(document.getId()).size(),
+        "All chunks should be deleted");
+    assertEquals(0, documentRelationshipRepository.findByDocumentId(document.getId()).size(),
+        "All relationships should be deleted");
   }
 }

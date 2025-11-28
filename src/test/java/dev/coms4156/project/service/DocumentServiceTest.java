@@ -13,6 +13,9 @@ import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
+import dev.coms4156.project.repository.DocumentChunkRepository;
+import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +32,12 @@ class DocumentServiceTest {
 
   @Mock
   private DocumentRepository documentRepository;
+
+  @Mock
+  private DocumentChunkRepository documentChunkRepository;
+
+  @Mock
+  private DocumentRelationshipRepository documentRelationshipRepository;
 
   @Mock
   private DocumentTextExtractionService textExtractionService;
@@ -48,10 +57,11 @@ class DocumentServiceTest {
   void setUp() {
     documentService = new DocumentService(
         documentRepository,
+        documentChunkRepository,
+        documentRelationshipRepository,
         textExtractionService,
         chunkingService,
-        embeddingService
-    );
+        embeddingService);
   }
 
   @Test
@@ -86,7 +96,6 @@ class DocumentServiceTest {
     assertEquals("test.pdf", result.getFilename());
     verify(documentRepository, times(5)).save(any(Document.class));
   }
-
 
   @Test
   void testProcessDocument_UnsupportedFileType() throws Exception {
@@ -155,13 +164,66 @@ class DocumentServiceTest {
   @Test
   void testDeleteDocument() {
     // Given
-    doNothing().when(documentRepository).deleteById(1L);
+    Document document = new Document();
+    document.setId(1L);
+    when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+    when(documentChunkRepository.findByDocumentId(1L)).thenReturn(Arrays.asList());
+    when(documentRelationshipRepository.findByDocumentId(1L)).thenReturn(Arrays.asList());
+    doNothing().when(documentRelationshipRepository).deleteAll(any());
+    doNothing().when(documentChunkRepository).deleteAll(any());
+    doNothing().when(documentRepository).delete(any(Document.class));
 
     // When
     documentService.deleteDocument(1L);
 
     // Then
-    verify(documentRepository).deleteById(1L);
+    verify(documentRepository).findById(1L);
+    verify(documentRelationshipRepository).findByDocumentId(1L);
+    verify(documentChunkRepository).findByDocumentId(1L);
+    verify(documentRepository).delete(document);
+  }
+
+  @Test
+  void testDeleteDocument_WithChunksAndRelationships() {
+    // Given
+    Document document = new Document();
+    document.setId(1L);
+    DocumentChunk chunk1 = DocumentChunk.builder().id(1L).build();
+    DocumentChunk chunk2 = DocumentChunk.builder().id(2L).build();
+    DocumentRelationship relationship = DocumentRelationship.builder().id(1L).build();
+
+    when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
+    when(documentChunkRepository.findByDocumentId(1L))
+        .thenReturn(Arrays.asList(chunk1, chunk2));
+    when(documentRelationshipRepository.findByDocumentId(1L))
+        .thenReturn(Arrays.asList(relationship));
+    doNothing().when(documentRelationshipRepository).deleteAll(any());
+    doNothing().when(documentChunkRepository).deleteAll(any());
+    doNothing().when(documentRepository).delete(any(Document.class));
+
+    // When
+    documentService.deleteDocument(1L);
+
+    // Then
+    verify(documentRepository).findById(1L);
+    verify(documentRelationshipRepository).findByDocumentId(1L);
+    verify(documentRelationshipRepository).deleteAll(Arrays.asList(relationship));
+    verify(documentChunkRepository).findByDocumentId(1L);
+    verify(documentChunkRepository).deleteAll(Arrays.asList(chunk1, chunk2));
+    verify(documentRepository).delete(document);
+  }
+
+  @Test
+  void testDeleteDocument_NotFound() {
+    // Given
+    when(documentRepository.findById(1L)).thenReturn(Optional.empty());
+
+    // When
+    documentService.deleteDocument(1L);
+
+    // Then
+    verify(documentRepository).findById(1L);
+    verify(documentRepository, times(0)).delete(any());
   }
 
   @Test
@@ -188,9 +250,8 @@ class DocumentServiceTest {
     document.setId(1L);
     when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
 
-    DocumentChunkingService.ChunkStatistics stats =
-        new DocumentChunkingService.ChunkStatistics(
-            5, 1000, 200, 150, 250);
+    DocumentChunkingService.ChunkStatistics stats = new DocumentChunkingService.ChunkStatistics(
+        5, 1000, 200, 150, 250);
     when(chunkingService.getChunkStatistics(document)).thenReturn(stats);
 
     // When
