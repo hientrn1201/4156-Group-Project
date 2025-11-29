@@ -14,12 +14,12 @@ import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.dtos.DocumentDTO;
 import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
+import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
 import dev.coms4156.project.dtos.DocumentStatusCounts;
 import dev.coms4156.project.dtos.DocumentSummaryResponse;
 import dev.coms4156.project.dtos.DocumentUploadResponse;
-import dev.coms4156.project.dtos.DocumentSearchResponse;
-import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.ErrorResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
@@ -57,7 +57,8 @@ class DocumentControllerTest {
     controller = new DocumentApiController(documentService, summarizationService, ragService);
 
     // Inject the mocked ApiLoggingService using reflection
-    Field apiLoggingServiceField = DocumentApiController.class.getDeclaredField("apiLoggingService");
+    Field apiLoggingServiceField =
+        DocumentApiController.class.getDeclaredField("apiLoggingService");
     apiLoggingServiceField.setAccessible(true);
     apiLoggingServiceField.set(controller, apiLoggingService);
 
@@ -67,7 +68,7 @@ class DocumentControllerTest {
   }
 
   private Document makeDoc(Long id, String filename, String contentType, long size,
-      Document.ProcessingStatus status, String summary) {
+                           Document.ProcessingStatus status, String summary) {
     Document d = new Document();
     d.setId(id);
     d.setFilename(filename);
@@ -148,8 +149,8 @@ class DocumentControllerTest {
   void testGetDocument_Success() {
     // Given
     Long documentId = 1L;
-    Document document = makeDoc(documentId, "test.pdf", "application/pdf", 1024L,
-        Document.ProcessingStatus.COMPLETED, "Test summary");
+    Document document = makeDoc(documentId, "test.pdf", "application/pdf",
+        1024L, Document.ProcessingStatus.COMPLETED, "Test summary");
 
     when(documentService.getDocumentById(documentId)).thenReturn(Optional.of(document));
 
@@ -196,7 +197,8 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    DocumentRelationshipInfoResponse responseBody =
+        (DocumentRelationshipInfoResponse) response.getBody();
     assertEquals(documentId, responseBody.getDocumentId());
     assertEquals(0, responseBody.getCount());
     assertEquals("Relationship analysis not yet implemented", responseBody.getMessage());
@@ -323,8 +325,10 @@ class DocumentControllerTest {
   @Test
   void testGetAllDocuments_Success() {
     List<Document> docs = List.of(
-        makeDoc(1L, "a.pdf", "application/pdf", 1, Document.ProcessingStatus.UPLOADED, null),
-        makeDoc(2L, "b.pdf", "application/pdf", 2, Document.ProcessingStatus.COMPLETED, "sum"));
+        makeDoc(1L, "a.pdf", "application/pdf", 1,
+            Document.ProcessingStatus.UPLOADED, null),
+        makeDoc(2L, "b.pdf", "application/pdf", 2,
+            Document.ProcessingStatus.COMPLETED, "sum"));
     when(documentService.getAllDocuments()).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments("");
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -336,8 +340,10 @@ class DocumentControllerTest {
   @Test
   void testGetDocumentsByFilename_Success() {
     List<Document> docs = List.of(
-        makeDoc(1L, "doc1.pdf", "application/pdf", 1, Document.ProcessingStatus.UPLOADED, null),
-        makeDoc(2L, "doc2.pdf", "application/pdf", 2, Document.ProcessingStatus.UPLOADED, null));
+        makeDoc(1L, "doc1.pdf", "application/pdf", 1,
+            Document.ProcessingStatus.UPLOADED, null),
+        makeDoc(2L, "doc2.pdf", "application/pdf", 2,
+            Document.ProcessingStatus.UPLOADED, null));
     String queryString = "doc";
     when(documentService.getDocumentsByFilename(queryString)).thenReturn(docs);
     ResponseEntity<?> response = controller.getAllDocuments(queryString);
@@ -356,13 +362,20 @@ class DocumentControllerTest {
 
   @Test
   void testGetProcessingStatistics_AllStatuses() {
-    List<Document> all = List.of(makeDoc(1L, "a", "t", 1, Document.ProcessingStatus.UPLOADED, null),
-        makeDoc(2L, "b", "t", 1, Document.ProcessingStatus.TEXT_EXTRACTED, null),
-        makeDoc(3L, "c", "t", 1, Document.ProcessingStatus.CHUNKED, null),
-        makeDoc(4L, "d", "t", 1, Document.ProcessingStatus.EMBEDDINGS_GENERATED, null),
-        makeDoc(5L, "e", "t", 1, Document.ProcessingStatus.SUMMARIZED, null),
-        makeDoc(6L, "f", "t", 1, Document.ProcessingStatus.COMPLETED, null),
-        makeDoc(7L, "g", "t", 1, Document.ProcessingStatus.FAILED, null));
+    List<Document> all = List.of(makeDoc(1L, "a", "t", 1,
+            Document.ProcessingStatus.UPLOADED, null),
+        makeDoc(2L, "b", "t", 1,
+            Document.ProcessingStatus.TEXT_EXTRACTED, null),
+        makeDoc(3L, "c", "t", 1,
+            Document.ProcessingStatus.CHUNKED, null),
+        makeDoc(4L, "d", "t", 1,
+            Document.ProcessingStatus.EMBEDDINGS_GENERATED, null),
+        makeDoc(5L, "e", "t", 1,
+            Document.ProcessingStatus.SUMMARIZED, null),
+        makeDoc(6L, "f", "t", 1,
+            Document.ProcessingStatus.COMPLETED, null),
+        makeDoc(7L, "g", "t", 1,
+            Document.ProcessingStatus.FAILED, null));
     when(documentService.getAllDocuments()).thenReturn(all);
 
     ResponseEntity<?> response = controller.getProcessingStatistics();
@@ -408,7 +421,8 @@ class DocumentControllerTest {
   @Test
   void testDeleteDocument_Success() {
     final long id = 28L;
-    Document existing = makeDoc(id, "x", "t", 1L, Document.ProcessingStatus.COMPLETED, null);
+    Document existing = makeDoc(id, "x", "t", 1L,
+        Document.ProcessingStatus.COMPLETED, null);
     Optional<Document> i = Optional.of(existing);
     when(documentService.getDocumentById(id)).thenReturn(i);
     doNothing().when(documentService).deleteDocument(id);
@@ -456,10 +470,14 @@ class DocumentControllerTest {
   @Test
   void testGetDocumentsWithSummaries() {
     List<Document> all = new java.util.ArrayList<>();
-    all.add(makeDoc(1L, "2", "t", 1L, Document.ProcessingStatus.SUMMARIZED, "hello"));
-    all.add(makeDoc(2L, "8", "t", 1L, Document.ProcessingStatus.SUMMARIZED, "yes"));
-    all.add(makeDoc(3L, "28", "t", 1L, Document.ProcessingStatus.SUMMARIZED, "282828"));
-    all.add(makeDoc(4L, "a", "t", 1L, Document.ProcessingStatus.COMPLETED, null));
+    all.add(makeDoc(1L, "2", "t", 1L,
+        Document.ProcessingStatus.SUMMARIZED, "hello"));
+    all.add(makeDoc(2L, "8", "t", 1L,
+        Document.ProcessingStatus.SUMMARIZED, "yes"));
+    all.add(makeDoc(3L, "28", "t", 1L,
+        Document.ProcessingStatus.SUMMARIZED, "282828"));
+    all.add(makeDoc(4L, "a", "t", 1L,
+        Document.ProcessingStatus.COMPLETED, null));
     when(documentService.getAllDocuments()).thenReturn(all);
 
     ResponseEntity<?> response = controller.getDocumentsWithSummaries();

@@ -4,23 +4,27 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * DTO containing counts of documents by processing status.
+ * Used for statistics and reporting.
+ */
 @Data
 @AllArgsConstructor
 @Builder
 public class DocumentStatusCounts {
 
-    private Long uploaded;
+  private Long uploaded;
 
-    private Long textExtracted;
+  private Long textExtracted;
 
-    private Long chunked;
+  private Long chunked;
 
-    private Long embeddingsGenerated;
+  private Long embeddingsGenerated;
 
-    private Long summarized;
+  private Long summarized;
 
-    private Long completed;
+  private Long completed;
 
-    private Long failed;
+  private Long failed;
 
 }

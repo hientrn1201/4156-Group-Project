@@ -15,6 +15,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+        format_sql: true
+    open-in-view: false
 
   servlet:
     multipart:
@@ -77,3 +80,8 @@ app:
     similarity-threshold: 0.7
   summarization:
     max-summary-length: 500
+  jwt:
+    # Change this to a secure random string in production (minimum 32 characters)
+    secret: your-256-bit-secret-key-change-this-in-production-minimum-32-characters-long
+    # Token expiration in milliseconds (default: 24 hours = 86400000)
+    expiration: 86400000

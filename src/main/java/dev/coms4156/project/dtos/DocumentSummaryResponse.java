@@ -4,6 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Response DTO for document summary retrieval.
+ * Contains the document ID and its generated summary.
+ */
 @Data
 @AllArgsConstructor
 @Builder

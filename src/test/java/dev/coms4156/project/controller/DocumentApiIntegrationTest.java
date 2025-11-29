@@ -40,6 +40,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -49,7 +52,9 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * Comprehensive API Integration Tests using MockMvc.
  */
-@WebMvcTest({DocumentApiController.class, Controller.class})
+@WebMvcTest(value = { DocumentApiController.class, Controller.class }, excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class })
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("API Integration Tests")
 class DocumentApiIntegrationTest {
 
@@ -67,6 +72,13 @@ class DocumentApiIntegrationTest {
 
   @MockBean
   private ApiLoggingService apiLoggingService;
+
+  // Mock security-related beans to prevent SecurityConfig from failing
+  @MockBean
+  private dev.coms4156.project.config.JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @MockBean
+  private dev.coms4156.project.config.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   private ListAppender<ILoggingEvent> logAppender;
   private Logger apiLogger;
@@ -104,7 +116,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Typical valid: GET welcome endpoint")
     void testWelcomeEndpoint_TypicalValid() throws Exception {
       mockMvc.perform(get("/api")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(content().string("Welcome to Knowledge Management Service Powered by AI!"));
     }
@@ -113,7 +125,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Atypical valid: GET welcome with different client ID")
     void testWelcomeEndpoint_AtypicalValid() throws Exception {
       mockMvc.perform(get("/api")
-              .header("X-Client-ID", "unusual-client-name-12345"))
+          .header("X-Client-ID", "unusual-client-name-12345"))
           .andExpect(status().isOk())
           .andExpect(content().string("Welcome to Knowledge Management Service Powered by AI!"));
     }
@@ -123,7 +135,7 @@ class DocumentApiIntegrationTest {
     void testWelcomeEndpoint_Invalid() throws Exception {
       // Invalid path - should return 404
       mockMvc.perform(get("/api/invalid-path")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isNotFound());
     }
   }
@@ -154,8 +166,8 @@ class DocumentApiIntegrationTest {
 
       // Make the actual HTTP POST request using MockMvc
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-1"))
+          .file(file)
+          .header("X-Client-ID", "client-1"))
           // Verify the HTTP response
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L))
@@ -187,8 +199,8 @@ class DocumentApiIntegrationTest {
       when(documentService.processDocument(any())).thenReturn(document);
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-special"))
+          .file(file)
+          .header("X-Client-ID", "client-special"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(2L))
           .andExpect(jsonPath("$.filename").value("large-file-émoji.txt"));
@@ -209,8 +221,8 @@ class DocumentApiIntegrationTest {
 
       // Make request and verify it returns 400 Bad Request
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(emptyFile)
-              .header("X-Client-ID", "client-1"))
+          .file(emptyFile)
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.error").value("File is empty"));
 
@@ -221,7 +233,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Invalid: Upload without file parameter")
     void testUploadDocument_Invalid_MissingFile() throws Exception {
       mockMvc.perform(multipart("/api/v1/documents")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isBadRequest());
     }
 
@@ -235,8 +247,8 @@ class DocumentApiIntegrationTest {
           .thenThrow(new RuntimeException("Processing failed"));
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-1"))
+          .file(file)
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isInternalServerError())
           .andExpect(jsonPath("$.error").value("Document processing failed"));
     }
@@ -263,7 +275,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getDocumentById(1L)).thenReturn(Optional.of(document));
 
       mockMvc.perform(get("/api/v1/documents/1")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(1L))
           .andExpect(jsonPath("$.filename").value("test.pdf"))
@@ -287,7 +299,7 @@ class DocumentApiIntegrationTest {
           .thenReturn(Optional.of(document));
 
       mockMvc.perform(get("/api/v1/documents/" + Long.MAX_VALUE)
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(Long.MAX_VALUE));
 
@@ -300,7 +312,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getDocumentById(999L)).thenReturn(Optional.empty());
 
       mockMvc.perform(get("/api/v1/documents/999")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isNotFound());
 
       verify(documentService, times(1)).getDocumentById(999L);
@@ -310,7 +322,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Invalid: Invalid ID format")
     void testGetDocument_Invalid_BadId() throws Exception {
       mockMvc.perform(get("/api/v1/documents/invalid-id")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isBadRequest());
     }
   }
@@ -324,13 +336,12 @@ class DocumentApiIntegrationTest {
     void testGetAllDocuments_TypicalValid() throws Exception {
       List<Document> documents = Arrays.asList(
           Document.builder().id(1L).filename("doc1.pdf").build(),
-          Document.builder().id(2L).filename("doc2.pdf").build()
-      );
+          Document.builder().id(2L).filename("doc2.pdf").build());
 
       when(documentService.getAllDocuments()).thenReturn(documents);
 
       mockMvc.perform(get("/api/v1/documents")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(2))
           .andExpect(jsonPath("$.documents").isArray())
@@ -343,14 +354,13 @@ class DocumentApiIntegrationTest {
     @DisplayName("Atypical valid: Get documents with filename filter")
     void testGetAllDocuments_AtypicalValid_WithFilter() throws Exception {
       List<Document> documents = Arrays.asList(
-          Document.builder().id(1L).filename("test-doc.pdf").build()
-      );
+          Document.builder().id(1L).filename("test-doc.pdf").build());
 
       when(documentService.getDocumentsByFilename("test")).thenReturn(documents);
 
       mockMvc.perform(get("/api/v1/documents")
-              .param("filename", "test")
-              .header("X-Client-ID", "client-1"))
+          .param("filename", "test")
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(1))
           .andExpect(jsonPath("$.documents[0].filename").value("test-doc.pdf"));
@@ -365,7 +375,7 @@ class DocumentApiIntegrationTest {
           .thenThrow(new RuntimeException("Database error"));
 
       mockMvc.perform(get("/api/v1/documents")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isInternalServerError());
     }
   }
@@ -383,14 +393,16 @@ class DocumentApiIntegrationTest {
           .chunkIndex(0)
           .build();
 
-      // MockMvc with URL-encoded path: Spring decodes it, so service receives decoded version
-      // But MockMvc doesn't decode automatically - we need to use decoded version in the path
+      // MockMvc with URL-encoded path: Spring decodes it, so service receives decoded
+      // version
+      // But MockMvc doesn't decode automatically - we need to use decoded version in
+      // the path
       when(documentService.findSimilarChunks("machine learning", 3))
           .thenReturn(Arrays.asList(chunk));
 
       // Use unencoded path variable - MockMvc handles encoding
       mockMvc.perform(get("/api/v1/search/machine learning")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           // Spring decodes the path variable before passing to controller
           .andExpect(jsonPath("$.query").value("machine learning"))
@@ -415,7 +427,7 @@ class DocumentApiIntegrationTest {
 
       // MockMvc handles encoding automatically
       mockMvc.perform(get("/api/v1/search/" + query)
-              .header("X-Client-ID", "client-special"))
+          .header("X-Client-ID", "client-special"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(1));
 
@@ -429,7 +441,7 @@ class DocumentApiIntegrationTest {
           .thenThrow(new RuntimeException("Search failed"));
 
       mockMvc.perform(get("/api/v1/search/test")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isInternalServerError())
           .andExpect(jsonPath("$.error").exists());
     }
@@ -441,7 +453,7 @@ class DocumentApiIntegrationTest {
           .thenReturn(Arrays.asList());
 
       mockMvc.perform(get("/api/v1/search/nonexistent")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(0))
           .andExpect(jsonPath("$.results").isArray());
@@ -459,7 +471,7 @@ class DocumentApiIntegrationTest {
           .thenReturn("This is a test summary of the document.");
 
       mockMvc.perform(get("/api/v1/documents/1/summary")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L))
           .andExpect(jsonPath("$.summary").value("This is a test summary of the document."));
@@ -474,7 +486,7 @@ class DocumentApiIntegrationTest {
       when(summarizationService.getDocumentSummary(1L)).thenReturn(longSummary);
 
       mockMvc.perform(get("/api/v1/documents/1/summary")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.summary").exists());
     }
@@ -485,7 +497,7 @@ class DocumentApiIntegrationTest {
       when(summarizationService.getDocumentSummary(999L)).thenReturn(null);
 
       mockMvc.perform(get("/api/v1/documents/999/summary")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isNotFound());
 
       verify(summarizationService, times(1)).getDocumentSummary(999L);
@@ -501,13 +513,12 @@ class DocumentApiIntegrationTest {
     void testGetProcessingStatistics_TypicalValid() throws Exception {
       List<Document> docs = Arrays.asList(
           Document.builder().processingStatus(Document.ProcessingStatus.COMPLETED).build(),
-          Document.builder().processingStatus(Document.ProcessingStatus.FAILED).build()
-      );
+          Document.builder().processingStatus(Document.ProcessingStatus.FAILED).build());
 
       when(documentService.getAllDocuments()).thenReturn(docs);
 
       mockMvc.perform(get("/api/v1/documents/stats")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.total").value(2))
           .andExpect(jsonPath("$.byStatus").exists())
@@ -521,7 +532,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getAllDocuments()).thenReturn(Arrays.asList());
 
       mockMvc.perform(get("/api/v1/documents/stats")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.total").value(0))
           .andExpect(jsonPath("$.completionRate").value(0.0))
@@ -535,11 +546,12 @@ class DocumentApiIntegrationTest {
           .thenThrow(new RuntimeException("Database error"));
 
       // Controller doesn't catch exceptions - RuntimeException propagates
-      // Spring wraps it in ServletException, which is expected for unhandled exceptions
+      // Spring wraps it in ServletException, which is expected for unhandled
+      // exceptions
       // This test verifies that service exceptions propagate correctly
       try {
         mockMvc.perform(get("/api/v1/documents/stats")
-                .header("X-Client-ID", "client-1"))
+            .header("X-Client-ID", "client-1"))
             .andExpect(status().isInternalServerError());
       } catch (jakarta.servlet.ServletException e) {
         // Expected - Spring wraps RuntimeException in ServletException
@@ -565,7 +577,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getDocumentById(1L)).thenReturn(Optional.of(document));
 
       mockMvc.perform(delete("/api/v1/documents/1")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L))
           .andExpect(jsonPath("$.message").value("Document deleted successfully"));
@@ -581,7 +593,7 @@ class DocumentApiIntegrationTest {
           .thenReturn(Optional.of(document));
 
       mockMvc.perform(delete("/api/v1/documents/" + Long.MAX_VALUE)
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk());
     }
 
@@ -591,7 +603,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getDocumentById(999L)).thenReturn(Optional.empty());
 
       mockMvc.perform(delete("/api/v1/documents/999")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isNotFound())
           .andExpect(jsonPath("$.error").value("Document not found"));
 
@@ -609,13 +621,12 @@ class DocumentApiIntegrationTest {
       List<Document> allDocs = Arrays.asList(
           Document.builder().id(1L).summary("Summary 1").build(),
           Document.builder().id(2L).summary("Summary 2").build(),
-          Document.builder().id(3L).summary(null).build()
-      );
+          Document.builder().id(3L).summary(null).build());
 
       when(documentService.getAllDocuments()).thenReturn(allDocs);
 
       mockMvc.perform(get("/api/v1/documents/summaries")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(2))
           .andExpect(jsonPath("$.documents").isArray());
@@ -627,7 +638,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getAllDocuments()).thenReturn(Arrays.asList());
 
       mockMvc.perform(get("/api/v1/documents/summaries")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(0));
     }
@@ -639,11 +650,12 @@ class DocumentApiIntegrationTest {
           .thenThrow(new RuntimeException("Database error"));
 
       // Controller doesn't catch exceptions - RuntimeException propagates
-      // Spring wraps it in ServletException, which is expected for unhandled exceptions
+      // Spring wraps it in ServletException, which is expected for unhandled
+      // exceptions
       // This test verifies that service exceptions propagate correctly
       try {
         mockMvc.perform(get("/api/v1/documents/summaries")
-                .header("X-Client-ID", "client-1"))
+            .header("X-Client-ID", "client-1"))
             .andExpect(status().isInternalServerError());
       } catch (jakarta.servlet.ServletException e) {
         // Expected - Spring wraps RuntimeException in ServletException
@@ -662,7 +674,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Typical valid: Get relationships for document")
     void testGetDocumentRelationships_TypicalValid() throws Exception {
       mockMvc.perform(get("/api/v1/relationships/1")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L))
           .andExpect(jsonPath("$.relationships").isArray())
@@ -674,7 +686,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Atypical valid: Get relationships with large document ID")
     void testGetDocumentRelationships_AtypicalValid_LargeId() throws Exception {
       mockMvc.perform(get("/api/v1/relationships/" + Long.MAX_VALUE)
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(Long.MAX_VALUE));
     }
@@ -683,7 +695,7 @@ class DocumentApiIntegrationTest {
     @DisplayName("Invalid: Invalid document ID format")
     void testGetDocumentRelationships_Invalid_BadId() throws Exception {
       mockMvc.perform(get("/api/v1/relationships/invalid")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isBadRequest());
     }
   }
@@ -709,8 +721,8 @@ class DocumentApiIntegrationTest {
           .thenReturn("client-backend-1");
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-backend-1"))
+          .file(file)
+          .header("X-Client-ID", "client-backend-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(1L));
     }
@@ -732,8 +744,8 @@ class DocumentApiIntegrationTest {
           .thenReturn("client-backend-2");
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-backend-2"))
+          .file(file)
+          .header("X-Client-ID", "client-backend-2"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(2L));
     }
@@ -746,12 +758,12 @@ class DocumentApiIntegrationTest {
 
       // Client 1 search
       mockMvc.perform(get("/api/v1/search/query1")
-              .header("X-Client-ID", "client-backend-1"))
+          .header("X-Client-ID", "client-backend-1"))
           .andExpect(status().isOk());
 
       // Client 2 search
       mockMvc.perform(get("/api/v1/search/query2")
-              .header("X-Client-ID", "client-backend-2"))
+          .header("X-Client-ID", "client-backend-2"))
           .andExpect(status().isOk());
 
       // Verify service was called twice (once per client)
@@ -774,7 +786,7 @@ class DocumentApiIntegrationTest {
       MockMultipartFile testFile = new MockMultipartFile(
           "file", "test.pdf", "application/pdf", "content".getBytes());
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(testFile))
+          .file(testFile))
           .andExpect(status().isOk());
 
       // ApiLoggingService called by interceptor multiple times
@@ -806,8 +818,8 @@ class DocumentApiIntegrationTest {
       when(documentService.processDocument(any())).thenReturn(uploadedDoc);
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-1"))
+          .file(file)
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(100L));
 
@@ -815,7 +827,7 @@ class DocumentApiIntegrationTest {
       when(documentService.getDocumentById(100L)).thenReturn(Optional.of(uploadedDoc));
 
       mockMvc.perform(get("/api/v1/documents/100")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(100L))
           .andExpect(jsonPath("$.filename").value("persistence-test.pdf"))
@@ -841,8 +853,8 @@ class DocumentApiIntegrationTest {
       when(documentService.processDocument(any())).thenReturn(uploadedDoc);
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-1"))
+          .file(file)
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk());
 
       // Read: Get summary for the uploaded document
@@ -850,7 +862,7 @@ class DocumentApiIntegrationTest {
           .thenReturn("Summary of uploaded document");
 
       mockMvc.perform(get("/api/v1/documents/200/summary")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.documentId").value(200L))
           .andExpect(jsonPath("$.summary").value("Summary of uploaded document"));
@@ -875,8 +887,8 @@ class DocumentApiIntegrationTest {
       when(documentService.processDocument(any())).thenReturn(uploadedDoc);
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "client-1"))
+          .file(file)
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk());
 
       // Read: Search for content related to uploaded document
@@ -890,7 +902,7 @@ class DocumentApiIntegrationTest {
 
       // Use unencoded path - MockMvc handles encoding
       mockMvc.perform(get("/api/v1/search/machine learning")
-              .header("X-Client-ID", "client-1"))
+          .header("X-Client-ID", "client-1"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.count").value(1))
           .andExpect(jsonPath("$.results[0].textContent").value("machine learning content"));
@@ -920,8 +932,8 @@ class DocumentApiIntegrationTest {
       when(apiLoggingService.generateRequestId()).thenReturn("req-123");
 
       mockMvc.perform(multipart("/api/v1/documents")
-              .file(file)
-              .header("X-Client-ID", "logging-client-1"));
+          .file(file)
+          .header("X-Client-ID", "logging-client-1"));
 
       // Verify logging service was called
       // Note: ApiLoggingService is called multiple times by interceptor
@@ -938,7 +950,7 @@ class DocumentApiIntegrationTest {
       when(apiLoggingService.generateRequestId()).thenReturn("req-456");
 
       mockMvc.perform(get("/api/v1/search/test")
-              .header("X-Client-ID", "logging-client-2"));
+          .header("X-Client-ID", "logging-client-2"));
 
       // Note: ApiLoggingService is called by interceptor multiple times
       verify(apiLoggingService, atLeast(1)).generateRequestId();
@@ -961,7 +973,8 @@ class DocumentApiIntegrationTest {
       mockMvc.perform(get("/api/v1/documents")
           .header("X-Client-ID", "client-1"));
 
-      // Verify logging was called for each endpoint (interceptor calls it multiple times)
+      // Verify logging was called for each endpoint (interceptor calls it multiple
+      // times)
       verify(apiLoggingService, atLeast(2)).generateRequestId();
     }
 
@@ -984,11 +997,11 @@ class DocumentApiIntegrationTest {
           .andExpect(status().isOk());
 
       // Verify both clients were logged with their respective IDs
-      // Interceptor calls getClientId multiple times per request (preHandle, afterCompletion)
+      // Interceptor calls getClientId multiple times per request (preHandle,
+      // afterCompletion)
       verify(apiLoggingService, atLeast(2)).getClientId(anyString(), anyString());
       verify(apiLoggingService, atLeast(1)).getClientId("client-1", "127.0.0.1");
       verify(apiLoggingService, atLeast(1)).getClientId("client-2", "127.0.0.1");
     }
   }
 }
-
