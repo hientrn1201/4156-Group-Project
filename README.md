@@ -73,7 +73,36 @@ http://localhost:8080/api/v1
 
 ## Authentication
 
-Currently, the API does not require authentication. In production, implement proper security measures.
+The API uses JWT (JSON Web Token) authentication. All endpoints except `/api/v1/auth/**` require a valid JWT token.
+
+### Getting a JWT Token
+
+1. **Register a new user:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "your-username",
+    "email": "your-email@example.com",
+    "password": "your-password"
+  }'
+```
+
+2. **Or login with existing credentials:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "your-username",
+    "password": "your-password"
+  }'
+```
+
+3. **Use the returned token in API requests:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents
+```
 
 ## API Testing Tool (PostMan)
 
@@ -361,67 +390,131 @@ All endpoints may return the following error responses:
 - **Batch Operations**: Process multiple documents efficiently
 - **Statistics and Analytics**: Comprehensive processing statistics and metrics
 
+## Python Client
+
+A Python client is provided in the `client/` directory for easy API interaction.
+
+### Client Setup
+
+1. **Navigate to client directory:**
+```bash
+cd client
+```
+
+2. **Set up authentication:**
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Register a user and get a JWT token
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+
+# Copy the token from the response and add it to .env file
+# Edit .env and replace 'your-jwt-token-here' with your actual token
+```
+
+3. **Use the client:**
+```bash
+# Test connection
+python client.py welcome
+
+# Upload a document
+python client.py upload ../path/to/document.pdf
+
+# List all documents
+python client.py list
+
+# Search documents
+python client.py search "machine learning"
+
+# Get statistics
+python client.py stats
+```
+
+### Multi-Client Demo
+
+Run the multi-client demonstration:
+```bash
+python demo_multiple_clients.py
+```
+
 ## Examples
 
 ### Upload a Document
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/documents \
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
   -F "file=@document.pdf"
 ```
 
 ### Get All Documents
 
 ```bash
-curl http://localhost:8080/api/v1/documents
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents
 ```
 
 ### Get Document by ID
 
 ```bash
-curl http://localhost:8080/api/v1/documents/1
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/1
 ```
 
 ### Get Document Summary
 
 ```bash
-curl http://localhost:8080/api/v1/documents/1/summary
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/1/summary
 ```
 
 ### Get Documents with Summaries
 
 ```bash
-curl http://localhost:8080/api/v1/documents/summaries
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/summaries
 ```
 
 ### Get Processing Statistics
 
 ```bash
-curl http://localhost:8080/api/v1/documents/stats
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/stats
 ```
 
 ### Delete Document
 
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/documents/1
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -X DELETE http://localhost:8080/api/v1/documents/1
 ```
 
 ### Search Documents
 
 ```bash
-curl http://localhost:8080/api/v1/search/machine%20learning
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/search/machine%20learning
 ```
 
 ### Get Document Relationships
 
 ```bash
-curl http://localhost:8080/api/v1/relationships/1
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/relationships/1
 ```
 
 ### Get Welcome Message
 
 ```bash
-curl http://localhost:8080/api
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api
 ```
 
 ## Troubleshooting
