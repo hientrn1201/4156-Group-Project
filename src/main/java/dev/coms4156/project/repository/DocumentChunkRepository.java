@@ -52,6 +52,18 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Lo
   @Query("DELETE FROM DocumentChunk dc WHERE dc.document = :document")
   void deleteByDocument(@Param("document") Document document);
 
+  /**
+   * Deletes all chunks for a given document using native SQL.
+   * This avoids loading entities with embeddings which can cause converter
+   * issues.
+   *
+   * @param documentId the document ID
+   * @return the number of chunks deleted
+   */
+  @Modifying
+  @Query(value = "DELETE FROM document_chunks WHERE document_id = :documentId", nativeQuery = true)
+  int deleteByDocumentIdNative(@Param("documentId") Long documentId);
+
   @Modifying
   @Query(value = "INSERT INTO document_chunks (chunk_index, chunk_size, document_id, "
       + "embedding, end_position, start_position, text_content) VALUES "

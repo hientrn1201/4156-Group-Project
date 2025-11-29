@@ -58,11 +58,11 @@ public class DocumentService {
    *                                       vector embeddings for each chunk.
    */
   public DocumentService(DocumentRepository documentRepository,
-                         DocumentChunkRepository documentChunkRepository,
-                         DocumentRelationshipRepository documentRelationshipRepository,
-                         DocumentTextExtractionService textExtractionService,
-                         DocumentChunkingService chunkingService,
-                         SimpleEmbeddingService embeddingService) {
+      DocumentChunkRepository documentChunkRepository,
+      DocumentRelationshipRepository documentRelationshipRepository,
+      DocumentTextExtractionService textExtractionService,
+      DocumentChunkingService chunkingService,
+      SimpleEmbeddingService embeddingService) {
     this.documentRepository = documentRepository;
     this.documentChunkRepository = documentChunkRepository;
     this.documentRelationshipRepository = documentRelationshipRepository;
@@ -208,18 +208,19 @@ public class DocumentService {
 
     Document document = documentOpt.get();
 
-    // Step 1: Delete all relationships associated with this document's chunks
-    List<DocumentRelationship> relationships = documentRelationshipRepository.findByDocumentId(id);
-    if (!relationships.isEmpty()) {
-      documentRelationshipRepository.deleteAll(relationships);
-      System.out.println("Deleted " + relationships.size() + " relationships for document: " + id);
+    // Step 1: Delete all relationships associated with this document's chunks using
+    // native query
+    // This avoids loading entities with embeddings which can cause converter issues
+    int relationshipsDeleted = documentRelationshipRepository.deleteByDocumentIdNative(id);
+    if (relationshipsDeleted > 0) {
+      System.out.println("Deleted " + relationshipsDeleted + " relationships for document: " + id);
     }
 
-    // Step 2: Delete all chunks associated with this document
-    List<DocumentChunk> chunks = documentChunkRepository.findByDocumentId(id);
-    if (!chunks.isEmpty()) {
-      documentChunkRepository.deleteAll(chunks);
-      System.out.println("Deleted " + chunks.size() + " chunks for document: " + id);
+    // Step 2: Delete all chunks associated with this document using native query
+    // This avoids loading entities with embeddings which can cause converter issues
+    int chunksDeleted = documentChunkRepository.deleteByDocumentIdNative(id);
+    if (chunksDeleted > 0) {
+      System.out.println("Deleted " + chunksDeleted + " chunks for document: " + id);
     }
 
     // Step 3: Delete the document itself
@@ -243,7 +244,8 @@ public class DocumentService {
    * including the number of chunks, average chunk length, and overlap ratio.
    *
    * @param documentId the ID of the document to analyze.
-   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing metrics.
+   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing
+   *         metrics.
    * @throws IllegalArgumentException if the document is not found.
    */
   public DocumentChunkingService.ChunkStatistics getChunkStatistics(Long documentId) {
@@ -282,7 +284,8 @@ public class DocumentService {
    * now).
    *
    * @param text the extracted text to summarize.
-   * @return a short summary string, or a placeholder message if text is unavailable.
+   * @return a short summary string, or a placeholder message if text is
+   *         unavailable.
    */
   private String generateSummary(String text) {
     if (text == null || text.trim().isEmpty()) {

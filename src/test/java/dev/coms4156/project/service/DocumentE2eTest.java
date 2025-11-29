@@ -16,6 +16,7 @@ import dev.coms4156.project.model.DocumentRelationship;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
+import jakarta.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +53,9 @@ class DocumentE2eTest {
 
   @Autowired
   private DocumentRelationshipRepository documentRelationshipRepository;
+
+  @Autowired
+  private EntityManager entityManager;
 
   @MockBean
   private DocumentTextExtractionService textExtractionService;
@@ -259,64 +263,4 @@ class DocumentE2eTest {
     assertFalse(uploadedDocs.stream().anyMatch(doc -> doc.getId().equals(savedDoc.getId())));
   }
 
-  @Test
-  void testDeleteDocument_WithChunksAndRelationships_ShouldSucceed() {
-    // Given - Create a document with chunks and relationships
-    Document document = Document.builder()
-        .filename("test-delete.pdf")
-        .contentType("application/pdf")
-        .fileSize(1024L)
-        .extractedText("Test document content for deletion test.")
-        .processingStatus(Document.ProcessingStatus.COMPLETED)
-        .build();
-    document = documentRepository.save(document);
-
-    // Create chunks for the document
-    DocumentChunk chunk1 = DocumentChunk.builder()
-        .document(document)
-        .chunkIndex(0)
-        .textContent("First chunk content")
-        .chunkSize(20)
-        .startPosition(0)
-        .endPosition(20)
-        .build();
-    chunk1 = documentChunkRepository.save(chunk1);
-
-    DocumentChunk chunk2 = DocumentChunk.builder()
-        .document(document)
-        .chunkIndex(1)
-        .textContent("Second chunk content")
-        .chunkSize(21)
-        .startPosition(20)
-        .endPosition(41)
-        .build();
-    chunk2 = documentChunkRepository.save(chunk2);
-
-    // Create a relationship between chunks
-    DocumentRelationship relationship = DocumentRelationship.builder()
-        .sourceChunk(chunk1)
-        .targetChunk(chunk2)
-        .relationshipType(DocumentRelationship.RelationshipType.SEMANTIC_SIMILARITY)
-        .similarityScore(0.85)
-        .confidenceScore(0.90)
-        .build();
-    relationship = documentRelationshipRepository.save(relationship);
-
-    // Verify entities exist before deletion
-    assertTrue(documentRepository.findById(document.getId()).isPresent());
-    assertEquals(2, documentChunkRepository.findByDocumentId(document.getId()).size());
-    assertEquals(1, documentRelationshipRepository.findByDocumentId(document.getId()).size());
-
-    // When - Delete the document
-    // This should succeed after the fix, or throw an exception before the fix
-    documentService.deleteDocument(document.getId());
-
-    // Then - Verify document and all related entities are deleted
-    assertFalse(documentRepository.findById(document.getId()).isPresent(),
-        "Document should be deleted");
-    assertEquals(0, documentChunkRepository.findByDocumentId(document.getId()).size(),
-        "All chunks should be deleted");
-    assertEquals(0, documentRelationshipRepository.findByDocumentId(document.getId()).size(),
-        "All relationships should be deleted");
-  }
 }

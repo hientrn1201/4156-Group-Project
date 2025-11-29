@@ -167,10 +167,10 @@ class DocumentServiceTest {
     Document document = new Document();
     document.setId(1L);
     when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
-    when(documentChunkRepository.findByDocumentId(1L)).thenReturn(Arrays.asList());
-    when(documentRelationshipRepository.findByDocumentId(1L)).thenReturn(Arrays.asList());
-    doNothing().when(documentRelationshipRepository).deleteAll(any());
-    doNothing().when(documentChunkRepository).deleteAll(any());
+    // New implementation uses native queries to avoid loading entities with
+    // embeddings
+    when(documentRelationshipRepository.deleteByDocumentIdNative(1L)).thenReturn(0);
+    when(documentChunkRepository.deleteByDocumentIdNative(1L)).thenReturn(0);
     doNothing().when(documentRepository).delete(any(Document.class));
 
     // When
@@ -178,8 +178,8 @@ class DocumentServiceTest {
 
     // Then
     verify(documentRepository).findById(1L);
-    verify(documentRelationshipRepository).findByDocumentId(1L);
-    verify(documentChunkRepository).findByDocumentId(1L);
+    verify(documentRelationshipRepository).deleteByDocumentIdNative(1L);
+    verify(documentChunkRepository).deleteByDocumentIdNative(1L);
     verify(documentRepository).delete(document);
   }
 
@@ -188,17 +188,12 @@ class DocumentServiceTest {
     // Given
     Document document = new Document();
     document.setId(1L);
-    DocumentChunk chunk1 = DocumentChunk.builder().id(1L).build();
-    DocumentChunk chunk2 = DocumentChunk.builder().id(2L).build();
-    DocumentRelationship relationship = DocumentRelationship.builder().id(1L).build();
 
     when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
-    when(documentChunkRepository.findByDocumentId(1L))
-        .thenReturn(Arrays.asList(chunk1, chunk2));
-    when(documentRelationshipRepository.findByDocumentId(1L))
-        .thenReturn(Arrays.asList(relationship));
-    doNothing().when(documentRelationshipRepository).deleteAll(any());
-    doNothing().when(documentChunkRepository).deleteAll(any());
+    // New implementation uses native queries to avoid loading entities with
+    // embeddings
+    when(documentRelationshipRepository.deleteByDocumentIdNative(1L)).thenReturn(1);
+    when(documentChunkRepository.deleteByDocumentIdNative(1L)).thenReturn(2);
     doNothing().when(documentRepository).delete(any(Document.class));
 
     // When
@@ -206,10 +201,8 @@ class DocumentServiceTest {
 
     // Then
     verify(documentRepository).findById(1L);
-    verify(documentRelationshipRepository).findByDocumentId(1L);
-    verify(documentRelationshipRepository).deleteAll(Arrays.asList(relationship));
-    verify(documentChunkRepository).findByDocumentId(1L);
-    verify(documentChunkRepository).deleteAll(Arrays.asList(chunk1, chunk2));
+    verify(documentRelationshipRepository).deleteByDocumentIdNative(1L);
+    verify(documentChunkRepository).deleteByDocumentIdNative(1L);
     verify(documentRepository).delete(document);
   }
 
