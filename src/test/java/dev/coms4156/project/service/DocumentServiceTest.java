@@ -290,27 +290,6 @@ class DocumentServiceTest {
   }
 
   @Test
-  void testProcessDocument_ExceptionDuringProcessing() throws Exception {
-    // Given - exception thrown during text extraction
-    when(multipartFile.isEmpty()).thenReturn(false);
-    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
-    when(multipartFile.getSize()).thenReturn(1024L);
-    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
-    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
-    when(textExtractionService.extractText(multipartFile))
-        .thenThrow(new RuntimeException("Extraction failed"));
-
-    Document savedDocument = new Document();
-    savedDocument.setId(1L);
-    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
-
-    // When & Then - should catch exception, set status to FAILED, and rethrow
-    assertThrows(RuntimeException.class, () -> {
-      documentService.processDocument(multipartFile);
-    });
-  }
-
-  @Test
   void testGetChunkStatistics_DocumentNotFound() {
     // Given - document doesn't exist
     when(documentRepository.findById(999L)).thenReturn(Optional.empty());
@@ -360,5 +339,177 @@ class DocumentServiceTest {
       // Verify that the document status was set to FAILED (saved twice: initial + failed status)
       verify(documentRepository, times(2)).save(any(Document.class));
     }
+  }
+
+  @Test
+  void testGenerateSummary_ShortText() throws Exception {
+    // Given - text shorter than 200 characters
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Short text");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be the cleaned text (no truncation)
+    assertNotNull(result.getSummary());
+    assertTrue(result.getSummary().contains("Short text"));
+  }
+
+  @Test
+  void testGenerateSummary_LongText_WithPeriod() throws Exception {
+    // Given - text longer than 200 chars with period after position 100
+    StringBuilder longText = new StringBuilder();
+    for (int i = 0; i < 50; i++) {
+      longText.append("Sentence ").append(i).append(". ");
+    }
+    String text = longText.toString();
+
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(text);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be truncated at sentence boundary
+    assertNotNull(result.getSummary());
+    assertTrue(result.getSummary().length() <= 201); // 200 + period
+  }
+
+  @Test
+  void testGenerateSummary_LongText_NoPeriodAfter100() throws Exception {
+    // Given - text longer than 200 chars but period before position 100
+    String longText = "a".repeat(100) + " b".repeat(100); // No periods after position 100
+
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be truncated at 200 chars with "..."
+    assertNotNull(result.getSummary());
+    assertTrue(result.getSummary().endsWith("..."));
+    assertTrue(result.getSummary().length() <= 203); // 200 + "..."
+  }
+
+  @Test
+  void testGenerateSummary_LongText_PeriodAt100() throws Exception {
+    // Given - text longer than 200 chars with period exactly at position 100
+    String longText = "a".repeat(100) + ". " + "b".repeat(100);
+
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be truncated with "..." (period at 100, not > 100)
+    assertNotNull(result.getSummary());
+    // Period at exactly 100 means lastPeriod == 100, which is NOT > 100, so should add "..."
+    assertTrue(result.getSummary().endsWith("..."));
+  }
+
+  @Test
+  void testGenerateSummary_LongText_PeriodAt101() throws Exception {
+    // Given - text longer than 200 chars with period at position 101 (> 100)
+    String longText = "a".repeat(101) + ". " + "b".repeat(100);
+
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be truncated at sentence boundary (period > 100)
+    assertNotNull(result.getSummary());
+    assertTrue(result.getSummary().length() <= 103); // Period at 101 + 1 for period + 1 for space
+  }
+
+  @Test
+  void testGenerateSummary_Exactly200Chars() throws Exception {
+    // Given - text exactly 200 characters after cleaning
+    String exactText = "a".repeat(200);
+
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(exactText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+
+    // When
+    Document result = documentService.processDocument(multipartFile);
+
+    // Then - summary should be text as-is (no truncation)
+    assertNotNull(result.getSummary());
+    assertEquals(200, result.getSummary().length());
   }
 }

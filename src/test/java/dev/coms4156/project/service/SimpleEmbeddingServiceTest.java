@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
@@ -12,6 +15,7 @@ import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -572,5 +576,100 @@ class SimpleEmbeddingServiceTest {
     assertEquals(0.8, (Double) result.get("embeddingCoverage"), 0.01);
     assertEquals("llama3.2", result.get("model"));
     assertEquals(4096, result.get("dimensions"));
+  }
+
+  @Test
+  void testFindSimilarChunks_QueryEmbeddingStringShort() {
+    // Given - query that generates short embedding string (tests Math.min branch)
+    Document doc = Document.builder().id(1L).build();
+    String shortQuery = "test";
+    
+    float[] mockEmbedding = {0.1f, 0.2f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.findSimilarChunks(anyString(), anyInt()))
+        .thenReturn(Collections.emptyList());
+
+    // When
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(shortQuery, 5);
+
+    // Then
+    assertNotNull(result);
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  void testFindSimilarChunks_QueryEmbeddingStringLong() {
+    // Given - query that generates long embedding string (tests Math.min branch when > 50)
+    final String longQuery = 
+        "This is a very long query that will generate a long embedding string";
+    
+    float[] mockEmbedding = new float[100];
+    for (int i = 0; i < 100; i++) {
+      mockEmbedding[i] = 0.1f * i;
+    }
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.findSimilarChunks(anyString(), anyInt()))
+        .thenReturn(Collections.emptyList());
+
+    // When
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(longQuery, 5);
+
+    // Then
+    assertNotNull(result);
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  void testFindSimilarChunks_ExceptionDuringSearch() {
+    // Given - exception during similarity search
+    String query = "test query";
+    
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.findSimilarChunks(anyString(), anyInt()))
+        .thenThrow(new RuntimeException("Database error"));
+
+    // When - should catch exception and return empty list
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(query, 5);
+
+    // Then
+    assertNotNull(result);
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  void testCalculateSimilarity_DifferentLengthVectors() {
+    // Given - vectors with different lengths
+    // Note: calculateSimilarity catches exceptions and returns 0.0, so we test that behavior
+    float[] vec1 = {1.0f, 2.0f, 3.0f};
+    float[] vec2 = {1.0f, 2.0f};
+
+    // When - should catch IllegalArgumentException and return 0.0
+    double result = embeddingService.calculateSimilarity(vec1, vec2);
+
+    // Then - should return 0.0 (exception is caught internally)
+    assertEquals(0.0, result);
+  }
+
+  @Test
+  void testCalculateSimilarity_EmptyVectors() {
+    // Given - empty vectors
+    float[] vec1 = {};
+    float[] vec2 = {1.0f, 2.0f};
+
+    // When
+    double result = embeddingService.calculateSimilarity(vec1, vec2);
+
+    // Then - should return 0.0
+    assertEquals(0.0, result);
   }
 }

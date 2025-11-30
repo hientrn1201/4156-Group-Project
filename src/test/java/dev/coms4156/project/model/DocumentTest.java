@@ -242,4 +242,246 @@ class DocumentTest {
       }
     }
   }
+
+  @Test
+  void testEquals_UploadedAtField() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .build();
+    
+    assertEquals(doc1, doc2);
+    
+    doc1.setUploadedAt(java.time.LocalDateTime.now());
+    doc2.setUploadedAt(java.time.LocalDateTime.now().plusSeconds(1));
+    // Timestamps might be different, but equals should still work if other fields match
+    // Actually, Lombok's @Data includes all fields in equals, so timestamps matter
+    assertNotEquals(doc1, doc2);
+    
+    doc2.setUploadedAt(doc1.getUploadedAt());
+    assertEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_UpdatedAtField() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .build();
+    
+    assertEquals(doc1, doc2);
+    
+    doc1.setUpdatedAt(java.time.LocalDateTime.now());
+    doc2.setUpdatedAt(java.time.LocalDateTime.now().plusSeconds(1));
+    assertNotEquals(doc1, doc2);
+    
+    doc2.setUpdatedAt(doc1.getUpdatedAt());
+    assertEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_NullTimestampFields() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename("test.pdf");
+    doc1.setContentType("application/pdf");
+    doc1.setUploadedAt(null);
+    doc1.setUpdatedAt(null);
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename("test.pdf");
+    doc2.setContentType("application/pdf");
+    doc2.setUploadedAt(null);
+    doc2.setUpdatedAt(null);
+    
+    assertEquals(doc1, doc2);
+    
+    doc1.setUploadedAt(java.time.LocalDateTime.now());
+    assertNotEquals(doc1, doc2);
+    
+    doc1.setUploadedAt(null);
+    doc1.setUpdatedAt(java.time.LocalDateTime.now());
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testHashCode_WithTimestamps() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .uploadedAt(java.time.LocalDateTime.now())
+        .updatedAt(java.time.LocalDateTime.now())
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .uploadedAt(doc1.getUploadedAt())
+        .updatedAt(doc1.getUpdatedAt())
+        .build();
+    
+    assertEquals(doc1.hashCode(), doc2.hashCode());
+  }
+
+  @Test
+  void testEquals_FilenameNull() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename(null);
+    doc1.setContentType("application/pdf");
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename(null);
+    doc2.setContentType("application/pdf");
+    
+    assertEquals(doc1, doc2);
+    
+    doc2.setFilename("test.pdf");
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_ContentTypeNull() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename("test.pdf");
+    doc1.setContentType(null);
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename("test.pdf");
+    doc2.setContentType(null);
+    
+    assertEquals(doc1, doc2);
+    
+    doc2.setContentType("application/pdf");
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_AllFieldsWithNulls() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename("test.pdf");
+    doc1.setContentType("application/pdf");
+    doc1.setFileSize(null);
+    doc1.setExtractedText(null);
+    doc1.setSummary(null);
+    doc1.setUploadedAt(null);
+    doc1.setUpdatedAt(null);
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename("test.pdf");
+    doc2.setContentType("application/pdf");
+    doc2.setFileSize(null);
+    doc2.setExtractedText(null);
+    doc2.setSummary(null);
+    doc2.setUploadedAt(null);
+    doc2.setUpdatedAt(null);
+    
+    assertEquals(doc1, doc2);
+    assertEquals(doc1.hashCode(), doc2.hashCode());
+  }
+
+  @Test
+  void testHashCode_WithAllNullFields() {
+    Document doc = new Document();
+    doc.setId(null);
+    doc.setFilename(null);
+    doc.setContentType(null);
+    doc.setFileSize(null);
+    doc.setExtractedText(null);
+    doc.setSummary(null);
+    doc.setUploadedAt(null);
+    doc.setUpdatedAt(null);
+    
+    int hash = doc.hashCode();
+    assertNotNull(hash);
+  }
+
+  @Test
+  void testEquals_ProcessingStatusDefault() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .processingStatus(Document.ProcessingStatus.UPLOADED)
+        .build();
+    
+    assertEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_ExtractedTextAndSummaryCombinations() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .extractedText("text1")
+        .summary("summary1")
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .extractedText("text1")
+        .summary("summary1")
+        .build();
+    
+    assertEquals(doc1, doc2);
+    
+    doc2.setExtractedText("text2");
+    assertNotEquals(doc1, doc2);
+    
+    doc2.setExtractedText("text1");
+    doc2.setSummary("summary2");
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testHashCode_ConsistencyWithNulls() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename("test.pdf");
+    doc1.setContentType("application/pdf");
+    doc1.setFileSize(null);
+    doc1.setExtractedText(null);
+    doc1.setSummary(null);
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename("test.pdf");
+    doc2.setContentType("application/pdf");
+    doc2.setFileSize(null);
+    doc2.setExtractedText(null);
+    doc2.setSummary(null);
+    
+    assertEquals(doc1.hashCode(), doc2.hashCode());
+  }
 }
