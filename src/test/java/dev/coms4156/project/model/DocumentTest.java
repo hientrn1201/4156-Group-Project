@@ -72,7 +72,174 @@ class DocumentTest {
   @Test
   void testProcessingStatusEnum() {
     assertEquals("UPLOADED", Document.ProcessingStatus.UPLOADED.toString());
+    assertEquals("TEXT_EXTRACTED", Document.ProcessingStatus.TEXT_EXTRACTED.toString());
+    assertEquals("CHUNKED", Document.ProcessingStatus.CHUNKED.toString());
+    assertEquals("EMBEDDINGS_GENERATED", Document.ProcessingStatus.EMBEDDINGS_GENERATED.toString());
+    assertEquals("SUMMARIZED", Document.ProcessingStatus.SUMMARIZED.toString());
     assertEquals("COMPLETED", Document.ProcessingStatus.COMPLETED.toString());
     assertEquals("FAILED", Document.ProcessingStatus.FAILED.toString());
+  }
+
+  @Test
+  void testEquals_AllFieldsDifferent() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    
+    assertEquals(doc1, doc2);
+    
+    // Test each field difference
+    doc2.setContentType("text/plain");
+    assertNotEquals(doc1, doc2);
+    
+    doc2.setContentType("application/pdf");
+    doc2.setFileSize(2048L);
+    assertNotEquals(doc1, doc2);
+    
+    doc2.setFileSize(1024L);
+    doc2.setProcessingStatus(Document.ProcessingStatus.FAILED);
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_NullableFields() {
+    Document doc1 = new Document();
+    doc1.setId(1L);
+    doc1.setFilename("test.pdf");
+    doc1.setContentType("application/pdf");
+    doc1.setFileSize(null);
+    
+    Document doc2 = new Document();
+    doc2.setId(1L);
+    doc2.setFilename("test.pdf");
+    doc2.setContentType("application/pdf");
+    doc2.setFileSize(null);
+    
+    assertEquals(doc1, doc2);
+    
+    doc2.setFileSize(1024L);
+    assertNotEquals(doc1, doc2);
+    
+    doc1.setFileSize(1024L);
+    assertEquals(doc1, doc2);
+  }
+
+  @Test
+  void testHashCode_Consistency() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    
+    assertEquals(doc1.hashCode(), doc2.hashCode());
+  }
+
+  @Test
+  void testBuilder_WithAllFields() {
+    Document doc = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .fileSize(1024L)
+        .extractedText("Sample text")
+        .summary("Sample summary")
+        .processingStatus(Document.ProcessingStatus.COMPLETED)
+        .build();
+    
+    assertNotNull(doc);
+    assertEquals(1L, doc.getId());
+    assertEquals("test.pdf", doc.getFilename());
+    assertEquals("application/pdf", doc.getContentType());
+    assertEquals(1024L, doc.getFileSize());
+    assertEquals("Sample text", doc.getExtractedText());
+    assertEquals("Sample summary", doc.getSummary());
+    assertEquals(Document.ProcessingStatus.COMPLETED, doc.getProcessingStatus());
+  }
+
+  @Test
+  void testEquals_ExtractedTextAndSummary() {
+    Document doc1 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .extractedText("Text 1")
+        .summary("Summary 1")
+        .build();
+    
+    Document doc2 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .extractedText("Text 1")
+        .summary("Summary 1")
+        .build();
+    
+    Document doc3 = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .extractedText("Text 2")
+        .summary("Summary 1")
+        .build();
+    
+    assertEquals(doc1, doc2);
+    assertNotEquals(doc1, doc3);
+    
+    doc1.setExtractedText(null);
+    doc2.setExtractedText("Text 1");
+    assertNotEquals(doc1, doc2);
+    
+    doc1.setExtractedText("Text 1");
+    doc1.setSummary(null);
+    doc2.setSummary("Summary 1");
+    assertNotEquals(doc1, doc2);
+  }
+
+  @Test
+  void testEquals_AllStatusValues() {
+    Document base = Document.builder()
+        .id(1L)
+        .filename("test.pdf")
+        .contentType("application/pdf")
+        .processingStatus(Document.ProcessingStatus.UPLOADED)
+        .build();
+    
+    for (Document.ProcessingStatus status : Document.ProcessingStatus.values()) {
+      Document doc = Document.builder()
+          .id(1L)
+          .filename("test.pdf")
+          .contentType("application/pdf")
+          .processingStatus(status)
+          .build();
+      
+      if (status == Document.ProcessingStatus.UPLOADED) {
+        assertEquals(base, doc);
+      } else {
+        assertNotEquals(base, doc);
+      }
+    }
   }
 }

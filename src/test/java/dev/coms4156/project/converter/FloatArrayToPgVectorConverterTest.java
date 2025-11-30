@@ -36,4 +36,37 @@ class FloatArrayToPgVectorConverterTest {
     float[] expected = {1.0f, 2.5f, 3.7f};
     assertArrayEquals(expected, result);
   }
+
+  @Test
+  void testConvertToDatabaseColumn_Null() {
+    String result = converter.convertToDatabaseColumn(null);
+    assertEquals(null, result);
+  }
+
+  @Test
+  void testConvertToDatabaseColumn_Empty() {
+    float[] input = {};
+    String result = converter.convertToDatabaseColumn(input);
+    assertEquals(null, result);
+  }
+
+  @Test
+  void testConvertToEntityAttribute_Null() {
+    float[] result = converter.convertToEntityAttribute(null);
+    assertArrayEquals(new float[0], result);
+  }
+
+  @Test
+  void testConvertToEntityAttribute_Empty() {
+    float[] result = converter.convertToEntityAttribute("");
+    assertArrayEquals(new float[0], result);
+  }
+
+  @Test
+  void testConvertToEntityAttribute_WithSpaces() {
+    String input = "[ 1.0 , 2.5 , 3.7 ]";
+    float[] result = converter.convertToEntityAttribute(input);
+    float[] expected = {1.0f, 2.5f, 3.7f};
+    assertArrayEquals(expected, result);
+  }
 }

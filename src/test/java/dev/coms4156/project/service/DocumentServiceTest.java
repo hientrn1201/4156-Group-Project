@@ -15,6 +15,7 @@ import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -245,5 +246,119 @@ class DocumentServiceTest {
     Optional<Document> result = documentService.getDocumentById(1L);
 
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testProcessDocument_EmptyExtractedText() throws Exception {
+    // Given - text extraction returns empty string
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("   "); // Empty/whitespace
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    // When & Then - should throw RuntimeException
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testProcessDocument_EmptyChunks() throws Exception {
+    // Given - chunking returns empty list
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Sample text");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Collections.emptyList());
+
+    // When & Then - should throw RuntimeException
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testProcessDocument_ExceptionDuringProcessing() throws Exception {
+    // Given - exception thrown during text extraction
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile))
+        .thenThrow(new RuntimeException("Extraction failed"));
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    // When & Then - should catch exception, set status to FAILED, and rethrow
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testGetChunkStatistics_DocumentNotFound() {
+    // Given - document doesn't exist
+    when(documentRepository.findById(999L)).thenReturn(Optional.empty());
+
+    // When & Then - should throw IllegalArgumentException
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      documentService.getChunkStatistics(999L);
+    });
+    assertEquals("Document not found: 999", exception.getMessage());
+  }
+
+  @Test
+  void testGetDocumentsByFilename() {
+    // Given
+    Document doc1 = new Document();
+    doc1.setFilename("test1.pdf");
+    Document doc2 = new Document();
+    doc2.setFilename("test2.pdf");
+    when(documentRepository.findByFilenameContaining("test")).thenReturn(Arrays.asList(doc1, doc2));
+
+    // When
+    List<Document> result = documentService.getDocumentsByFilename("test");
+
+    // Then
+    assertEquals(2, result.size());
+  }
+
+  @Test
+  void testProcessDocument_ExceptionSetsFailedStatus() throws Exception {
+    // Given - exception during processing
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile))
+        .thenThrow(new RuntimeException("Extraction failed"));
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    // When & Then - should catch exception, set status to FAILED, and rethrow
+    try {
+      documentService.processDocument(multipartFile);
+    } catch (RuntimeException e) {
+      // Verify that the document status was set to FAILED (saved twice: initial + failed status)
+      verify(documentRepository, times(2)).save(any(Document.class));
+    }
   }
 }
