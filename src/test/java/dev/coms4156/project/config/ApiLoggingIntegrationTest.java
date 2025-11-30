@@ -11,6 +11,9 @@ import dev.coms4156.project.service.DocumentSummarizationService;
 import dev.coms4156.project.service.RagService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
@@ -21,7 +24,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
  * Comprehensive integration test for API logging functionality.
  * Verifies that API endpoints are accessible and logging system is configured.
  */
-@WebMvcTest
+@WebMvcTest(value = { dev.coms4156.project.controller.DocumentApiController.class,
+    dev.coms4156.project.controller.Controller.class },
+    excludeAutoConfiguration = {
+      SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class })
+@AutoConfigureMockMvc(addFilters = false)
 class ApiLoggingIntegrationTest {
 
   @Autowired
@@ -38,6 +45,13 @@ class ApiLoggingIntegrationTest {
 
   @MockBean
   private ApiLoggingService apiLoggingService;
+
+  // Mock security-related beans to prevent SecurityConfig from failing
+  @MockBean
+  private dev.coms4156.project.config.JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @MockBean
+  private dev.coms4156.project.config.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @Test
   void testApiLoggingInterceptor_ComprehensiveLoggingTest() throws Exception {

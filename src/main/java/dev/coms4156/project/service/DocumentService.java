@@ -2,6 +2,9 @@ package dev.coms4156.project.service;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
+import dev.coms4156.project.repository.DocumentChunkRepository;
+import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.io.IOException;
 import java.util.List;
@@ -13,8 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * Service responsible for managing document processing and CRUD operations.
  * <p>
- * The {@code DocumentService} handles the complete document lifecycle, including upload,
- * text extraction, chunking, embedding generation, and summarization. It integrates with
+ * The {@code DocumentService} handles the complete document lifecycle,
+ * including upload,
+ * text extraction, chunking, embedding generation, and summarization. It
+ * integrates with
  * {@link DocumentTextExtractionService}, {@link DocumentChunkingService}, and
  * {@link SimpleEmbeddingService} to orchestrate end-to-end document processing.
  * </p>
@@ -23,27 +28,44 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentService {
 
   private final DocumentRepository documentRepository;
+  private final DocumentChunkRepository documentChunkRepository;
+  private final DocumentRelationshipRepository documentRelationshipRepository;
   private final DocumentTextExtractionService textExtractionService;
   private final DocumentChunkingService chunkingService;
   private final SimpleEmbeddingService embeddingService;
 
   /**
-   * Constructs a new {@code DocumentService} instance with all required dependencies.
+   * Constructs a new {@code DocumentService} instance with all required
+   * dependencies.
    *
-   * @param documentRepository    the {@link DocumentRepository} used for persisting and retrieving
-   *                              documents.
-   * @param textExtractionService the {@link DocumentTextExtractionService} used to extract raw
-   *                              text from uploaded files.
-   * @param chunkingService       the {@link DocumentChunkingService} responsible for dividing text
-   *                              into manageable chunks.
-   * @param embeddingService      the {@link SimpleEmbeddingService} responsible for generating
-   *                              vector embeddings for each chunk.
+   * @param documentRepository             the {@link DocumentRepository} used for
+   *                                       persisting and retrieving
+   *                                       documents.
+   * @param documentChunkRepository        the {@link DocumentChunkRepository}
+   *                                       used for managing chunks.
+   * @param documentRelationshipRepository the
+   *                                       {@link DocumentRelationshipRepository}
+   *                                       used for managing relationships.
+   * @param textExtractionService          the
+   *                                       {@link DocumentTextExtractionService}
+   *                                       used to extract raw
+   *                                       text from uploaded files.
+   * @param chunkingService                the {@link DocumentChunkingService}
+   *                                       responsible for dividing text
+   *                                       into manageable chunks.
+   * @param embeddingService               the {@link SimpleEmbeddingService}
+   *                                       responsible for generating
+   *                                       vector embeddings for each chunk.
    */
   public DocumentService(DocumentRepository documentRepository,
-                         DocumentTextExtractionService textExtractionService,
-                         DocumentChunkingService chunkingService,
-                         SimpleEmbeddingService embeddingService) {
+      DocumentChunkRepository documentChunkRepository,
+      DocumentRelationshipRepository documentRelationshipRepository,
+      DocumentTextExtractionService textExtractionService,
+      DocumentChunkingService chunkingService,
+      SimpleEmbeddingService embeddingService) {
     this.documentRepository = documentRepository;
+    this.documentChunkRepository = documentChunkRepository;
+    this.documentRelationshipRepository = documentRelationshipRepository;
     this.textExtractionService = textExtractionService;
     this.chunkingService = chunkingService;
     this.embeddingService = embeddingService;
@@ -51,12 +73,6 @@ public class DocumentService {
 
   /**
    * Processes an uploaded document through the complete pipeline.
-   *
-   * @param file the uploaded {@link MultipartFile} to process.
-   * @return the processed {@link Document} entity, including extracted text and summary.
-   * @throws IOException              if reading the uploaded file fails.
-   * @throws IllegalArgumentException if the file is empty or of an unsupported type.
-   * @throws RuntimeException         if any pipeline step fails.
    */
   @Transactional
   public Document processDocument(MultipartFile file) throws IOException {
@@ -135,12 +151,8 @@ public class DocumentService {
     }
   }
 
-
   /**
    * Retrieves a document by its unique ID.
-   *
-   * @param id the document ID.
-   * @return an {@link Optional} containing the document if found, or empty if not found.
    */
   public Optional<Document> getDocumentById(Long id) {
     return documentRepository.findById(id);
@@ -176,12 +188,43 @@ public class DocumentService {
 
   /**
    * Deletes a document and all associated data such as chunks and embeddings.
+   * <p>
+   * This method properly handles cascading deletes by:
+   * 1. Finding and deleting all document relationships associated with the
+   * document's chunks
+   * 2. Finding and deleting all document chunks associated with the document
+   * 3. Finally deleting the document itself
+   * </p>
    *
    * @param id the ID of the document to delete.
    */
   @Transactional
   public void deleteDocument(Long id) {
-    documentRepository.deleteById(id);
+    Optional<Document> documentOpt = documentRepository.findById(id);
+    if (documentOpt.isEmpty()) {
+      System.out.println("Document not found: " + id);
+      return;
+    }
+
+    Document document = documentOpt.get();
+
+    // Step 1: Delete all relationships associated with this document's chunks using
+    // native query
+    // This avoids loading entities with embeddings which can cause converter issues
+    int relationshipsDeleted = documentRelationshipRepository.deleteByDocumentIdNative(id);
+    if (relationshipsDeleted > 0) {
+      System.out.println("Deleted " + relationshipsDeleted + " relationships for document: " + id);
+    }
+
+    // Step 2: Delete all chunks associated with this document using native query
+    // This avoids loading entities with embeddings which can cause converter issues
+    int chunksDeleted = documentChunkRepository.deleteByDocumentIdNative(id);
+    if (chunksDeleted > 0) {
+      System.out.println("Deleted " + chunksDeleted + " chunks for document: " + id);
+    }
+
+    // Step 3: Delete the document itself
+    documentRepository.delete(document);
     System.out.println("Deleted document: " + id);
   }
 
@@ -201,7 +244,8 @@ public class DocumentService {
    * including the number of chunks, average chunk length, and overlap ratio.
    *
    * @param documentId the ID of the document to analyze.
-   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing metrics.
+   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing
+   *         metrics.
    * @throws IllegalArgumentException if the document is not found.
    */
   public DocumentChunkingService.ChunkStatistics getChunkStatistics(Long documentId) {
@@ -235,12 +279,13 @@ public class DocumentService {
     return embeddingService.findSimilarChunks(queryText, limit);
   }
 
-
   /**
-   * Generates a simple summary of the document’s text content (placeholder for now).
+   * Generates a simple summary of the document’s text content (placeholder for
+   * now).
    *
    * @param text the extracted text to summarize.
-   * @return a short summary string, or a placeholder message if text is unavailable.
+   * @return a short summary string, or a placeholder message if text is
+   *         unavailable.
    */
   private String generateSummary(String text) {
     if (text == null || text.trim().isEmpty()) {

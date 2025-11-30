@@ -2,6 +2,9 @@
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
+import dev.coms4156.project.repository.DocumentChunkRepository;
+import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.io.IOException;
 import java.util.List;
@@ -13,8 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * Service responsible for managing document processing and CRUD operations.
  * &lt;p&gt;
- * The {@code DocumentService} handles the complete document lifecycle, including upload,
- * text extraction, chunking, embedding generation, and summarization. It integrates with
+ * The {@code DocumentService} handles the complete document lifecycle,
+ * including upload,
+ * text extraction, chunking, embedding generation, and summarization. It
+ * integrates with
  * {@link DocumentTextExtractionService}, {@link DocumentChunkingService}, and
  * {@link SimpleEmbeddingService} to orchestrate end-to-end document processing.
  * &lt;/p&gt;
@@ -23,127 +28,134 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentService {
 
   private final DocumentRepository documentRepository;
+  private final DocumentChunkRepository documentChunkRepository;
+  private final DocumentRelationshipRepository documentRelationshipRepository;
   private final DocumentTextExtractionService textExtractionService;
   private final DocumentChunkingService chunkingService;
   private final SimpleEmbeddingService embeddingService;
 
   /**
-   * Constructs a new {@code DocumentService} instance with all required dependencies.
+   * Constructs a new {@code DocumentService} instance with all required
+   * dependencies.
    *
-   * @param documentRepository    the {@link DocumentRepository} used for persisting and retrieving
-   *                              documents.
-   * @param textExtractionService the {@link DocumentTextExtractionService} used to extract raw
-   *                              text from uploaded files.
-   * @param chunkingService       the {@link DocumentChunkingService} responsible for dividing text
-   *                              into manageable chunks.
-   * @param embeddingService      the {@link SimpleEmbeddingService} responsible for generating
-   *                              vector embeddings for each chunk.
+   * @param documentRepository             the {@link DocumentRepository} used for
+   *                                       persisting and retrieving
+   *                                       documents.
+   * @param documentChunkRepository        the {@link DocumentChunkRepository}
+   *                                       used for managing chunks.
+   * @param documentRelationshipRepository the
+   *                                       {@link DocumentRelationshipRepository}
+   *                                       used for managing relationships.
+   * @param textExtractionService          the
+   *                                       {@link DocumentTextExtractionService}
+   *                                       used to extract raw
+   *                                       text from uploaded files.
+   * @param chunkingService                the {@link DocumentChunkingService}
+   *                                       responsible for dividing text
+   *                                       into manageable chunks.
+   * @param embeddingService               the {@link SimpleEmbeddingService}
+   *                                       responsible for generating
+   *                                       vector embeddings for each chunk.
    */
   public DocumentService(DocumentRepository documentRepository,
-                         DocumentTextExtractionService textExtractionService,
-                         DocumentChunkingService chunkingService,
-<span class="fc" id="L45">                         SimpleEmbeddingService embeddingService) {</span>
-<span class="fc" id="L46">    this.documentRepository = documentRepository;</span>
-<span class="fc" id="L47">    this.textExtractionService = textExtractionService;</span>
-<span class="fc" id="L48">    this.chunkingService = chunkingService;</span>
-<span class="fc" id="L49">    this.embeddingService = embeddingService;</span>
-<span class="fc" id="L50">  }</span>
+      DocumentChunkRepository documentChunkRepository,
+      DocumentRelationshipRepository documentRelationshipRepository,
+      DocumentTextExtractionService textExtractionService,
+      DocumentChunkingService chunkingService,
+<span class="fc" id="L65">      SimpleEmbeddingService embeddingService) {</span>
+<span class="fc" id="L66">    this.documentRepository = documentRepository;</span>
+<span class="fc" id="L67">    this.documentChunkRepository = documentChunkRepository;</span>
+<span class="fc" id="L68">    this.documentRelationshipRepository = documentRelationshipRepository;</span>
+<span class="fc" id="L69">    this.textExtractionService = textExtractionService;</span>
+<span class="fc" id="L70">    this.chunkingService = chunkingService;</span>
+<span class="fc" id="L71">    this.embeddingService = embeddingService;</span>
+<span class="fc" id="L72">  }</span>
 
   /**
    * Processes an uploaded document through the complete pipeline.
-   *
-   * @param file the uploaded {@link MultipartFile} to process.
-   * @return the processed {@link Document} entity, including extracted text and summary.
-   * @throws IOException              if reading the uploaded file fails.
-   * @throws IllegalArgumentException if the file is empty or of an unsupported type.
-   * @throws RuntimeException         if any pipeline step fails.
    */
   @Transactional
   public Document processDocument(MultipartFile file) throws IOException {
-<span class="fc" id="L63">    System.out.println(&quot;Starting document processing for: &quot; + file.getOriginalFilename());</span>
+<span class="fc" id="L79">    System.out.println(&quot;Starting document processing for: &quot; + file.getOriginalFilename());</span>
 
     // Validate file
-<span class="fc bfc" id="L66" title="All 2 branches covered.">    if (file.isEmpty()) {</span>
-<span class="fc" id="L67">      throw new IllegalArgumentException(&quot;File is empty&quot;);</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">    if (file.isEmpty()) {</span>
+<span class="fc" id="L83">      throw new IllegalArgumentException(&quot;File is empty&quot;);</span>
     }
 
     // Check if file type is supported
-<span class="fc" id="L71">    String contentType = textExtractionService.detectContentType(file);</span>
-<span class="fc bfc" id="L72" title="All 2 branches covered.">    if (!textExtractionService.isSupportedContentType(contentType)) {</span>
-<span class="fc" id="L73">      throw new IllegalArgumentException(&quot;Unsupported file type: &quot; + contentType);</span>
+<span class="fc" id="L87">    String contentType = textExtractionService.detectContentType(file);</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (!textExtractionService.isSupportedContentType(contentType)) {</span>
+<span class="fc" id="L89">      throw new IllegalArgumentException(&quot;Unsupported file type: &quot; + contentType);</span>
     }
 
     // Create document entity
-<span class="fc" id="L77">    Document document = new Document();</span>
-<span class="fc" id="L78">    document.setFilename(file.getOriginalFilename());</span>
-<span class="fc" id="L79">    document.setFileSize(file.getSize());</span>
-<span class="fc" id="L80">    document.setContentType(contentType);</span>
-<span class="fc" id="L81">    document.setProcessingStatus(Document.ProcessingStatus.UPLOADED);</span>
+<span class="fc" id="L93">    Document document = new Document();</span>
+<span class="fc" id="L94">    document.setFilename(file.getOriginalFilename());</span>
+<span class="fc" id="L95">    document.setFileSize(file.getSize());</span>
+<span class="fc" id="L96">    document.setContentType(contentType);</span>
+<span class="fc" id="L97">    document.setProcessingStatus(Document.ProcessingStatus.UPLOADED);</span>
 
     // Save document
-<span class="fc" id="L84">    document = documentRepository.save(document);</span>
+<span class="fc" id="L100">    document = documentRepository.save(document);</span>
 
     try {
       // Step 1: Extract text using Apache Tika
-<span class="fc" id="L88">      System.out.println(&quot;Step 1: Extracting text from document: &quot; + document.getId());</span>
-<span class="fc" id="L89">      String extractedText = textExtractionService.extractText(file);</span>
+<span class="fc" id="L104">      System.out.println(&quot;Step 1: Extracting text from document: &quot; + document.getId());</span>
+<span class="fc" id="L105">      String extractedText = textExtractionService.extractText(file);</span>
 
-<span class="pc bpc" id="L91" title="2 of 4 branches missed.">      if (extractedText == null || extractedText.trim().isEmpty()) {</span>
-<span class="nc" id="L92">        throw new RuntimeException(&quot;No text could be extracted from the document&quot;);</span>
+<span class="fc bfc" id="L107" title="All 4 branches covered.">      if (extractedText == null || extractedText.trim().isEmpty()) {</span>
+<span class="fc" id="L108">        throw new RuntimeException(&quot;No text could be extracted from the document&quot;);</span>
       }
 
-<span class="fc" id="L95">      document.setExtractedText(extractedText);</span>
-<span class="fc" id="L96">      document.setProcessingStatus(Document.ProcessingStatus.TEXT_EXTRACTED);</span>
-<span class="fc" id="L97">      document = documentRepository.save(document);</span>
+<span class="fc" id="L111">      document.setExtractedText(extractedText);</span>
+<span class="fc" id="L112">      document.setProcessingStatus(Document.ProcessingStatus.TEXT_EXTRACTED);</span>
+<span class="fc" id="L113">      document = documentRepository.save(document);</span>
 
       // Step 2: Chunk the document (in memory only)
-<span class="fc" id="L100">      System.out.println(&quot;Step 2: Chunking document: &quot; + document.getId());</span>
-<span class="fc" id="L101">      List&lt;DocumentChunk&gt; chunks = chunkingService.chunkDocument(document);</span>
+<span class="fc" id="L116">      System.out.println(&quot;Step 2: Chunking document: &quot; + document.getId());</span>
+<span class="fc" id="L117">      List&lt;DocumentChunk&gt; chunks = chunkingService.chunkDocument(document);</span>
 
-<span class="pc bpc" id="L103" title="1 of 2 branches missed.">      if (chunks.isEmpty()) {</span>
-<span class="nc" id="L104">        throw new RuntimeException(&quot;No chunks could be created from the document&quot;);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">      if (chunks.isEmpty()) {</span>
+<span class="fc" id="L120">        throw new RuntimeException(&quot;No chunks could be created from the document&quot;);</span>
       }
 
       // Step 3: Generate embeddings for chunks
-<span class="fc" id="L108">      System.out.println(&quot;Step 3: Generating embeddings for &quot; + chunks.size() + &quot; chunks&quot;);</span>
-<span class="fc" id="L109">      embeddingService.generateEmbeddings(chunks);</span>
+<span class="fc" id="L124">      System.out.println(&quot;Step 3: Generating embeddings for &quot; + chunks.size() + &quot; chunks&quot;);</span>
+<span class="fc" id="L125">      embeddingService.generateEmbeddings(chunks);</span>
 
-<span class="fc" id="L111">      document.setProcessingStatus(Document.ProcessingStatus.CHUNKED);</span>
-<span class="fc" id="L112">      document = documentRepository.save(document);</span>
+<span class="fc" id="L127">      document.setProcessingStatus(Document.ProcessingStatus.CHUNKED);</span>
+<span class="fc" id="L128">      document = documentRepository.save(document);</span>
 
-<span class="fc" id="L114">      document.setProcessingStatus(Document.ProcessingStatus.EMBEDDINGS_GENERATED);</span>
-<span class="fc" id="L115">      document = documentRepository.save(document);</span>
+<span class="fc" id="L130">      document.setProcessingStatus(Document.ProcessingStatus.EMBEDDINGS_GENERATED);</span>
+<span class="fc" id="L131">      document = documentRepository.save(document);</span>
 
       // Step 4: Generate summary (optional - can be implemented later)
-<span class="fc" id="L118">      System.out.println(&quot;Step 4: Generating summary for document: &quot; + document.getId());</span>
-<span class="fc" id="L119">      String summary = generateSummary(extractedText);</span>
+<span class="fc" id="L134">      System.out.println(&quot;Step 4: Generating summary for document: &quot; + document.getId());</span>
+<span class="fc" id="L135">      String summary = generateSummary(extractedText);</span>
 
-<span class="fc" id="L121">      document.setSummary(summary);</span>
-<span class="fc" id="L122">      document.setProcessingStatus(Document.ProcessingStatus.COMPLETED);</span>
-<span class="fc" id="L123">      document = documentRepository.save(document);</span>
+<span class="fc" id="L137">      document.setSummary(summary);</span>
+<span class="fc" id="L138">      document.setProcessingStatus(Document.ProcessingStatus.COMPLETED);</span>
+<span class="fc" id="L139">      document = documentRepository.save(document);</span>
 
-<span class="fc" id="L125">      System.out.println(&quot;Successfully processed document: &quot; + document.getFilename() + &quot; with &quot;</span>
-<span class="fc" id="L126">          + chunks.size() + &quot; chunks&quot;);</span>
-<span class="fc" id="L127">      return document;</span>
+<span class="fc" id="L141">      System.out.println(&quot;Successfully processed document: &quot; + document.getFilename() + &quot; with &quot;</span>
+<span class="fc" id="L142">          + chunks.size() + &quot; chunks&quot;);</span>
+<span class="fc" id="L143">      return document;</span>
 
-<span class="nc" id="L129">    } catch (Exception e) {</span>
-<span class="nc" id="L130">      System.err.println(&quot;Error processing document &quot; + document.getId() + &quot;: &quot; + e.getMessage());</span>
-<span class="nc" id="L131">      e.printStackTrace();</span>
-<span class="nc" id="L132">      document.setProcessingStatus(Document.ProcessingStatus.FAILED);</span>
-<span class="nc" id="L133">      documentRepository.save(document);</span>
-<span class="nc" id="L134">      throw new RuntimeException(&quot;Document processing failed&quot;, e);</span>
+<span class="fc" id="L145">    } catch (Exception e) {</span>
+<span class="fc" id="L146">      System.err.println(&quot;Error processing document &quot; + document.getId() + &quot;: &quot; + e.getMessage());</span>
+<span class="fc" id="L147">      e.printStackTrace();</span>
+<span class="fc" id="L148">      document.setProcessingStatus(Document.ProcessingStatus.FAILED);</span>
+<span class="fc" id="L149">      documentRepository.save(document);</span>
+<span class="fc" id="L150">      throw new RuntimeException(&quot;Document processing failed&quot;, e);</span>
     }
   }
 
-
   /**
    * Retrieves a document by its unique ID.
-   *
-   * @param id the document ID.
-   * @return an {@link Optional} containing the document if found, or empty if not found.
    */
   public Optional&lt;Document&gt; getDocumentById(Long id) {
-<span class="fc" id="L146">    return documentRepository.findById(id);</span>
+<span class="fc" id="L158">    return documentRepository.findById(id);</span>
   }
 
   /**
@@ -152,7 +164,7 @@ public class DocumentService {
    * @return a list of all {@link Document} entities.
    */
   public List&lt;Document&gt; getAllDocuments() {
-<span class="fc" id="L155">    return documentRepository.findAll();</span>
+<span class="fc" id="L167">    return documentRepository.findAll();</span>
   }
 
   /**
@@ -161,7 +173,7 @@ public class DocumentService {
    * @return a list of all matching {@link Document} entities.
    */
   public List&lt;Document&gt; getDocumentsByFilename(String filename) {
-<span class="nc" id="L164">    return documentRepository.findByFilenameContaining(filename);</span>
+<span class="fc" id="L176">    return documentRepository.findByFilenameContaining(filename);</span>
   }
 
   /**
@@ -171,19 +183,50 @@ public class DocumentService {
    * @return a list of documents with the specified status.
    */
   public List&lt;Document&gt; getDocumentsByStatus(Document.ProcessingStatus status) {
-<span class="fc" id="L174">    return documentRepository.findByProcessingStatus(status);</span>
+<span class="fc" id="L186">    return documentRepository.findByProcessingStatus(status);</span>
   }
 
   /**
    * Deletes a document and all associated data such as chunks and embeddings.
+   * &lt;p&gt;
+   * This method properly handles cascading deletes by:
+   * 1. Finding and deleting all document relationships associated with the
+   * document's chunks
+   * 2. Finding and deleting all document chunks associated with the document
+   * 3. Finally deleting the document itself
+   * &lt;/p&gt;
    *
    * @param id the ID of the document to delete.
    */
   @Transactional
   public void deleteDocument(Long id) {
-<span class="fc" id="L184">    documentRepository.deleteById(id);</span>
-<span class="fc" id="L185">    System.out.println(&quot;Deleted document: &quot; + id);</span>
-<span class="fc" id="L186">  }</span>
+<span class="fc" id="L203">    Optional&lt;Document&gt; documentOpt = documentRepository.findById(id);</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    if (documentOpt.isEmpty()) {</span>
+<span class="fc" id="L205">      System.out.println(&quot;Document not found: &quot; + id);</span>
+<span class="fc" id="L206">      return;</span>
+    }
+
+<span class="fc" id="L209">    Document document = documentOpt.get();</span>
+
+    // Step 1: Delete all relationships associated with this document's chunks using
+    // native query
+    // This avoids loading entities with embeddings which can cause converter issues
+<span class="fc" id="L214">    int relationshipsDeleted = documentRelationshipRepository.deleteByDocumentIdNative(id);</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">    if (relationshipsDeleted &gt; 0) {</span>
+<span class="fc" id="L216">      System.out.println(&quot;Deleted &quot; + relationshipsDeleted + &quot; relationships for document: &quot; + id);</span>
+    }
+
+    // Step 2: Delete all chunks associated with this document using native query
+    // This avoids loading entities with embeddings which can cause converter issues
+<span class="fc" id="L221">    int chunksDeleted = documentChunkRepository.deleteByDocumentIdNative(id);</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">    if (chunksDeleted &gt; 0) {</span>
+<span class="fc" id="L223">      System.out.println(&quot;Deleted &quot; + chunksDeleted + &quot; chunks for document: &quot; + id);</span>
+    }
+
+    // Step 3: Delete the document itself
+<span class="fc" id="L227">    documentRepository.delete(document);</span>
+<span class="fc" id="L228">    System.out.println(&quot;Deleted document: &quot; + id);</span>
+<span class="fc" id="L229">  }</span>
 
   /**
    * Retrieves all {@link DocumentChunk} instances belonging to a given document.
@@ -193,7 +236,7 @@ public class DocumentService {
    * @throws IllegalArgumentException if the document does not exist.
    */
   public List&lt;DocumentChunk&gt; getDocumentChunks(Long documentId) {
-<span class="fc" id="L196">    return chunkingService.getChunksForDocument(documentId);</span>
+<span class="fc" id="L239">    return chunkingService.getChunksForDocument(documentId);</span>
   }
 
   /**
@@ -201,15 +244,16 @@ public class DocumentService {
    * including the number of chunks, average chunk length, and overlap ratio.
    *
    * @param documentId the ID of the document to analyze.
-   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing metrics.
+   * @return a {@link DocumentChunkingService.ChunkStatistics} object containing
+   *         metrics.
    * @throws IllegalArgumentException if the document is not found.
    */
   public DocumentChunkingService.ChunkStatistics getChunkStatistics(Long documentId) {
-<span class="fc" id="L208">    Optional&lt;Document&gt; document = getDocumentById(documentId);</span>
-<span class="pc bpc" id="L209" title="1 of 2 branches missed.">    if (document.isEmpty()) {</span>
-<span class="nc" id="L210">      throw new IllegalArgumentException(&quot;Document not found: &quot; + documentId);</span>
+<span class="fc" id="L252">    Optional&lt;Document&gt; document = getDocumentById(documentId);</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">    if (document.isEmpty()) {</span>
+<span class="fc" id="L254">      throw new IllegalArgumentException(&quot;Document not found: &quot; + documentId);</span>
     }
-<span class="fc" id="L212">    return chunkingService.getChunkStatistics(document.get());</span>
+<span class="fc" id="L256">    return chunkingService.getChunkStatistics(document.get());</span>
   }
 
   /**
@@ -221,7 +265,7 @@ public class DocumentService {
    */
   @Transactional
   public int generateEmbeddingsForDocument(Long documentId) {
-<span class="fc" id="L224">    return embeddingService.generateEmbeddingsForDocument(documentId);</span>
+<span class="fc" id="L268">    return embeddingService.generateEmbeddingsForDocument(documentId);</span>
   }
 
   /**
@@ -232,35 +276,36 @@ public class DocumentService {
    * @return a list of the most similar {@link DocumentChunk} entities.
    */
   public List&lt;DocumentChunk&gt; findSimilarChunks(String queryText, int limit) {
-<span class="fc" id="L235">    return embeddingService.findSimilarChunks(queryText, limit);</span>
+<span class="fc" id="L279">    return embeddingService.findSimilarChunks(queryText, limit);</span>
   }
 
-
   /**
-   * Generates a simple summary of the document’s text content (placeholder for now).
+   * Generates a simple summary of the document’s text content (placeholder for
+   * now).
    *
    * @param text the extracted text to summarize.
-   * @return a short summary string, or a placeholder message if text is unavailable.
+   * @return a short summary string, or a placeholder message if text is
+   *         unavailable.
    */
   private String generateSummary(String text) {
-<span class="pc bpc" id="L246" title="2 of 4 branches missed.">    if (text == null || text.trim().isEmpty()) {</span>
-<span class="nc" id="L247">      return &quot;No summary available&quot;;</span>
+<span class="pc bpc" id="L291" title="2 of 4 branches missed.">    if (text == null || text.trim().isEmpty()) {</span>
+<span class="nc" id="L292">      return &quot;No summary available&quot;;</span>
     }
 
     // Simple truncation-based summary (first 200 characters)
-<span class="fc" id="L251">    String cleanedText = text.replaceAll(&quot;\\s+&quot;, &quot; &quot;).trim();</span>
-<span class="pc bpc" id="L252" title="1 of 2 branches missed.">    if (cleanedText.length() &lt;= 200) {</span>
-<span class="fc" id="L253">      return cleanedText;</span>
+<span class="fc" id="L296">    String cleanedText = text.replaceAll(&quot;\\s+&quot;, &quot; &quot;).trim();</span>
+<span class="fc bfc" id="L297" title="All 2 branches covered.">    if (cleanedText.length() &lt;= 200) {</span>
+<span class="fc" id="L298">      return cleanedText;</span>
     }
 
     // Try to break at sentence boundary
-<span class="nc" id="L257">    String truncated = cleanedText.substring(0, 200);</span>
-<span class="nc" id="L258">    int lastPeriod = truncated.lastIndexOf('.');</span>
-<span class="nc bnc" id="L259" title="All 2 branches missed.">    if (lastPeriod &gt; 100) {</span>
-<span class="nc" id="L260">      return truncated.substring(0, lastPeriod + 1);</span>
+<span class="fc" id="L302">    String truncated = cleanedText.substring(0, 200);</span>
+<span class="fc" id="L303">    int lastPeriod = truncated.lastIndexOf('.');</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">    if (lastPeriod &gt; 100) {</span>
+<span class="fc" id="L305">      return truncated.substring(0, lastPeriod + 1);</span>
     }
 
-<span class="nc" id="L263">    return truncated + &quot;...&quot;;</span>
+<span class="fc" id="L308">    return truncated + &quot;...&quot;;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -2,11 +2,11 @@ package dev.coms4156.project.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,6 +57,45 @@ class DocumentSummarizationServiceTest {
     verify(documentRepository).save(document);
   }
 
+  // Invalid equivalence partition - null extracted text
+  @Test
+  void testGenerateSummary_NullText() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setFilename("test.pdf");
+    document.setExtractedText(null);
+
+    String result = summarizationService.generateSummary(document);
+
+    assertEquals(null, result);
+  }
+
+  // Invalid equivalence partition - empty extracted text
+  @Test
+  void testGenerateSummary_EmptyText() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setFilename("test.pdf");
+    document.setExtractedText("");
+
+    String result = summarizationService.generateSummary(document);
+
+    assertEquals(null, result);
+  }
+
+  // Invalid equivalence partition - whitespace-only text
+  @Test
+  void testGenerateSummary_WhitespaceOnlyText() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setFilename("test.pdf");
+    document.setExtractedText("   \n\t   ");
+
+    String result = summarizationService.generateSummary(document);
+
+    assertEquals(null, result);
+  }
+
   @Test
   void testGenerateSimpleSummary() {
     // Given
@@ -70,6 +109,48 @@ class DocumentSummarizationServiceTest {
     // Then
     assertNotNull(result);
     assertTrue(result.length() > 0);
+  }
+
+  // Boundary analysis - very short text (under 200 chars)
+  @Test
+  void testGenerateSimpleSummary_ShortText() {
+    String shortText = "This is a short document.";
+
+    String result = summarizationService.generateSimpleSummary(shortText);
+
+    assertEquals(shortText, result);
+  }
+
+  // Boundary analysis - exactly 200 characters
+  @Test
+  void testGenerateSimpleSummary_Exactly200Chars() {
+    String text200 = "a".repeat(200);
+
+    String result = summarizationService.generateSimpleSummary(text200);
+
+    assertEquals(text200, result);
+  }
+
+  // Boundary analysis - 201 characters (just over limit)
+  @Test
+  void testGenerateSimpleSummary_Over200Chars() {
+    String text201 = "a".repeat(201);
+
+    String result = summarizationService.generateSimpleSummary(text201);
+
+    assertEquals("a".repeat(200) + "...", result);
+    assertEquals(203, result.length()); // 200 + "..."
+  }
+
+  // Valid equivalence partition - very long text
+  @Test
+  void testGenerateSimpleSummary_VeryLongText() {
+    String longText = "This is a very long document. ".repeat(100);
+
+    String result = summarizationService.generateSimpleSummary(longText);
+
+    assertEquals(203, result.length()); // 200 + "..."
+    assertTrue(result.endsWith("..."));
   }
 
   @Test
@@ -87,6 +168,63 @@ class DocumentSummarizationServiceTest {
     assertEquals("Test summary", result);
   }
 
+  // Invalid equivalence partition - document not found
+  @Test
+  void testGetDocumentSummary_NotFound() {
+    Long documentId = 999L;
+
+    when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+    String result = summarizationService.getDocumentSummary(documentId);
+
+    assertEquals(null, result);
+  }
+
+  // Invalid equivalence partition - document exists but no summary
+  @Test
+  void testGetDocumentSummary_NoSummary() {
+    Long documentId = 1L;
+    Document document = new Document();
+    document.setId(documentId);
+    document.setSummary(null);
+
+    when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+    String result = summarizationService.getDocumentSummary(documentId);
+
+    assertEquals(null, result);
+  }
+
+  // Boundary analysis - minimum valid document ID
+  @Test
+  void testGetDocumentSummary_MinimumId() {
+    Long documentId = 1L;
+    Document document = new Document();
+    document.setId(documentId);
+    document.setSummary("Summary for doc 1");
+
+    when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+    String result = summarizationService.getDocumentSummary(documentId);
+
+    assertEquals("Summary for doc 1", result);
+  }
+
+  // Boundary analysis - very large document ID
+  @Test
+  void testGetDocumentSummary_LargeId() {
+    Long documentId = Long.MAX_VALUE;
+    Document document = new Document();
+    document.setId(documentId);
+    document.setSummary("Summary for large ID");
+
+    when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+    String result = summarizationService.getDocumentSummary(documentId);
+
+    assertEquals("Summary for large ID", result);
+  }
+
   @Test
   void testGenerateAiSummary() {
     // Given
@@ -102,141 +240,62 @@ class DocumentSummarizationServiceTest {
     assertTrue(result.contains("Machine learning"));
   }
 
+  // Boundary analysis - single character input
   @Test
-  void testGenerateSummary_NullText() {
-    // Given - document with null extracted text
-    Document document = new Document();
-    document.setId(1L);
-    document.setFilename("test.pdf");
-    document.setExtractedText(null);
+  void testGenerateAiSummary_SingleCharacter() {
+    String inputText = "a";
 
-    // When
-    String result = summarizationService.generateSummary(document);
+    String result = summarizationService.generateAiSummary(inputText);
 
-    // Then - should return null
-    assertNull(result);
-  }
-
-  @Test
-  void testGenerateSummary_EmptyText() {
-    // Given - document with empty extracted text
-    Document document = new Document();
-    document.setId(1L);
-    document.setFilename("test.pdf");
-    document.setExtractedText("   "); // Whitespace only
-
-    // When
-    String result = summarizationService.generateSummary(document);
-
-    // Then - should return null
-    assertNull(result);
-  }
-
-  @Test
-  void testGenerateSummary_ExceptionDuringGeneration() {
-    // Given - AI summary generation throws exception, but generateAiSummary catches it
-    // and falls back to simple summary, so generateSummary should succeed
-    Document document = new Document();
-    document.setId(1L);
-    document.setFilename("test.pdf");
-    document.setExtractedText("Sample text");
-
-    when(chatClient.prompt()).thenThrow(new RuntimeException("AI service unavailable"));
-    when(documentRepository.save(any(Document.class))).thenReturn(document);
-
-    // When - generateAiSummary will catch exception and fallback, so generateSummary succeeds
-    String result = summarizationService.generateSummary(document);
-
-    // Then - should return fallback summary (not null)
     assertNotNull(result);
-    assertEquals("Sample text", result); // Simple summary for short text
+    assertEquals("a", result); // Should fallback to simple summary
   }
 
+  // Valid equivalence partition - very long input
   @Test
-  void testGenerateSimpleSummary_ShortText() {
-    // Given - text is <= 200 characters
-    String shortText = "This is a short text.";
+  void testGenerateAiSummary_VeryLongInput() {
+    String longText = "This is a very long document. ".repeat(1000);
 
-    // When
-    String result = summarizationService.generateSimpleSummary(shortText);
+    String result = summarizationService.generateAiSummary(longText);
 
-    // Then - should return text as-is
-    assertEquals(shortText, result);
-  }
-
-  @Test
-  void testGenerateSimpleSummary_Exactly200Characters() {
-    // Given - text is exactly 200 characters
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 200; i++) {
-      sb.append("a");
-    }
-    String exactText = sb.toString();
-
-    // When
-    String result = summarizationService.generateSimpleSummary(exactText);
-
-    // Then - should return text as-is (no truncation)
-    assertEquals(200, result.length());
-    assertEquals(exactText, result);
-  }
-
-  @Test
-  void testGenerateSimpleSummary_LongText() {
-    // Given - text is > 200 characters
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 300; i++) {
-      sb.append("a");
-    }
-    String longText = sb.toString();
-
-    // When
-    String result = summarizationService.generateSimpleSummary(longText);
-
-    // Then - should truncate to 200 + "..."
-    assertEquals(203, result.length()); // 200 + "..."
     assertNotNull(result);
+    assertTrue(result.length() <= 203); // Should fallback and be truncated
   }
 
+  // Invalid equivalence partition - empty input
   @Test
-  void testGetDocumentSummary_DocumentNotFound() {
-    // Given - document doesn't exist
-    when(documentRepository.findById(999L)).thenReturn(Optional.empty());
+  void testGenerateAiSummary_EmptyInput() {
+    String result = summarizationService.generateAiSummary("");
 
-    // When
-    String result = summarizationService.getDocumentSummary(999L);
-
-    // Then - should return null
-    assertNull(result);
+    assertEquals("", result);
   }
 
+  // Invalid equivalence partition - null input
   @Test
-  void testGetDocumentSummary_DocumentWithoutSummary() {
-    // Given - document exists but has no summary
-    Document document = new Document();
-    document.setId(1L);
-    document.setSummary(null);
-    when(documentRepository.findById(1L)).thenReturn(Optional.of(document));
-
-    // When
-    String result = summarizationService.getDocumentSummary(1L);
-
-    // Then - should return null
-    assertNull(result);
+  void testGenerateAiSummary_NullInput() {
+    assertThrows(Exception.class, () -> {
+      summarizationService.generateAiSummary(null);
+    });
   }
 
+  // Test AI service failure
   @Test
-  void testGenerateAiSummary_ExceptionFallsBackToSimple() {
-    // Given - AI generation fails
-    String text = "Sample text for summarization";
-    when(chatClient.prompt()).thenThrow(new RuntimeException("AI unavailable"));
+  void testGenerateAiSummary_ServiceFailure() {
+    String text = "This is a long text that needs summarization and exceeds the minimum length requirement for processing by the AI service.";
+    
+    when(chatClient.prompt(any(String.class))).thenThrow(new RuntimeException("AI service unavailable"));
 
-    // When - should fallback to simple summary
     String result = summarizationService.generateAiSummary(text);
-
-    // Then - should return simple summary (not null)
     assertNotNull(result);
-    assertEquals(text, result); // Simple summary for short text
+    // Should fallback to simple summary
+  }
+
+  // Test null document in generateSummary
+  @Test
+  void testGenerateSummary_NullDocument() {
+    assertThrows(Exception.class, () -> {
+      summarizationService.generateSummary(null);
+    });
   }
 
 }

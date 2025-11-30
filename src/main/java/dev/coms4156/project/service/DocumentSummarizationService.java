@@ -64,6 +64,11 @@ public class DocumentSummarizationService {
           .call()
           .content();
 
+      if (summary == null) {
+        System.err.println(" returned null summary,using fallback");
+        return generateSimpleSummary(text);
+      }
+
       System.out.println("Generated AI summary of length: " + summary.length());
       return summary;
 

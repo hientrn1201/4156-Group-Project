@@ -3,14 +3,13 @@ package dev.coms4156.project.config;
 import dev.coms4156.project.service.ApiLoggingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
@@ -136,6 +135,7 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
   /**
    * Extracts the request body for logging purposes.
    * Only extracts body for POST/PUT/PATCH requests.
+   * Uses ContentCachingRequestWrapper to avoid consuming the input stream.
    */
   private String extractRequestBody(HttpServletRequest request) {
     String method = request.getMethod();
@@ -150,16 +150,24 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
         return "[MULTIPART_DATA]";
       }
 
-      // Read the request body
-      byte[] body = StreamUtils.copyToByteArray(request.getInputStream());
-      if (body.length > 0) {
-        String bodyString = new String(body, StandardCharsets.UTF_8);
-        // Truncate very long request bodies
-        return bodyString.length() > 1000 ? bodyString.substring(0, 1000) + "...[TRUNCATED]" :
-            bodyString;
+      // Use ContentCachingRequestWrapper if available (set by filter)
+      if (request instanceof ContentCachingRequestWrapper) {
+        ContentCachingRequestWrapper wrapper = (ContentCachingRequestWrapper) request;
+        byte[] body = wrapper.getContentAsByteArray();
+        if (body.length > 0) {
+          String bodyString = new String(body, StandardCharsets.UTF_8);
+          // Truncate very long request bodies
+          return bodyString.length() > 1000 ? bodyString.substring(0, 1000) + "...[TRUNCATED]" :
+              bodyString;
+        }
+      } else {
+        // Fallback: try to read from input stream (may consume it)
+        // This should not happen if the filter is properly configured
+        logger.warn("Request is not wrapped in ContentCachingRequestWrapper, body may be consumed");
+        return "[REQUEST_BODY_NOT_AVAILABLE]";
       }
 
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.warn("Could not read request body for logging", e);
       return "[ERROR_READING_BODY]";
     }

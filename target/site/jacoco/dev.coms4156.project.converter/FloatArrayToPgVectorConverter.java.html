@@ -12,8 +12,8 @@ import jakarta.persistence.Converter;
 
   @Override
   public String convertToDatabaseColumn(float[] attribute) {
-<span class="pc bpc" id="L15" title="2 of 4 branches missed.">    if (attribute == null || attribute.length == 0) {</span>
-<span class="nc" id="L16">      return null;</span>
+<span class="fc bfc" id="L15" title="All 4 branches covered.">    if (attribute == null || attribute.length == 0) {</span>
+<span class="fc" id="L16">      return null;</span>
     }
     // Convert to Postgres vector format: [1.0, 2.0, 3.0]
 <span class="fc" id="L19">    StringBuilder sb = new StringBuilder(&quot;[&quot;);</span>
@@ -29,8 +29,8 @@ import jakarta.persistence.Converter;
 
   @Override
   public float[] convertToEntityAttribute(String dbData) {
-<span class="pc bpc" id="L32" title="2 of 4 branches missed.">    if (dbData == null || dbData.isEmpty()) {</span>
-<span class="nc" id="L33">      return new float[0];</span>
+<span class="pc bpc" id="L32" title="1 of 4 branches missed.">    if (dbData == null || dbData.isEmpty()) {</span>
+<span class="fc" id="L33">      return new float[0];</span>
     }
 <span class="fc" id="L35">    String clean = dbData.replaceAll(&quot;[\\[\\]]&quot;, &quot;&quot;);</span>
 <span class="fc" id="L36">    String[] parts = clean.split(&quot;,&quot;);</span>

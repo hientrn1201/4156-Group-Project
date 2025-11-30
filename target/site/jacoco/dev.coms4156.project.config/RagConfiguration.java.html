@@ -21,7 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * Using Spring AI with Ollama and PGVector.
  */
 @Configuration
-<span class="nc" id="L24">public class RagConfiguration {</span>
+<span class="fc" id="L24">public class RagConfiguration {</span>
 
   @Value(&quot;${spring.ai.ollama.base-url}&quot;)
   private String ollamaBaseUrl;
@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   public OllamaApi ollamaApi() {
-<span class="nc" id="L36">    return new OllamaApi(ollamaBaseUrl);</span>
+<span class="fc" id="L36">    return new OllamaApi(ollamaBaseUrl);</span>
   }
 
   /**
@@ -43,9 +43,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   public OllamaOptions ollamaOptions() {
-<span class="nc" id="L46">    return OllamaOptions.create()</span>
-<span class="nc" id="L47">        .withModel(&quot;llama3.2&quot;)</span>
-<span class="nc" id="L48">        .withTemperature(0.7);</span>
+<span class="fc" id="L46">    return OllamaOptions.create()</span>
+<span class="fc" id="L47">        .withModel(&quot;llama3.2&quot;)</span>
+<span class="fc" id="L48">        .withTemperature(0.7);</span>
   }
 
   /**
@@ -55,7 +55,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   public ObservationRegistry observationRegistry() {
-<span class="nc" id="L58">    return ObservationRegistry.create();</span>
+<span class="fc" id="L58">    return ObservationRegistry.create();</span>
   }
 
   /**
@@ -65,7 +65,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   public ModelManagementOptions modelManagementOptions() {
-<span class="nc" id="L68">    return ModelManagementOptions.builder().build();</span>
+<span class="fc" id="L68">    return ModelManagementOptions.builder().build();</span>
   }
 
   /**
@@ -77,7 +77,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
   public ChatModel chatModel(OllamaApi ollamaApi, OllamaOptions ollamaOptions,
                              ObservationRegistry observationRegistry,
                              ModelManagementOptions modelManagementOptions) {
-<span class="nc" id="L80">    return new OllamaChatModel(ollamaApi, ollamaOptions, null,</span>
+<span class="fc" id="L80">    return new OllamaChatModel(ollamaApi, ollamaOptions, null,</span>
         null, observationRegistry, modelManagementOptions);
   }
 
@@ -90,7 +90,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
   public EmbeddingModel embeddingModel(OllamaApi ollamaApi, OllamaOptions ollamaOptions,
                                        ObservationRegistry observationRegistry,
                                        ModelManagementOptions modelManagementOptions) {
-<span class="nc" id="L93">    return new OllamaEmbeddingModel(ollamaApi, ollamaOptions, observationRegistry,</span>
+<span class="fc" id="L93">    return new OllamaEmbeddingModel(ollamaApi, ollamaOptions, observationRegistry,</span>
         modelManagementOptions);
   }
 
@@ -101,7 +101,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   public VectorStore vectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
-<span class="nc" id="L104">    return new PgVectorStore(jdbcTemplate, embeddingModel);</span>
+<span class="fc" id="L104">    return new PgVectorStore(jdbcTemplate, embeddingModel);</span>
   }
 
   /**
@@ -111,7 +111,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
    */
   @Bean
   ChatClient chatClient(ChatModel chatModel) {
-<span class="nc" id="L114">    return ChatClient.builder(chatModel).build();</span>
+<span class="fc" id="L114">    return ChatClient.builder(chatModel).build();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

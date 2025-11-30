@@ -3,6 +3,7 @@ package dev.coms4156.project.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -11,8 +12,11 @@ import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
 import dev.coms4156.project.repository.DocumentChunkRepository;
+import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
+import jakarta.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +50,12 @@ class DocumentE2eTest {
 
   @Autowired
   private DocumentChunkRepository documentChunkRepository;
+
+  @Autowired
+  private DocumentRelationshipRepository documentRelationshipRepository;
+
+  @Autowired
+  private EntityManager entityManager;
 
   @MockBean
   private DocumentTextExtractionService textExtractionService;
@@ -252,4 +262,5 @@ class DocumentE2eTest {
         documentService.getDocumentsByStatus(Document.ProcessingStatus.UPLOADED);
     assertFalse(uploadedDocs.stream().anyMatch(doc -> doc.getId().equals(savedDoc.getId())));
   }
+
 }

@@ -17,21 +17,36 @@ import requests
 from urllib.parse import quote
 
 
+def load_env_file():
+    """Load environment variables from .env file if it exists."""
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+
+
 class KnowledgeServiceClient:
     """Client for interacting with the Knowledge Management Service API."""
 
-    def __init__(self, base_url: str, client_id: str):
+    def __init__(self, base_url: str, client_id: str, jwt_token: Optional[str] = None):
         """
         Initialize the client.
 
         Args:
             base_url: Base URL of the service (e.g., http://localhost:8080)
             client_id: Unique identifier for this client instance
+            jwt_token: JWT token for authentication (optional)
         """
         self.base_url = base_url.rstrip('/')
         self.api_base = f"{self.base_url}/api/v1"
         self.client_id = client_id
         self.headers = {"X-Client-ID": client_id}
+        if jwt_token:
+            self.headers["Authorization"] = f"Bearer {jwt_token}"
 
     def upload_document(self, file_path: str) -> Dict[str, Any]:
         """
@@ -237,6 +252,9 @@ def print_statistics(stats: Dict[str, Any]):
 
 def main():
     """Main entry point for the client."""
+    # Load .env file automatically
+    load_env_file()
+    
     parser = argparse.ArgumentParser(
         description='Knowledge Management Service Client',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -277,6 +295,11 @@ Examples:
         '--client-id',
         default=os.getenv('CLIENT_ID', f'client-{int(time.time())}'),
         help='Unique client identifier (default: auto-generated or CLIENT_ID env var)'
+    )
+    parser.add_argument(
+        '--token',
+        default=os.getenv('JWT_TOKEN'),
+        help='JWT token for authentication (default: JWT_TOKEN env var)'
     )
 
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -321,7 +344,7 @@ Examples:
         sys.exit(1)
 
     # Create client
-    client = KnowledgeServiceClient(args.url, args.client_id)
+    client = KnowledgeServiceClient(args.url, args.client_id, args.token)
 
     try:
         if args.command == 'upload':
