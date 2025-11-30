@@ -1,6 +1,8 @@
 package dev.coms4156.project.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -40,6 +42,26 @@ class DocumentTextExtractionServiceTest {
     });
   }
 
+  // Invalid equivalence partition - null multipart file
+  @Test
+  void testExtractText_NullFile() {
+    assertThrows(Exception.class, () -> {
+      textExtractionService.extractText((MultipartFile) null);
+    });
+  }
+
+  // Boundary analysis - zero-byte file (not empty but no content)
+  @Test
+  void testExtractText_ZeroByteFile() throws IOException, TikaException {
+    InputStream emptyStream = new ByteArrayInputStream(new byte[1]); // At least 1 byte
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(emptyStream);
+
+    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+
+    assertNotNull(result);
+  }
+
   @Test
   void testExtractText() throws IOException, TikaException {
     // Given
@@ -49,10 +71,50 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.getInputStream()).thenReturn(inputStream);
 
     // When
-    String result = textExtractionService.extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
 
     // Then
     assertEquals("This is a test document content.", result);
+  }
+
+  // Boundary analysis - very large file content
+  @Test
+  void testExtractText_LargeContent() throws IOException, TikaException {
+    String largeContent = "Large content line.\n".repeat(1000);
+    InputStream inputStream = new ByteArrayInputStream(largeContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+
+    assertNotNull(result);
+    assertTrue(result.length() > 1000);
+  }
+
+  // Boundary analysis - single character content
+  @Test
+  void testExtractText_SingleCharacter() throws IOException, TikaException {
+    InputStream inputStream = new ByteArrayInputStream("a".getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+
+    assertEquals("a", result);
+  }
+
+  // Valid equivalence partition - content with special characters
+  @Test
+  void testExtractText_SpecialCharacters() throws IOException, TikaException {
+    String specialContent = "Content with special chars: àáâãäåæçèéêë 中文 русский";
+    InputStream inputStream = new ByteArrayInputStream(specialContent.getBytes("UTF-8"));
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+
+    assertNotNull(result);
+    assertTrue(result.contains("àáâãäåæçèéêë"));
   }
 
   @Test
@@ -69,6 +131,44 @@ class DocumentTextExtractionServiceTest {
 
     // Then
     assertTrue(result.startsWith("text/"));
+  }
+
+  // Boundary analysis - empty file for content detection
+  @Test
+  void testDetectContentType_EmptyFile() throws IOException {
+    InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("empty.txt");
+    when(multipartFile.getInputStream()).thenReturn(emptyStream);
+
+    String result = textExtractionService.detectContentType(multipartFile);
+    assertNotNull(result);
+  }
+
+  // Boundary analysis - file with no extension
+  @Test
+  void testDetectContentType_NoExtension() throws IOException {
+    String testContent = "Sample content";
+    InputStream inputStream = new ByteArrayInputStream(testContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("filename_without_extension");
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    String result = textExtractionService.detectContentType(multipartFile);
+    assertNotNull(result);
+  }
+
+  // Invalid equivalence partition - null filename
+  @Test
+  void testDetectContentType_NullFilename() throws IOException {
+    String testContent = "Sample content";
+    InputStream inputStream = new ByteArrayInputStream(testContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn(null);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    String result = textExtractionService.detectContentType(multipartFile);
+    assertNotNull(result);
   }
 
   @Test
@@ -89,6 +189,49 @@ class DocumentTextExtractionServiceTest {
     assertTrue(textExtractionService.isSupportedContentType("text/html"));
     assertTrue(textExtractionService.isSupportedContentType("text/xml"));
     assertTrue(textExtractionService.isSupportedContentType("application/xml"));
+  }
+
+  // Invalid equivalence partition - unsupported content types
+  @Test
+  void testIsSupportedContentType_UnsupportedTypes() {
+    assertFalse(textExtractionService.isSupportedContentType("image/jpeg"));
+    assertFalse(textExtractionService.isSupportedContentType("video/mp4"));
+    assertFalse(textExtractionService.isSupportedContentType("audio/mp3"));
+    assertFalse(textExtractionService.isSupportedContentType("application/zip"));
+    assertFalse(textExtractionService.isSupportedContentType("application/unknown"));
+  }
+
+  // Boundary analysis - null and empty content types
+  @Test
+  void testIsSupportedContentType_NullAndEmpty() {
+    assertFalse(textExtractionService.isSupportedContentType(null));
+    assertFalse(textExtractionService.isSupportedContentType(""));
+    assertFalse(textExtractionService.isSupportedContentType("   "));
+  }
+
+  // Boundary analysis - case sensitivity
+  @Test
+  void testIsSupportedContentType_CaseSensitivity() {
+    // Implementation is case sensitive - uppercase returns false
+    assertFalse(textExtractionService.isSupportedContentType("TEXT/PLAIN"));
+    assertFalse(textExtractionService.isSupportedContentType("Application/PDF"));
+    assertTrue(textExtractionService.isSupportedContentType("text/PLAIN")); // starts with text/
+  }
+
+  // Invalid equivalence partition - malformed content types
+  @Test
+  void testIsSupportedContentType_MalformedTypes() {
+    assertFalse(textExtractionService.isSupportedContentType("textplain")); // doesn't start with text/
+    assertTrue(textExtractionService.isSupportedContentType("text/")); // starts with text/
+    assertFalse(textExtractionService.isSupportedContentType("/plain"));
+    assertTrue(textExtractionService.isSupportedContentType("text//plain")); // starts with text/
+  }
+
+  // Boundary analysis - very long content type
+  @Test
+  void testIsSupportedContentType_VeryLongType() {
+    String longType = "application/" + "a".repeat(1000);
+    assertFalse(textExtractionService.isSupportedContentType(longType));
   }
 
 

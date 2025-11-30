@@ -77,6 +77,48 @@ class DocumentChunkingServiceTest {
     verify(documentChunkRepository).deleteByDocument(document);
   }
 
+  // Boundary analysis - exactly at chunk size limit
+  @Test
+  void testChunkDocument_ExactChunkSize() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setExtractedText("a".repeat(1000)); // Exactly 1000 chars
+
+    doNothing().when(documentChunkRepository).deleteByDocument(document);
+
+    List<DocumentChunk> result = chunkingService.chunkDocument(document);
+
+    assertEquals(1, result.size());
+    assertEquals(1000, result.get(0).getTextContent().length());
+  }
+
+  // Boundary analysis - minimum valid text (1 character)
+  @Test
+  void testChunkDocument_SingleCharacter() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setExtractedText("a");
+
+    doNothing().when(documentChunkRepository).deleteByDocument(document);
+
+    List<DocumentChunk> result = chunkingService.chunkDocument(document);
+
+    assertEquals(1, result.size());
+    assertEquals("a", result.get(0).getTextContent());
+  }
+
+  // Invalid equivalence partition - null extracted text
+  @Test
+  void testChunkDocument_NullExtractedText() {
+    Document document = new Document();
+    document.setId(1L);
+    document.setExtractedText(null);
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      chunkingService.chunkDocument(document);
+    });
+  }
+
   @Test
   void testChunkDocument_WithSentenceBreaking() {
     // Given
