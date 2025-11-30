@@ -300,4 +300,162 @@ class DocumentServiceTest {
 
     assertTrue(result.isEmpty());
   }
+
+  @Test
+  void testProcessDocument_TextExtractionFails() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testProcessDocument_NullExtractedText() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(null);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testProcessDocument_ChunkingFails() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Sample text content");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(List.of());
+
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testGetChunkStatistics_DocumentNotFound() {
+    when(documentRepository.findById(1L)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      documentService.getChunkStatistics(1L);
+    });
+  }
+
+  @Test
+  void testGenerateSummary_EmptyText() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("   ");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    assertThrows(RuntimeException.class, () -> {
+      documentService.processDocument(multipartFile);
+    });
+  }
+
+  @Test
+  void testGenerateSummary_ShortText() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Short text");
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent("Short text")
+        .build();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(List.of(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(List.of(chunk));
+
+    Document result = documentService.processDocument(multipartFile);
+    assertNotNull(result);
+  }
+
+  @Test
+  void testGenerateSummary_LongTextWithPeriod() throws Exception {
+    String longText = "This is a very long text that exceeds 200 characters. It contains multiple sentences and should be truncated at a sentence boundary. This sentence should be included in the summary because it ends with a period.";
+    
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent(longText)
+        .build();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(List.of(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(List.of(chunk));
+
+    Document result = documentService.processDocument(multipartFile);
+    assertNotNull(result);
+  }
+
+  @Test
+  void testGenerateSummary_LongTextNoPeriod() throws Exception {
+    String longText = "This is a very long text that exceeds 200 characters but has no period in the first 200 characters so it should be truncated with ellipsis instead of at sentence boundary because there is no suitable break point";
+    
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
+    when(multipartFile.getSize()).thenReturn(1024L);
+    when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
+    when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
+    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+
+    Document savedDocument = new Document();
+    savedDocument.setId(1L);
+    when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent(longText)
+        .build();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(List.of(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(List.of(chunk));
+
+    Document result = documentService.processDocument(multipartFile);
+    assertNotNull(result);
+  }
 }

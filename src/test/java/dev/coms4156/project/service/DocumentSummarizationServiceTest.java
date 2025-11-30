@@ -278,4 +278,24 @@ class DocumentSummarizationServiceTest {
     });
   }
 
+  // Test AI service failure
+  @Test
+  void testGenerateAiSummary_ServiceFailure() {
+    String text = "This is a long text that needs summarization and exceeds the minimum length requirement for processing by the AI service.";
+    
+    when(chatClient.prompt(any(String.class))).thenThrow(new RuntimeException("AI service unavailable"));
+
+    String result = summarizationService.generateAiSummary(text);
+    assertNotNull(result);
+    // Should fallback to simple summary
+  }
+
+  // Test null document in generateSummary
+  @Test
+  void testGenerateSummary_NullDocument() {
+    assertThrows(Exception.class, () -> {
+      summarizationService.generateSummary(null);
+    });
+  }
+
 }

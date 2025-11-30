@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -413,5 +415,145 @@ class SimpleEmbeddingServiceTest {
 
     assertNotNull(result);
     assertNotNull(result.getEmbedding());
+  }
+
+  // Test embedding service failure
+  @Test
+  void testGenerateEmbedding_ServiceFailure() {
+    Document doc = Document.builder().id(1L).build();
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .document(doc)
+        .textContent("Test content")
+        .build();
+
+    when(embeddingModel.call(any(EmbeddingRequest.class)))
+        .thenThrow(new RuntimeException("Service unavailable"));
+
+    assertThrows(RuntimeException.class, () -> {
+      embeddingService.generateEmbedding(chunk);
+    });
+  }
+
+  // Test getEmbeddingStatistics success
+  @Test
+  void testGetEmbeddingStatistics_Success() {
+    when(documentChunkRepository.count()).thenReturn(100L);
+    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(80L);
+
+    Map<String, Object> stats = embeddingService.getEmbeddingStatistics();
+
+    assertEquals(100L, stats.get("totalChunks"));
+    assertEquals(80L, stats.get("chunksWithEmbeddings"));
+    assertEquals(0.8, stats.get("embeddingCoverage"));
+    assertEquals("llama3.2", stats.get("model"));
+  }
+
+  // Test getEmbeddingStatistics with zero chunks
+  @Test
+  void testGetEmbeddingStatistics_ZeroChunks() {
+    when(documentChunkRepository.count()).thenReturn(0L);
+    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(0L);
+
+    Map<String, Object> stats = embeddingService.getEmbeddingStatistics();
+
+    assertEquals(0L, stats.get("totalChunks"));
+    assertEquals(0.0, stats.get("embeddingCoverage"));
+  }
+
+  // Test getEmbeddingStatistics with exception
+  @Test
+  void testGetEmbeddingStatistics_Exception() {
+    when(documentChunkRepository.count()).thenThrow(new RuntimeException("DB error"));
+
+    Map<String, Object> stats = embeddingService.getEmbeddingStatistics();
+
+    assertTrue(stats.containsKey("error"));
+  }
+
+  // Test findSimilarChunks with null query
+  @Test
+  void testFindSimilarChunks_NullQuery() {
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(null, 5);
+    assertEquals(0, result.size());
+  }
+
+  // Test findSimilarChunks with empty query
+  @Test
+  void testFindSimilarChunks_EmptyQuery() {
+    List<DocumentChunk> result = embeddingService.findSimilarChunks("", 5);
+    assertEquals(0, result.size());
+  }
+
+  // Test findSimilarChunks with whitespace query
+  @Test
+  void testFindSimilarChunks_WhitespaceQuery() {
+    List<DocumentChunk> result = embeddingService.findSimilarChunks("   ", 5);
+    assertEquals(0, result.size());
+  }
+
+  // Test findSimilarChunks success
+  @Test
+  void testFindSimilarChunks_Success() {
+    String query = "test query";
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent("Similar content")
+        .build();
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.findSimilarChunks(anyString(), any(Integer.class)))
+        .thenReturn(Arrays.asList(chunk));
+
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(query, 5);
+
+    assertEquals(1, result.size());
+    assertEquals("Similar content", result.get(0).getTextContent());
+  }
+
+  // Test findSimilarChunks with exception
+  @Test
+  void testFindSimilarChunks_Exception() {
+    when(embeddingModel.call(any(EmbeddingRequest.class)))
+        .thenThrow(new RuntimeException("Embedding failed"));
+
+    List<DocumentChunk> result = embeddingService.findSimilarChunks("test", 5);
+    assertEquals(0, result.size());
+  }
+
+  // Test generateEmbeddingsForDocument with no chunks
+  @Test
+  void testGenerateEmbeddingsForDocument_NoChunks() {
+    when(documentChunkRepository.findByDocumentIdAndEmbeddingIsNull(1L))
+        .thenReturn(new ArrayList<>());
+
+    int result = embeddingService.generateEmbeddingsForDocument(1L);
+    assertEquals(0, result);
+  }
+
+  // Test generateEmbeddingsForDocument success
+  @Test
+  void testGenerateEmbeddingsForDocument_Success() {
+    Document doc = Document.builder().id(1L).build();
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .document(doc)
+        .textContent("Test content")
+        .build();
+    
+    when(documentChunkRepository.findByDocumentIdAndEmbeddingIsNull(1L))
+        .thenReturn(Arrays.asList(chunk));
+    
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+
+    int result = embeddingService.generateEmbeddingsForDocument(1L);
+    assertEquals(1, result);
   }
 }

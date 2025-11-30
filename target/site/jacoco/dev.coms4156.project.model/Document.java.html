@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Document.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Knowledge Management Service</a> &gt; <a href="index.source.html" class="el_package">dev.coms4156.project.model</a> &gt; <span class="el_source">Document.java</span></div><h1>Document.java</h1><pre class="source lang-java linenums">package dev.coms4156.project.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,8 +10,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,57 +27,61 @@ import org.hibernate.annotations.UpdateTimestamp;
  */
 @Entity
 @Table(name = &quot;documents&quot;)
-<span class="pc bpc" id="L26" title="37 of 78 branches missed.">@Data</span>
-<span class="fc" id="L27">@NoArgsConstructor</span>
-<span class="fc" id="L28">@AllArgsConstructor</span>
-<span class="pc" id="L29">@Builder</span>
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Document {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-<span class="fc" id="L33">  private Long id;</span>
+  private Long id;
 
   @Column(name = &quot;filename&quot;, nullable = false)
-<span class="fc" id="L36">  private String filename;</span>
+  private String filename;
 
   @Column(name = &quot;content_type&quot;, nullable = false)
-<span class="fc" id="L39">  private String contentType;</span>
+  private String contentType;
 
   @Column(name = &quot;file_size&quot;)
-<span class="fc" id="L42">  private Long fileSize;</span>
+  private Long fileSize;
 
   @Lob
   @Column(name = &quot;extracted_text&quot;, columnDefinition = &quot;TEXT&quot;)
   @JsonIgnore
-<span class="fc" id="L47">  private String extractedText;</span>
+  private String extractedText;
 
   @Lob
   @Column(name = &quot;summary&quot;, columnDefinition = &quot;TEXT&quot;)
   @JsonIgnore
-<span class="fc" id="L52">  private String summary;</span>
+  private String summary;
 
-<span class="fc" id="L54">  @Enumerated(EnumType.STRING)</span>
+  @Enumerated(EnumType.STRING)
   @Column(name = &quot;processing_status&quot;, nullable = false)
-<span class="fc" id="L56">  private ProcessingStatus processingStatus = ProcessingStatus.UPLOADED;</span>
+  @Builder.Default
+  private ProcessingStatus processingStatus = ProcessingStatus.UPLOADED;
 
   @CreationTimestamp
   @Column(name = &quot;uploaded_at&quot;)
-<span class="fc" id="L60">  private LocalDateTime uploadedAt;</span>
+  private LocalDateTime uploadedAt;
 
   @UpdateTimestamp
   @Column(name = &quot;updated_at&quot;)
-<span class="fc" id="L64">  private LocalDateTime updatedAt;</span>
+  private LocalDateTime updatedAt;
+
+  @OneToMany(mappedBy = &quot;document&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List&lt;DocumentChunk&gt; chunks = new ArrayList&lt;&gt;();
 
   /**
    * Enum representing the processing status of a document.
    */
-<span class="fc" id="L69">  public enum ProcessingStatus {</span>
-<span class="fc" id="L70">    UPLOADED,</span>
-<span class="fc" id="L71">    TEXT_EXTRACTED,</span>
-<span class="fc" id="L72">    CHUNKED,</span>
-<span class="fc" id="L73">    EMBEDDINGS_GENERATED,</span>
-<span class="fc" id="L74">    SUMMARIZED,</span>
-<span class="fc" id="L75">    COMPLETED,</span>
-<span class="fc" id="L76">    FAILED</span>
+<span class="fc" id="L77">  public enum ProcessingStatus {</span>
+<span class="fc" id="L78">    UPLOADED,</span>
+<span class="fc" id="L79">    TEXT_EXTRACTED,</span>
+<span class="fc" id="L80">    CHUNKED,</span>
+<span class="fc" id="L81">    EMBEDDINGS_GENERATED,</span>
+<span class="fc" id="L82">    SUMMARIZED,</span>
+<span class="fc" id="L83">    COMPLETED,</span>
+<span class="fc" id="L84">    FAILED</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

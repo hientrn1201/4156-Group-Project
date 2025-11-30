@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * Uses existing document_chunks table for vector storage and retrieval.
  */
 <span class="fc" id="L16">@Slf4j</span>
-<span class="fc" id="L17">@RequiredArgsConstructor</span>
+@RequiredArgsConstructor
 @Service
 public class RagService {
 
@@ -81,25 +81,25 @@ public class RagService {
    * @return Map containing vector store statistics
    */
   public Map&lt;String, Object&gt; getVectorStoreStats() {
-<span class="nc" id="L84">    Map&lt;String, Object&gt; stats = new java.util.HashMap&lt;&gt;();</span>
+<span class="fc" id="L84">    Map&lt;String, Object&gt; stats = new java.util.HashMap&lt;&gt;();</span>
 
     try {
-<span class="nc" id="L87">      long totalChunks = documentChunkRepository.count();</span>
-<span class="nc" id="L88">      long chunksWithEmbeddings = documentChunkRepository.countByEmbeddingIsNotNull();</span>
+<span class="fc" id="L87">      long totalChunks = documentChunkRepository.count();</span>
+<span class="fc" id="L88">      long chunksWithEmbeddings = documentChunkRepository.countByEmbeddingIsNotNull();</span>
 
-<span class="nc" id="L90">      stats.put(&quot;status&quot;, &quot;active&quot;);</span>
-<span class="nc" id="L91">      stats.put(&quot;provider&quot;, &quot;DocumentChunks&quot;);</span>
-<span class="nc" id="L92">      stats.put(&quot;model&quot;, &quot;llama3.2&quot;);</span>
-<span class="nc" id="L93">      stats.put(&quot;dimensions&quot;, 3072);</span>
-<span class="nc" id="L94">      stats.put(&quot;totalChunks&quot;, totalChunks);</span>
-<span class="nc" id="L95">      stats.put(&quot;chunksWithEmbeddings&quot;, chunksWithEmbeddings);</span>
-<span class="nc" id="L96">      stats.put(&quot;embeddingCoverage&quot;,</span>
-<span class="nc bnc" id="L97" title="All 2 branches missed.">          totalChunks &gt; 0 ? (double) chunksWithEmbeddings / totalChunks : 0.0);</span>
-<span class="nc" id="L98">    } catch (Exception e) {</span>
-<span class="nc" id="L99">      stats.put(&quot;error&quot;, &quot;Failed to get vector store statistics: &quot; + e.getMessage());</span>
-<span class="nc" id="L100">    }</span>
+<span class="fc" id="L90">      stats.put(&quot;status&quot;, &quot;active&quot;);</span>
+<span class="fc" id="L91">      stats.put(&quot;provider&quot;, &quot;DocumentChunks&quot;);</span>
+<span class="fc" id="L92">      stats.put(&quot;model&quot;, &quot;llama3.2&quot;);</span>
+<span class="fc" id="L93">      stats.put(&quot;dimensions&quot;, 3072);</span>
+<span class="fc" id="L94">      stats.put(&quot;totalChunks&quot;, totalChunks);</span>
+<span class="fc" id="L95">      stats.put(&quot;chunksWithEmbeddings&quot;, chunksWithEmbeddings);</span>
+<span class="fc" id="L96">      stats.put(&quot;embeddingCoverage&quot;,</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">          totalChunks &gt; 0 ? (double) chunksWithEmbeddings / totalChunks : 0.0);</span>
+<span class="fc" id="L98">    } catch (Exception e) {</span>
+<span class="fc" id="L99">      stats.put(&quot;error&quot;, &quot;Failed to get vector store statistics: &quot; + e.getMessage());</span>
+<span class="fc" id="L100">    }</span>
 
-<span class="nc" id="L102">    return stats;</span>
+<span class="fc" id="L102">    return stats;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
