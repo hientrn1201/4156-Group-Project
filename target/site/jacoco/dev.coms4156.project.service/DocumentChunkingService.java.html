@@ -43,7 +43,7 @@ public class DocumentChunkingService {
   @Transactional
   public List&lt;DocumentChunk&gt; chunkDocument(Document document, Integer chunkSize,
                                            Integer overlapSize) {
-<span class="pc bpc" id="L46" title="1 of 4 branches missed.">    if (document == null || document.getExtractedText() == null</span>
+<span class="fc bfc" id="L46" title="All 4 branches covered.">    if (document == null || document.getExtractedText() == null</span>
 <span class="fc bfc" id="L47" title="All 2 branches covered.">        || document.getExtractedText().trim().isEmpty()) {</span>
 <span class="fc" id="L48">      throw new IllegalArgumentException(&quot;Document or extracted text cannot be null or empty&quot;);</span>
     }

@@ -507,4 +507,231 @@ class DocumentControllerTest {
     }
   }
 
+  // ===== ADDITIONAL BOUNDARY ANALYSIS AND EQUIVALENCE PARTITION TESTS =====
+
+  // Boundary analysis for upload - file size limits
+  @Test
+  void testUploadDocument_LargeFile() throws Exception {
+    MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(file.getOriginalFilename()).thenReturn("large.pdf");
+    when(file.getSize()).thenReturn(50L * 1024 * 1024); // 50MB
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+
+    when(documentService.processDocument(file))
+        .thenThrow(new IllegalArgumentException("File too large"));
+
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  // Invalid equivalence partition - unsupported file type
+  @Test
+  void testUploadDocument_UnsupportedFileType() throws Exception {
+    MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(file.getOriginalFilename()).thenReturn("image.jpg");
+    when(file.getContentType()).thenReturn("image/jpeg");
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+
+    when(documentService.processDocument(file))
+        .thenThrow(new IllegalArgumentException("Unsupported file type"));
+
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  // Boundary analysis - null filename
+  @Test
+  void testUploadDocument_NullFilename() throws Exception {
+    MultipartFile file = mock(MultipartFile.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(file.getOriginalFilename()).thenReturn(null);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+
+    when(documentService.processDocument(file))
+        .thenThrow(new IllegalArgumentException("Filename cannot be null"));
+
+    ResponseEntity<?> response = controller.uploadDocument(file, request);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  // Boundary analysis for document ID - negative ID
+  @Test
+  void testGetDocument_NegativeId() {
+    when(documentService.getDocumentById(-1L)).thenReturn(Optional.empty());
+    ResponseEntity<?> response = controller.getDocument(-1L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for document ID - zero ID
+  @Test
+  void testGetDocument_ZeroId() {
+    when(documentService.getDocumentById(0L)).thenReturn(Optional.empty());
+    ResponseEntity<?> response = controller.getDocument(0L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for document ID - maximum long value
+  @Test
+  void testGetDocument_MaxLongId() {
+    when(documentService.getDocumentById(Long.MAX_VALUE)).thenReturn(Optional.empty());
+    ResponseEntity<?> response = controller.getDocument(Long.MAX_VALUE);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for search - empty search text
+  @Test
+  void testSearchDocuments_EmptyText() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks("", 3)).thenReturn(List.of());
+
+    ResponseEntity<?> response = controller.searchDocuments("", request);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for search - very long search text
+  @Test
+  void testSearchDocuments_VeryLongText() {
+    String longText = "search ".repeat(1000);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks(longText, 3)).thenReturn(List.of());
+
+    ResponseEntity<?> response = controller.searchDocuments(longText, request);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for search - special characters
+  @Test
+  void testSearchDocuments_SpecialCharacters() {
+    String specialText = "@#$%^&*()_+-=[]{}|;':,.<>?/~`";
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks(specialText, 3)).thenReturn(List.of());
+
+    ResponseEntity<?> response = controller.searchDocuments(specialText, request);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for search - unicode characters
+  @Test
+  void testSearchDocuments_UnicodeCharacters() {
+    String unicodeText = "机器学习 русский язык";
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getHeader("X-Client-ID")).thenReturn(null);
+    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+    when(documentService.findSimilarChunks(unicodeText, 3)).thenReturn(List.of());
+
+    ResponseEntity<?> response = controller.searchDocuments(unicodeText, request);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for filename filter - null filename
+  @Test
+  void testGetAllDocuments_NullFilename() {
+    when(documentService.getAllDocuments()).thenReturn(List.of());
+    ResponseEntity<?> response = controller.getAllDocuments(null);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for filename filter - whitespace-only filename
+  @Test
+  void testGetAllDocuments_WhitespaceFilename() {
+    when(documentService.getAllDocuments()).thenReturn(List.of());
+    ResponseEntity<?> response = controller.getAllDocuments("   ");
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for filename filter - very long filename
+  @Test
+  void testGetAllDocuments_VeryLongFilename() {
+    String longFilename = "a".repeat(1000) + ".pdf";
+    when(documentService.getDocumentsByFilename(longFilename)).thenReturn(List.of());
+    ResponseEntity<?> response = controller.getAllDocuments(longFilename);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for delete - negative ID
+  @Test
+  void testDeleteDocument_NegativeId() {
+    when(documentService.getDocumentById(-1L)).thenReturn(Optional.empty());
+    ResponseEntity<?> response = controller.deleteDocument(-1L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for delete - zero ID
+  @Test
+  void testDeleteDocument_ZeroId() {
+    when(documentService.getDocumentById(0L)).thenReturn(Optional.empty());
+    ResponseEntity<?> response = controller.deleteDocument(0L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for summary - negative ID
+  @Test
+  void testGetDocumentSummary_NegativeId() {
+    when(summarizationService.getDocumentSummary(-1L)).thenReturn(null);
+    ResponseEntity<?> response = controller.getDocumentSummary(-1L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Boundary analysis for summary - zero ID
+  @Test
+  void testGetDocumentSummary_ZeroId() {
+    when(summarizationService.getDocumentSummary(0L)).thenReturn(null);
+    ResponseEntity<?> response = controller.getDocumentSummary(0L);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // Valid equivalence partition - summary with empty string
+  @Test
+  void testGetDocumentSummary_EmptyString() {
+    when(summarizationService.getDocumentSummary(1L)).thenReturn("");
+    ResponseEntity<?> response = controller.getDocumentSummary(1L);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  // Boundary analysis for relationships - negative ID
+  @Test
+  void testGetDocumentRelationships_NegativeId() {
+    ResponseEntity<?> response = controller.getDocumentRelationships(-1L);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    assertEquals(-1L, responseBody.getDocumentId());
+  }
+
+  // Boundary analysis for relationships - zero ID
+  @Test
+  void testGetDocumentRelationships_ZeroId() {
+    ResponseEntity<?> response = controller.getDocumentRelationships(0L);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    assertEquals(0L, responseBody.getDocumentId());
+  }
+
+  // Valid equivalence partition - documents with blank summaries
+  @Test
+  void testGetDocumentsWithSummaries_BlankSummaries() {
+    List<Document> all = List.of(
+        makeDoc(1L, "doc1", "t", 1L, Document.ProcessingStatus.COMPLETED, "valid summary"),
+        makeDoc(2L, "doc2", "t", 1L, Document.ProcessingStatus.COMPLETED, ""),
+        makeDoc(3L, "doc3", "t", 1L, Document.ProcessingStatus.COMPLETED, "   "),
+        makeDoc(4L, "doc4", "t", 1L, Document.ProcessingStatus.COMPLETED, null)
+    );
+    when(documentService.getAllDocuments()).thenReturn(all);
+
+    ResponseEntity<?> response = controller.getDocumentsWithSummaries();
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    DocumentListResponse body = (DocumentListResponse) response.getBody();
+    assertEquals(1L, body.getCount()); // Only doc1 has non-blank summary
+  }
+
 }

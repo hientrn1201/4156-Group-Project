@@ -92,4 +92,44 @@ class RagServiceTest {
         result.get(0).getTextContent());
   }
 
+  // Test getVectorStoreStats success
+  @Test
+  void testGetVectorStoreStats_Success() {
+    when(documentChunkRepository.count()).thenReturn(150L);
+    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(120L);
+
+    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+
+    assertEquals("active", stats.get("status"));
+    assertEquals("DocumentChunks", stats.get("provider"));
+    assertEquals("llama3.2", stats.get("model"));
+    assertEquals(3072, stats.get("dimensions"));
+    assertEquals(150L, stats.get("totalChunks"));
+    assertEquals(120L, stats.get("chunksWithEmbeddings"));
+    assertEquals(0.8, stats.get("embeddingCoverage"));
+  }
+
+  // Test getVectorStoreStats with zero chunks
+  @Test
+  void testGetVectorStoreStats_ZeroChunks() {
+    when(documentChunkRepository.count()).thenReturn(0L);
+    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(0L);
+
+    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+
+    assertEquals(0L, stats.get("totalChunks"));
+    assertEquals(0.0, stats.get("embeddingCoverage"));
+  }
+
+  // Test getVectorStoreStats with exception
+  @Test
+  void testGetVectorStoreStats_Exception() {
+    when(documentChunkRepository.count()).thenThrow(new RuntimeException("Database error"));
+
+    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+
+    org.junit.jupiter.api.Assertions.assertTrue(stats.containsKey("error"));
+    org.junit.jupiter.api.Assertions.assertTrue(stats.get("error").toString().contains("Failed to get vector store statistics"));
+  }
+
 }

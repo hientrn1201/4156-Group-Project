@@ -29,9 +29,9 @@ public class DocumentSummarizationService {
 <span class="fc" id="L29">    System.out.println(&quot;Generating summary for document: &quot; + document.getFilename());</span>
 
 <span class="fc" id="L31">    String text = document.getExtractedText();</span>
-<span class="pc bpc" id="L32" title="2 of 4 branches missed.">    if (text == null || text.trim().isEmpty()) {</span>
-<span class="nc" id="L33">      System.err.println(&quot;No text content available for summarization: &quot; + document.getId());</span>
-<span class="nc" id="L34">      return null;</span>
+<span class="fc bfc" id="L32" title="All 4 branches covered.">    if (text == null || text.trim().isEmpty()) {</span>
+<span class="fc" id="L33">      System.err.println(&quot;No text content available for summarization: &quot; + document.getId());</span>
+<span class="fc" id="L34">      return null;</span>
     }
 
     try {
@@ -64,13 +64,18 @@ public class DocumentSummarizationService {
 <span class="nc" id="L64">          .call()</span>
 <span class="nc" id="L65">          .content();</span>
 
-<span class="nc" id="L67">      System.out.println(&quot;Generated AI summary of length: &quot; + summary.length());</span>
-<span class="nc" id="L68">      return summary;</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">      if (summary == null) {</span>
+<span class="nc" id="L68">        System.err.println(&quot; returned null summary,using fallback&quot;);</span>
+<span class="nc" id="L69">        return generateSimpleSummary(text);</span>
+      }
 
-<span class="fc" id="L70">    } catch (Exception e) {</span>
-<span class="fc" id="L71">      System.err.println(&quot;Error generating AI summary: &quot; + e.getMessage());</span>
+<span class="nc" id="L72">      System.out.println(&quot;Generated AI summary of length: &quot; + summary.length());</span>
+<span class="nc" id="L73">      return summary;</span>
+
+<span class="fc" id="L75">    } catch (Exception e) {</span>
+<span class="fc" id="L76">      System.err.println(&quot;Error generating AI summary: &quot; + e.getMessage());</span>
       // Fallback to simple summary if AI fails
-<span class="fc" id="L73">      return generateSimpleSummary(text);</span>
+<span class="fc" id="L78">      return generateSimpleSummary(text);</span>
     }
   }
 
@@ -78,25 +83,25 @@ public class DocumentSummarizationService {
    * Generate a simple summary by extracting the first few sentences (fallback).
    */
   public String generateSimpleSummary(String text) {
-<span class="fc" id="L81">    System.out.println(&quot;Generating simple summary from text of length: &quot; + text.length());</span>
+<span class="fc" id="L86">    System.out.println(&quot;Generating simple summary from text of length: &quot; + text.length());</span>
 
     // Simple summarization: take first 200 characters
-<span class="pc bpc" id="L84" title="1 of 2 branches missed.">    if (text.length() &lt;= 200) {</span>
-<span class="fc" id="L85">      return text;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">    if (text.length() &lt;= 200) {</span>
+<span class="fc" id="L90">      return text;</span>
     }
 
-<span class="nc" id="L88">    String summary = text.substring(0, 200) + &quot;...&quot;;</span>
-<span class="nc" id="L89">    System.out.println(&quot;Generated summary of length: &quot; + summary.length());</span>
-<span class="nc" id="L90">    return summary;</span>
+<span class="fc" id="L93">    String summary = text.substring(0, 200) + &quot;...&quot;;</span>
+<span class="fc" id="L94">    System.out.println(&quot;Generated summary of length: &quot; + summary.length());</span>
+<span class="fc" id="L95">    return summary;</span>
   }
 
   /**
    * Get summary for a document.
    */
   public String getDocumentSummary(Long documentId) {
-<span class="fc" id="L97">    return documentRepository.findById(documentId)</span>
-<span class="fc" id="L98">        .map(Document::getSummary)</span>
-<span class="fc" id="L99">        .orElse(null);</span>
+<span class="fc" id="L102">    return documentRepository.findById(documentId)</span>
+<span class="fc" id="L103">        .map(Document::getSummary)</span>
+<span class="fc" id="L104">        .orElse(null);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
