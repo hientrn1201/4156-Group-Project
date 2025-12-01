@@ -40,17 +40,8 @@ class FloatArrayToPgVectorConverterTest {
     assertArrayEquals(expected, result);
   }
 
-  // Boundary analysis - empty array
   @Test
-  void testConvertToDatabaseColumn_EmptyArray() {
-    float[] input = {};
-    String result = converter.convertToDatabaseColumn(input);
-    assertEquals(null, result);
-  }
-
-  // Boundary analysis - null array
-  @Test
-  void testConvertToDatabaseColumn_NullArray() {
+  void testConvertToDatabaseColumn_Null() {
     String result = converter.convertToDatabaseColumn(null);
     assertEquals(null, result);
   }

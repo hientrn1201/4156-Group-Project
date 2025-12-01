@@ -18,6 +18,7 @@ import dev.coms4156.project.repository.DocumentChunkRepository;
 import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -314,24 +315,28 @@ class DocumentServiceTest {
     savedDocument.setId(1L);
     when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
 
+    // When & Then - should throw RuntimeException
     assertThrows(RuntimeException.class, () -> {
       documentService.processDocument(multipartFile);
     });
   }
 
   @Test
-  void testProcessDocument_NullExtractedText() throws Exception {
+  void testProcessDocument_EmptyChunks() throws Exception {
+    // Given - chunking returns empty list
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
     when(multipartFile.getSize()).thenReturn(1024L);
     when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
     when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
-    when(textExtractionService.extractText(multipartFile)).thenReturn(null);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Sample text");
 
     Document savedDocument = new Document();
     savedDocument.setId(1L);
     when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Collections.emptyList());
 
+    // When & Then - should throw RuntimeException
     assertThrows(RuntimeException.class, () -> {
       documentService.processDocument(multipartFile);
     });
@@ -396,21 +401,23 @@ class DocumentServiceTest {
     savedDocument.setId(1L);
     when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
 
-    DocumentChunk chunk = DocumentChunk.builder()
-        .id(1L)
-        .textContent("Short text")
-        .build();
-    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(List.of(chunk));
-    when(embeddingService.generateEmbeddings(anyList())).thenReturn(List.of(chunk));
+    DocumentChunk chunk = new DocumentChunk();
+    when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
+    when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
 
+    // When
     Document result = documentService.processDocument(multipartFile);
-    assertNotNull(result);
+
+    // Then - summary should be the cleaned text (no truncation for short text)
+    assertNotNull(result.getSummary());
+    assertTrue(result.getSummary().contains("Short text"));
   }
 
   @Test
-  void testGenerateSummary_LongTextWithPeriod() throws Exception {
-    String longText = "This is a very long text that exceeds 200 characters. It contains multiple sentences and should be truncated at a sentence boundary. This sentence should be included in the summary because it ends with a period.";
-    
+  void testGenerateSummary_LongText_PeriodAt100() throws Exception {
+    // Given - text longer than 200 chars with period exactly at position 100
+    String longText = "a".repeat(100) + ". " + "b".repeat(100);
+
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
     when(multipartFile.getSize()).thenReturn(1024L);

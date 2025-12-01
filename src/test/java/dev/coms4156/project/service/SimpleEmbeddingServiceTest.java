@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -351,31 +353,32 @@ class SimpleEmbeddingServiceTest {
     });
   }
 
-  // Boundary analysis - single character text
   @Test
-  void testGenerateEmbedding_SingleCharacter() {
+  void testGenerateOllamaEmbeddingArray_NullResults() {
+    // Given - embedding model returns null results
     Document doc = Document.builder().id(1L).build();
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
         .document(doc)
-        .textContent("a")
+        .chunkIndex(0)
+        .chunkSize(100)
+        .startPosition(0)
+        .endPosition(100)
+        .textContent("Test text")
         .build();
 
-    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
-    Embedding embedding = new Embedding(mockEmbedding, 0);
-    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
-
+    EmbeddingResponse mockResponse = new EmbeddingResponse(null);
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
 
-    DocumentChunk result = embeddingService.generateEmbedding(chunk);
-
-    assertNotNull(result);
-    assertNotNull(result.getEmbedding());
+    // When & Then - should throw RuntimeException
+    assertThrows(RuntimeException.class, () -> {
+      embeddingService.generateEmbedding(chunk);
+    });
   }
 
-  // Boundary analysis - very long text
   @Test
-  void testGenerateEmbedding_VeryLongText() {
+  void testGenerateOllamaEmbeddingArray_Exception() {
+    // Given - embedding model throws exception
     Document doc = Document.builder().id(1L).build();
     DocumentChunk chunk = DocumentChunk.builder()
         .id(1L)
@@ -551,9 +554,61 @@ class SimpleEmbeddingServiceTest {
     float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
     Embedding embedding = new Embedding(mockEmbedding, 0);
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
 
+    // When
     int result = embeddingService.generateEmbeddingsForDocument(1L);
+
+    // Then
     assertEquals(1, result);
+  }
+
+  @Test
+  void testFindSimilarChunks_ExceptionDuringSearch() {
+    // Given - exception during similarity search
+    String testQuery = "test query";
+    
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.findSimilarChunks(anyString(), anyInt()))
+        .thenThrow(new RuntimeException("Database error"));
+
+    // When - should catch exception and return empty list
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(testQuery, 5);
+
+    // Then
+    assertNotNull(result);
+    assertEquals(0, result.size());
+  }
+
+  @Test
+  void testCalculateSimilarity_DifferentLengthVectors() {
+    // Given - vectors with different lengths
+    // Note: calculateSimilarity catches exceptions and returns 0.0, so we test that behavior
+    float[] vec1 = {1.0f, 2.0f, 3.0f};
+    float[] vec2 = {1.0f, 2.0f};
+
+    // When - should catch IllegalArgumentException and return 0.0
+    double result = embeddingService.calculateSimilarity(vec1, vec2);
+
+    // Then - should return 0.0 (exception is caught internally)
+    assertEquals(0.0, result);
+  }
+
+  @Test
+  void testCalculateSimilarity_EmptyVectors() {
+    // Given - empty vectors
+    float[] vec1 = {};
+    float[] vec2 = {1.0f, 2.0f};
+
+    // When
+    double result = embeddingService.calculateSimilarity(vec1, vec2);
+
+    // Then - should return 0.0
+    assertEquals(0.0, result);
   }
 }

@@ -234,5 +234,64 @@ class DocumentTextExtractionServiceTest {
     assertFalse(textExtractionService.isSupportedContentType(longType));
   }
 
+  @Test
+  void testExtractText_WithTextCleaning() throws IOException, TikaException {
+    // Given - text with excessive whitespace and mixed line endings
+    String testContent = "Line 1\r\nLine 2\r\n\r\n\r\nLine 3    \t\t   Line 4";
+    InputStream inputStream = new ByteArrayInputStream(testContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
 
+    // When
+    String result = textExtractionService.extractText(multipartFile);
+
+    // Then - should be cleaned (normalized line breaks, reduced whitespace)
+    assertTrue(result.contains("Line 1"));
+    assertTrue(result.contains("Line 2"));
+    assertTrue(result.contains("Line 3"));
+    assertTrue(result.contains("Line 4"));
+  }
+
+  @Test
+  void testExtractText_EmptyText() throws IOException, TikaException {
+    // Given - empty content
+    String testContent = "   \n\n\r\n   ";
+    InputStream inputStream = new ByteArrayInputStream(testContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    // When
+    String result = textExtractionService.extractText(multipartFile);
+
+    // Then - should return empty string
+    assertEquals("", result);
+  }
+
+  @Test
+  void testIsSupportedContentType_AllSupportedTypes() {
+    // Test each supported content type individually to cover all branches
+    assertTrue(textExtractionService.isSupportedContentType("text/plain"));
+    assertTrue(textExtractionService.isSupportedContentType("text/html"));
+    assertTrue(textExtractionService.isSupportedContentType("text/xml"));
+    assertTrue(textExtractionService.isSupportedContentType("application/pdf"));
+    assertTrue(textExtractionService.isSupportedContentType("application/msword"));
+    assertTrue(textExtractionService.isSupportedContentType(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+    assertTrue(textExtractionService.isSupportedContentType("application/vnd.ms-excel"));
+    assertTrue(textExtractionService.isSupportedContentType(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+    assertTrue(textExtractionService.isSupportedContentType("application/vnd.ms-powerpoint"));
+    assertTrue(textExtractionService.isSupportedContentType(
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"));
+    assertTrue(textExtractionService.isSupportedContentType("application/rtf"));
+    assertTrue(textExtractionService.isSupportedContentType("application/xml"));
+  }
+
+  @Test
+  void testIsSupportedContentType_TextPrefix() {
+    // Test that any text/* type is supported
+    assertTrue(textExtractionService.isSupportedContentType("text/csv"));
+    assertTrue(textExtractionService.isSupportedContentType("text/markdown"));
+    assertTrue(textExtractionService.isSupportedContentType("text/javascript"));
+  }
 }

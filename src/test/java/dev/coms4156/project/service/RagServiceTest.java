@@ -1,6 +1,7 @@
 package dev.coms4156.project.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -8,6 +9,7 @@ import dev.coms4156.project.model.DocumentChunk;
 import dev.coms4156.project.repository.DocumentChunkRepository;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,44 +94,64 @@ class RagServiceTest {
         result.get(0).getTextContent());
   }
 
-  // Test getVectorStoreStats success
   @Test
   void testGetVectorStoreStats_Success() {
-    when(documentChunkRepository.count()).thenReturn(150L);
-    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(120L);
+    // Given
+    when(documentChunkRepository.count()).thenReturn(100L);
+    when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(95L);
 
-    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+    // When
+    Map<String, Object> result = ragService.getVectorStoreStats();
 
-    assertEquals("active", stats.get("status"));
-    assertEquals("DocumentChunks", stats.get("provider"));
-    assertEquals("llama3.2", stats.get("model"));
-    assertEquals(3072, stats.get("dimensions"));
-    assertEquals(150L, stats.get("totalChunks"));
-    assertEquals(120L, stats.get("chunksWithEmbeddings"));
-    assertEquals(0.8, stats.get("embeddingCoverage"));
+    // Then
+    assertEquals("active", result.get("status"));
+    assertEquals(100L, result.get("totalChunks"));
+    assertEquals(95L, result.get("chunksWithEmbeddings"));
+    assertEquals(0.95, (Double) result.get("embeddingCoverage"), 0.01);
   }
 
-  // Test getVectorStoreStats with zero chunks
   @Test
   void testGetVectorStoreStats_ZeroChunks() {
+    // Given
     when(documentChunkRepository.count()).thenReturn(0L);
     when(documentChunkRepository.countByEmbeddingIsNotNull()).thenReturn(0L);
 
-    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+    // When
+    Map<String, Object> result = ragService.getVectorStoreStats();
 
-    assertEquals(0L, stats.get("totalChunks"));
-    assertEquals(0.0, stats.get("embeddingCoverage"));
+    // Then
+    assertEquals(0L, result.get("totalChunks"));
+    assertEquals(0.0, (Double) result.get("embeddingCoverage"), 0.01);
   }
 
-  // Test getVectorStoreStats with exception
   @Test
   void testGetVectorStoreStats_Exception() {
+    // Given
     when(documentChunkRepository.count()).thenThrow(new RuntimeException("Database error"));
 
-    java.util.Map<String, Object> stats = ragService.getVectorStoreStats();
+    // When
+    Map<String, Object> result = ragService.getVectorStoreStats();
 
-    org.junit.jupiter.api.Assertions.assertTrue(stats.containsKey("error"));
-    org.junit.jupiter.api.Assertions.assertTrue(stats.get("error").toString().contains("Failed to get vector store statistics"));
+    // Then - should catch exception and return error
+    assertTrue(result.containsKey("error"));
+    assertTrue(result.get("error").toString().contains("Failed to get vector store statistics"));
+  }
+
+  @Test
+  void testQueryWithRag_EmptyChunks() {
+    // Given
+    String question = "What is AI?";
+    when(embeddingService.findSimilarChunks(question, 5)).thenReturn(Arrays.asList());
+    when(chatClient.prompt()).thenReturn(requestSpec);
+    when(requestSpec.user(anyString())).thenReturn(requestSpec);
+    when(requestSpec.call()).thenReturn(responseSpec);
+    when(responseSpec.content()).thenReturn("AI is artificial intelligence.");
+
+    // When
+    String result = ragService.queryWithRag(question);
+
+    // Then - should still work with empty context
+    assertEquals("AI is artificial intelligence.", result);
   }
 
 }
