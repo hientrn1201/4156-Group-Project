@@ -111,6 +111,7 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk1, chunk2);
 
     // When
     List<DocumentChunk> result = embeddingService.generateEmbeddings(chunks);

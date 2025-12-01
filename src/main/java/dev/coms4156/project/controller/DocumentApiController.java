@@ -4,6 +4,7 @@ import dev.coms4156.project.dtos.DocumentChunkDTO;
 import dev.coms4156.project.dtos.DocumentDTO;
 import dev.coms4156.project.dtos.DocumentListResponse;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipDTO;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
 import dev.coms4156.project.dtos.DocumentStatusCounts;
@@ -187,12 +188,16 @@ public class DocumentApiController {
     try {
       // For now, return empty relationships - this would be implemented with actual
       // relationship analysis
+      List<DocumentRelationshipDTO> relationships = documentService
+          .getRelationshipsForDocument(documentId).stream()
+          .map(DocumentRelationshipDTO::fromDocumentRelationship)
+          .toList();
 
       DocumentRelationshipInfoResponse response = new DocumentRelationshipInfoResponse(
           documentId,
-          List.of(),
-          0,
-          "Relationship analysis not yet implemented");
+          relationships,
+          relationships.size(),
+          "Successfully retrieved document relationships");
 
       return ResponseEntity.ok(response);
 

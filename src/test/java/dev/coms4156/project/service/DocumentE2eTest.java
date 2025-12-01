@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -110,6 +111,7 @@ class DocumentE2eTest {
 
     // Mock embedding service
     when(embeddingService.generateEmbeddings(anyList())).thenReturn(mockChunks);
+    when(embeddingService.calculateSimilarity(any(float[].class), any(float[].class))).thenReturn(0.9);
 
     // Note: DocumentService uses its own generateSummary() method, not
     // DocumentSummarizationService
@@ -249,6 +251,19 @@ class DocumentE2eTest {
     when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(mockChunk));
     when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(mockChunk));
     when(summarizationService.generateSummary(any(Document.class))).thenReturn("Test summary");
+    List<DocumentRelationship> mockRelationships = Arrays.asList(
+        DocumentRelationship.builder()
+            .sourceChunk(mockChunk)
+            .targetChunk(mockChunk)
+            .similarityScore(0.9)
+            .build(),
+        DocumentRelationship.builder()
+            .sourceChunk(mockChunk)
+            .targetChunk(mockChunk)
+            .similarityScore(0.8)
+            .build()
+    );
+    // when(documentService.createRelationshipsForSourceChunks(anyList())).thenReturn(mockRelationships);
 
     // When - Upload document (should be COMPLETED after processing)
     Document savedDoc = documentService.processDocument(mockFile);

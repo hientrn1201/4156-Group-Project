@@ -90,18 +90,19 @@ public class SimpleEmbeddingService {
           float[] embeddingArray = generateOllamaEmbeddingArray(chunk.getTextContent());
           String embeddingString = convertFloatArrayToVectorString(embeddingArray);
 
-          // Use native SQL to insert with proper vector casting
-          documentChunkRepository.insertChunkWithEmbedding(
-              chunk.getChunkIndex(),
-              chunk.getChunkSize(),
-              chunk.getDocument().getId(),
-              embeddingString,
-              chunk.getEndPosition(),
-              chunk.getStartPosition(),
-              chunk.getTextContent());
+          // // Use native SQL to insert with proper vector casting
+          // documentChunkRepository.insertChunkWithEmbedding(
+          //     chunk.getChunkIndex(),
+          //     chunk.getChunkSize(),
+          //     chunk.getDocument().getId(),
+          //     embeddingString,
+          //     chunk.getEndPosition(),
+          //     chunk.getStartPosition(),
+          //     chunk.getTextContent());
 
           // Set embedding on chunk for return value
           chunk.setEmbedding(embeddingArray);
+          chunk = documentChunkRepository.save(chunk);
           processedChunks.add(chunk);
         } catch (Exception e) {
           System.err
@@ -200,6 +201,36 @@ public class SimpleEmbeddingService {
     }
   }
 
+  public List<DocumentChunk> findRelatedChunks(DocumentChunk chunk, int limit) {
+    if (chunk == null || chunk.getEmbedding() == null
+        || chunk.getEmbedding().length == 0) {
+      return new ArrayList<>();
+    }
+
+    if (limit == 0) {
+      return new ArrayList<>();
+    }
+
+    try {
+      float[] queryEmbeddingArray = chunk.getEmbedding();
+      String queryEmbedding = convertFloatArrayToVectorString(queryEmbeddingArray);
+      System.out.println("Chunk query embedding preview: "
+          + queryEmbedding.substring(0, Math.min(50, queryEmbedding.length())) + "...");
+
+      System.out.println("Chunk document ID: " + chunk.getDocument().getId());
+
+      System.out.println("Finding related chunks for chunk ID: " + chunk.getId());
+
+      // Use PostgreSQL vector similarity search
+      List<DocumentChunk> results =
+          documentChunkRepository.findRelatedChunks(chunk.getDocument().getId(), queryEmbedding, limit);
+      System.out.println("Found " + results.size() + " related chunks");
+      return results;
+    } catch (Exception e) {
+      System.err.println("Failed to find related chunks: " + e.getMessage());
+      return new ArrayList<>();
+    }
+  }
 
   /**
    * Calculates the cosine similarity between two embedding vectors.

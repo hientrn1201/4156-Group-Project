@@ -2,6 +2,7 @@ package dev.coms4156.project.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import dev.coms4156.project.dtos.DocumentDTO;
 import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipDTO;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
@@ -23,6 +25,7 @@ import dev.coms4156.project.dtos.DocumentUploadResponse;
 import dev.coms4156.project.dtos.ErrorResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
 import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
@@ -30,6 +33,7 @@ import dev.coms4156.project.service.RagService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -191,6 +195,26 @@ class DocumentControllerTest {
     // Given
     Long documentId = 1L;
 
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent("Sample chunk")
+        .build();
+    DocumentRelationship relationship = DocumentRelationship.builder()
+        .sourceChunk(chunk)
+        .targetChunk(chunk)
+        .build();
+    DocumentRelationship relationship2 = DocumentRelationship.builder()
+        .sourceChunk(chunk)
+        .targetChunk(chunk)
+        .build();
+    List<DocumentRelationshipDTO> relationshipDTOs = Arrays.asList(
+        DocumentRelationshipDTO.fromDocumentRelationship(relationship),
+        DocumentRelationshipDTO.fromDocumentRelationship(relationship2)
+    );
+
+    when(documentService.getRelationshipsForDocument(documentId))
+        .thenReturn(Arrays.asList(relationship, relationship2));
+
     // When
     ResponseEntity<?> response = controller.getDocumentRelationships(documentId);
 
@@ -200,8 +224,9 @@ class DocumentControllerTest {
     DocumentRelationshipInfoResponse responseBody =
         (DocumentRelationshipInfoResponse) response.getBody();
     assertEquals(documentId, responseBody.getDocumentId());
-    assertEquals(0, responseBody.getCount());
-    assertEquals("Relationship analysis not yet implemented", responseBody.getMessage());
+    assertIterableEquals(relationshipDTOs, responseBody.getRelationships());
+    assertEquals(2, responseBody.getCount());
+    assertEquals("Successfully retrieved document relationships", responseBody.getMessage());
   }
 
   @Test

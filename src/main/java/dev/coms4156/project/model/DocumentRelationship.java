@@ -16,6 +16,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
@@ -51,6 +53,7 @@ public class DocumentRelationship {
   @Column(name = "confidence_score")
   private Double confidenceScore;
 
+  @ColumnTransformer(write = "?::jsonb")
   @Column(name = "metadata", columnDefinition = "JSONB")
   private String metadata;
 

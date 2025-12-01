@@ -88,6 +88,13 @@ class DocumentServiceTest {
         .build();
     when(chunkingService.chunkDocument(any(Document.class))).thenReturn(Arrays.asList(chunk));
     when(embeddingService.generateEmbeddings(anyList())).thenReturn(Arrays.asList(chunk));
+    DocumentRelationship relationship = DocumentRelationship.builder()
+        .id(1L)
+        .sourceChunk(chunk)
+        .targetChunk(chunk)
+        .similarityScore(0.9)
+        .build();
+    when(documentService.createRelationshipsForSourceChunks(anyList())).thenReturn(List.of(relationship));
 
     // When
     Document result = documentService.processDocument(multipartFile);

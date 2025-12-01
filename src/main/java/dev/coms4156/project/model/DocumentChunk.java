@@ -20,8 +20,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
+
+import org.hibernate.annotations.Type;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 /**
  * Entity representing a chunk of text from a document with embedding vector.
@@ -61,11 +68,14 @@ public class DocumentChunk {
   @Column(name = "end_position")
   private Integer endPosition;
 
+  @JdbcTypeCode(SqlTypes.VECTOR)
   @Column(name = "embedding", columnDefinition = "vector(3072)")
-  @Convert(converter = FloatArrayToPgVectorConverter.class)
+  @Type(JsonType.class)
+  // @Convert(converter = FloatArrayToPgVectorConverter.class)
   @JsonIgnore
   private float[] embedding;
 
+  @ColumnTransformer(write = "?::jsonb")
   @Column(name = "metadata", columnDefinition = "JSONB")
   private String metadata;
 
