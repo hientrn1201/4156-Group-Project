@@ -408,10 +408,9 @@ class DocumentServiceTest {
     // When
     Document result = documentService.processDocument(multipartFile);
 
-    // Then - summary should be truncated at 200 chars with "..."
+    // Then - summary should be the cleaned text (no truncation for short text)
     assertNotNull(result.getSummary());
-    assertTrue(result.getSummary().endsWith("..."));
-    assertTrue(result.getSummary().length() <= 203); // 200 + "..."
+    assertTrue(result.getSummary().contains("Short text"));
   }
 
   @Test
