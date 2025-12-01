@@ -17,7 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * Comprehensive API tests for AuthController covering valid/invalid equivalence partitions
+ * Comprehensive API tests for AuthController covering valid/invalid equivalence
+ * partitions
  * and boundary analysis for all authentication endpoints.
  */
 class ApiAuthControllerTest {
@@ -59,7 +60,8 @@ class ApiAuthControllerTest {
   // Invalid equivalence partition - user already exists
   @Test
   void testRegister_UserAlreadyExists() {
-    RegisterRequest request = new RegisterRequest("existinguser", "existing@example.com", "password123");
+    RegisterRequest request = new RegisterRequest(
+        "existinguser", "existing@example.com", "password123");
 
     when(authenticationService.register(any(RegisterRequest.class)))
         .thenThrow(new IllegalArgumentException("User already exists"));
@@ -167,9 +169,9 @@ class ApiAuthControllerTest {
   void testRegister_ValidEmailEdgeCases() {
     // Test various valid email formats
     String[] validEmails = {
-        "a@b.co",           // Minimum valid email
-        "test.email+tag@example.com",  // Email with plus and dot
-        "user123@domain-name.org"      // Email with numbers and hyphen
+        "a@b.co", // Minimum valid email
+        "test.email+tag@example.com", // Email with plus and dot
+        "user123@domain-name.org" // Email with numbers and hyphen
     };
 
     for (String email : validEmails) {

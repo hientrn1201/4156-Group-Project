@@ -18,11 +18,11 @@ import org.hibernate.Hibernate;
 @Data
 @AllArgsConstructor
 @Builder
-public class DocumentChunkDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
+public class DocumentChunkDto { // CHECKSTYLE.ON: AbbreviationAsWordInName
 
   private Long id;
 
-  private DocumentDTO document;
+  private DocumentDto document;
 
   private Integer chunkIndex;
 
@@ -45,45 +45,45 @@ public class DocumentChunkDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
 
   private LocalDateTime updatedAt;
 
-  private List<DocumentRelationshipDTO> sourceRelationships;
+  private List<DocumentRelationshipDto> sourceRelationships;
 
-  private List<DocumentRelationshipDTO> targetRelationships;
+  private List<DocumentRelationshipDto> targetRelationships;
 
   /**
-   * Converts a DocumentChunk entity to a DocumentChunkDTO.
+   * Converts a DocumentChunk entity to a DocumentChunkDto.
    * Safely handles lazy-loaded collections and relationships to avoid
    * LazyInitializationException.
    *
    * @param dc the DocumentChunk entity to convert
-   * @return the DocumentChunkDTO, or null if the input is null
+   * @return the DocumentChunkDto, or null if the input is null
    */
-  public static DocumentChunkDTO fromDocumentChunk(DocumentChunk dc) {
+  public static DocumentChunkDto fromDocumentChunk(DocumentChunk dc) {
     if (dc == null) {
       return null;
     }
 
     // Safely handle lazy-loaded collections - check if initialized before accessing
-    List<DocumentRelationshipDTO> sourceRelationships = null;
+    List<DocumentRelationshipDto> sourceRelationships = null;
     if (dc.getSourceRelationships() != null
         && Hibernate.isInitialized(dc.getSourceRelationships())) {
       sourceRelationships = dc.getSourceRelationships().stream()
-          .map(DocumentRelationshipDTO::fromDocumentRelationship).toList();
+          .map(DocumentRelationshipDto::fromDocumentRelationship).toList();
     }
 
-    List<DocumentRelationshipDTO> targetRelationships = null;
+    List<DocumentRelationshipDto> targetRelationships = null;
     if (dc.getTargetRelationships() != null
         && Hibernate.isInitialized(dc.getTargetRelationships())) {
       targetRelationships = dc.getTargetRelationships().stream()
-          .map(DocumentRelationshipDTO::fromDocumentRelationship).toList();
+          .map(DocumentRelationshipDto::fromDocumentRelationship).toList();
     }
 
     // Safely handle lazy-loaded document - check if initialized before accessing
-    DocumentDTO documentDto = null;
+    DocumentDto documentDto = null;
     if (dc.getDocument() != null && Hibernate.isInitialized(dc.getDocument())) {
-      documentDto = DocumentDTO.fromDocument(dc.getDocument());
+      documentDto = DocumentDto.fromDocument(dc.getDocument());
     }
 
-    return new DocumentChunkDTO(
+    return new DocumentChunkDto(
         dc.getId(),
         documentDto,
         dc.getChunkIndex(),

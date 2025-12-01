@@ -135,9 +135,8 @@ public class DocumentService {
       System.out.println("Step 4: Generating summary for document: " + document.getId());
       String summary = generateSummary(extractedText);
 
-      // Step 5: Generate relationships between chunks 
-      List<DocumentRelationship> relationships =  
-          createRelationshipsForSourceChunks(chunks);
+      // Step 5: Generate relationships between chunks
+      List<DocumentRelationship> relationships = createRelationshipsForSourceChunks(chunks);
       System.out.println("Created " + relationships.size() + " document relationships.");
 
       document.setSummary(summary);
@@ -316,20 +315,30 @@ public class DocumentService {
 
   /**
    * Retrieves all document relationships for a given document ID.
-   * @param documentId the ID of the document for which relationships are retrieved
+   *
+   * @param documentId the ID of the document for which relationships are
+   *                   retrieved
    * @return List of DocumentRelationship entities
    */
   public List<DocumentRelationship> getRelationshipsForDocument(Long documentId) {
     return documentRelationshipRepository.findByDocumentId(documentId);
   }
 
-  public List<DocumentRelationship> createRelationshipsForSourceChunks(List<DocumentChunk> sourceChunks) {
+  /**
+   * Creates document relationships for all chunks of a given document.
+   *
+   * @param sourceChunks the list of source document chunks
+   * @return List of created DocumentRelationship entities
+   */
+  public List<DocumentRelationship> createRelationshipsForSourceChunks(
+      List<DocumentChunk> sourceChunks) {
     List<DocumentRelationship> allRelationships = new ArrayList<>();
 
     for (DocumentChunk sourceChunk : sourceChunks) {
       List<DocumentChunk> targetChunks = embeddingService.findRelatedChunks(sourceChunk, 5);
 
-      List<DocumentRelationship> relationships = createRelationshipsFromChunks(sourceChunk, targetChunks);
+      List<DocumentRelationship> relationships = createRelationshipsFromChunks(
+          sourceChunk, targetChunks);
       allRelationships.addAll(relationships);
     }
 
@@ -344,23 +353,22 @@ public class DocumentService {
    *
    * @param source  the document chunk that the given targets are related to.
    * @param targets the chunks that we are linking with the source chunk.
-   * @throws IllegalArgumentException on null source or empty list of targets.
    * @return List of created document relationships
+   * @throws IllegalArgumentException on null source or empty list of targets.
    */
-  public List<DocumentRelationship> createRelationshipsFromChunks(DocumentChunk source, List<DocumentChunk> targets) {
+  public List<DocumentRelationship> createRelationshipsFromChunks(
+      DocumentChunk source,
+      List<DocumentChunk> targets) {
     if (source == null) {
       throw new IllegalArgumentException("Source chunk must not be null!");
     }
-
-    // if (targets.size() == 0) {
-    //   throw new IllegalArgumentException("Targets list cannot be empty!");
-    // }
 
     try {
       // Only supports SEMANTIC_SIMILARITY
       List<DocumentRelationship> results = new ArrayList<>();
       for (DocumentChunk target : targets) {
-        Double similarityScore = embeddingService.calculateSimilarity(source.getEmbedding(), target.getEmbedding());
+        Double similarityScore = embeddingService
+            .calculateSimilarity(source.getEmbedding(), target.getEmbedding());
 
         DocumentRelationship docRel = new DocumentRelationship();
         docRel.setSourceChunk(source);

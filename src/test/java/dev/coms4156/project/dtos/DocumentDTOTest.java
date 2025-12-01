@@ -8,7 +8,7 @@ import dev.coms4156.project.model.Document;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
-class DocumentDTOTest {
+class DocumentDtoTest {
 
   @Test
   void testFromDocument_ValidDocument() {
@@ -22,7 +22,7 @@ class DocumentDTOTest {
     doc.setUploadedAt(LocalDateTime.now());
     doc.setUpdatedAt(LocalDateTime.now());
 
-    DocumentDTO dto = DocumentDTO.fromDocument(doc);
+    DocumentDto dto = DocumentDto.fromDocument(doc);
 
     assertNotNull(dto);
     assertEquals(1L, dto.getId());
@@ -32,13 +32,13 @@ class DocumentDTOTest {
 
   @Test
   void testFromDocument_NullDocument() {
-    DocumentDTO dto = DocumentDTO.fromDocument(null);
+    DocumentDto dto = DocumentDto.fromDocument(null);
     assertNull(dto);
   }
 
   @Test
   void testBuilder() {
-    DocumentDTO dto = DocumentDTO.builder()
+    DocumentDto dto = DocumentDto.builder()
         .id(1L)
         .filename("test.pdf")
         .build();

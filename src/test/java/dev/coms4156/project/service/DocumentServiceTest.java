@@ -94,7 +94,8 @@ class DocumentServiceTest {
         .targetChunk(chunk)
         .similarityScore(0.9)
         .build();
-    when(documentService.createRelationshipsForSourceChunks(anyList())).thenReturn(List.of(relationship));
+    when(documentService.createRelationshipsForSourceChunks(anyList()))
+        .thenReturn(List.of(relationship));
 
     // When
     Document result = documentService.processDocument(multipartFile);
@@ -161,8 +162,8 @@ class DocumentServiceTest {
         .thenReturn(Arrays.asList(doc));
 
     // When
-    List<Document> result =
-        documentService.getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
+    List<Document> result = documentService
+        .getDocumentsByStatus(Document.ProcessingStatus.COMPLETED);
 
     // Then
     assertEquals(1, result.size());
@@ -449,8 +450,10 @@ class DocumentServiceTest {
 
   @Test
   void testGenerateSummary_LongTextNoPeriod() throws Exception {
-    String longText = "This is a very long text that exceeds 200 characters but has no period in the first 200 characters so it should be truncated with ellipsis instead of at sentence boundary because there is no suitable break point";
-    
+    String longText = "This is a very long text that exceeds 200 characters but has no period"
+        + " in the first 200 characters so it should be truncated with ellipsis instead of at"
+        + " sentence boundary because there is no suitable break point";
+
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getOriginalFilename()).thenReturn("test.pdf");
     when(multipartFile.getSize()).thenReturn(1024L);

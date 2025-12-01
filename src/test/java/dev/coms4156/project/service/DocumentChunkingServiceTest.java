@@ -229,8 +229,8 @@ class DocumentChunkingServiceTest {
   @Test
   void testChunkStatistics_Constructor() {
     // When
-    DocumentChunkingService.ChunkStatistics stats =
-        new DocumentChunkingService.ChunkStatistics(5, 1000, 200, 150, 250);
+    DocumentChunkingService.ChunkStatistics stats = new DocumentChunkingService.ChunkStatistics(
+        5, 1000, 200, 150, 250);
 
     // Then
     assertEquals(5, stats.getTotalChunks());
@@ -434,7 +434,8 @@ class DocumentChunkingServiceTest {
     // Given - normal case where startIndex advances properly
     Document document = new Document();
     document.setId(1L);
-    document.setExtractedText("This is a test document with multiple sentences. Here is another sentence. And one more.");
+    document.setExtractedText(
+        "This is a test document with multiple sentences. Here is another sentence. And one more.");
 
     doNothing().when(documentChunkRepository).deleteByDocument(document);
 
@@ -446,8 +447,7 @@ class DocumentChunkingServiceTest {
     // Verify chunks don't overlap incorrectly
     for (int i = 0; i < result.size() - 1; i++) {
       // Allow for overlap
-      assertTrue(result.get(i).getEndPosition() 
-          <= result.get(i + 1).getStartPosition() + 5);
+      assertTrue(result.get(i).getEndPosition() <= result.get(i + 1).getStartPosition() + 5);
     }
   }
 

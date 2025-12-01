@@ -20,7 +20,9 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -162,6 +164,7 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    when(documentChunkRepository.save(any(DocumentChunk.class))).thenReturn(chunk);
 
     List<DocumentChunk> result = embeddingService.generateEmbeddings(chunks);
 
@@ -188,6 +191,9 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
 
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+    Mockito.doAnswer(AdditionalAnswers.returnsElementsOf(chunks))
+        .when(documentChunkRepository)
+        .save(any(DocumentChunk.class));
 
     List<DocumentChunk> result = embeddingService.generateEmbeddings(chunks);
 
