@@ -234,6 +234,16 @@ class DocumentTextExtractionServiceTest {
     assertFalse(textExtractionService.isSupportedContentType(longType));
   }
 
+  @Test
+  void testExtractText_WithTextCleaning() throws IOException, TikaException {
+    // Given - text with excessive whitespace and mixed line endings
+    String testContent = "Line 1\r\nLine 2\r\n\r\n\r\nLine 3    \t\t   Line 4";
+    InputStream inputStream = new ByteArrayInputStream(testContent.getBytes());
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getInputStream()).thenReturn(inputStream);
+
+    // When
+    String result = textExtractionService.extractText(multipartFile);
 
     // Then - should be cleaned (normalized line breaks, reduced whitespace)
     assertTrue(result.contains("Line 1"));

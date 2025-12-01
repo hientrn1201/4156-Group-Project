@@ -395,7 +395,7 @@ class DocumentServiceTest {
     when(multipartFile.getSize()).thenReturn(1024L);
     when(textExtractionService.detectContentType(multipartFile)).thenReturn("application/pdf");
     when(textExtractionService.isSupportedContentType("application/pdf")).thenReturn(true);
-    when(textExtractionService.extractText(multipartFile)).thenReturn(longText);
+    when(textExtractionService.extractText(multipartFile)).thenReturn("Short text");
 
     Document savedDocument = new Document();
     savedDocument.setId(1L);

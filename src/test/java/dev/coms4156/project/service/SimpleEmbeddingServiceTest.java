@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -555,11 +556,29 @@ class SimpleEmbeddingServiceTest {
     EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
     
     when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
+
+    // When
+    int result = embeddingService.generateEmbeddingsForDocument(1L);
+
+    // Then
+    assertEquals(1, result);
+  }
+
+  @Test
+  void testFindSimilarChunks_ExceptionDuringSearch() {
+    // Given - exception during similarity search
+    String testQuery = "test query";
+    
+    float[] mockEmbedding = {0.1f, 0.2f, 0.3f};
+    Embedding embedding = new Embedding(mockEmbedding, 0);
+    EmbeddingResponse mockResponse = new EmbeddingResponse(Arrays.asList(embedding));
+    
+    when(embeddingModel.call(any(EmbeddingRequest.class))).thenReturn(mockResponse);
     when(documentChunkRepository.findSimilarChunks(anyString(), anyInt()))
         .thenThrow(new RuntimeException("Database error"));
 
     // When - should catch exception and return empty list
-    List<DocumentChunk> result = embeddingService.findSimilarChunks(query, 5);
+    List<DocumentChunk> result = embeddingService.findSimilarChunks(testQuery, 5);
 
     // Then
     assertNotNull(result);
