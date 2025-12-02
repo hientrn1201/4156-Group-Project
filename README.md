@@ -396,17 +396,15 @@ A Python client is provided in the `client/` directory for easy API interaction.
 
 ### Client Setup
 
+**IMPORTANT: Make sure the service is running first!**
+
 1. **Navigate to client directory:**
 ```bash
 cd client
 ```
 
-2. **Set up authentication:**
+2. **Get a JWT token by registering a user:**
 ```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Register a user and get a JWT token
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -414,12 +412,16 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
     "email": "test@example.com",
     "password": "password123"
   }'
-
-# Copy the token from the response and add it to .env file
-# Edit .env and replace 'your-jwt-token-here' with your actual token
 ```
 
-3. **Use the client:**
+3. **Set up authentication:**
+```bash
+# Edit client/.env and replace YOUR_JWT_TOKEN_HERE with the actual token from step 2
+# Example: JWT_TOKEN=eyJhbGciOiJIUzUxMiJ9...
+# DO NOT include quotes around the token
+```
+
+5. **Use the client:**
 ```bash
 # Test connection
 python client.py welcome
@@ -555,6 +557,23 @@ To run all tests from the terminal:
 
 ```bash
 mvn clean test
+```
+
+### End-to-End Testing
+
+Comprehensive end-to-end testing documentation and tools are available:
+
+- **E2E_TESTING_CHECKLIST.md**: Complete checklist covering all API endpoints, error scenarios, and edge cases (80+ test scenarios)
+- **Automated Test Runner**: `./run_e2e_tests.sh` - Executes comprehensive API testing
+- **Manual Testing**: Individual test scripts in `client/` directory
+
+```bash
+# Run comprehensive end-to-end tests
+chmod +x run_e2e_tests.sh
+./run_e2e_tests.sh
+
+# Or run individual client tests
+python3 client/e2e_test_runner.py
 ```
 
 ### Style Checking
