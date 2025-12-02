@@ -15,7 +15,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @Builder
-public class DocumentRelationshipDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
+public class DocumentRelationshipDto { // CHECKSTYLE.ON: AbbreviationAsWordInName
   private Long id;
 
   private Long sourceChunkId;
@@ -33,17 +33,17 @@ public class DocumentRelationshipDTO { // CHECKSTYLE.ON: AbbreviationAsWordInNam
   private LocalDateTime createdAt;
 
   /**
-   * Converts a DocumentRelationship entity to a DocumentRelationshipDTO.
+   * Converts a DocumentRelationship entity to a DocumentRelationshipDto.
    *
    * @param dr the DocumentRelationship entity to convert
-   * @return the DocumentRelationshipDTO, or null if the input is null
+   * @return the DocumentRelationshipDto, or null if the input is null
    */
-  public static DocumentRelationshipDTO fromDocumentRelationship(DocumentRelationship dr) {
+  public static DocumentRelationshipDto fromDocumentRelationship(DocumentRelationship dr) {
     if (dr == null) {
       return null;
     }
 
-    return new DocumentRelationshipDTO(
+    return new DocumentRelationshipDto(
         dr.getId(),
         dr.getSourceChunk().getId(),
         dr.getTargetChunk().getId(),

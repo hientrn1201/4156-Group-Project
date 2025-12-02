@@ -16,7 +16,7 @@ public class DocumentRelationshipInfoResponse {
   private Long documentId;
 
   // TODO: change this to some real relationship object
-  private List<DocumentRelationshipDTO> relationships;
+  private List<DocumentRelationshipDto> relationships;
 
   private Integer count;
 

@@ -1,8 +1,9 @@
 package dev.coms4156.project.controller;
 
-import dev.coms4156.project.dtos.DocumentChunkDTO;
-import dev.coms4156.project.dtos.DocumentDTO;
+import dev.coms4156.project.dtos.DocumentChunkDto;
+import dev.coms4156.project.dtos.DocumentDto;
 import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipDto;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
@@ -141,7 +142,7 @@ public class DocumentApiController {
   @GetMapping("/documents/{id}")
   @ApiResponses({
       @ApiResponse(responseCode = "200",
-          content = @Content(schema = @Schema(implementation = DocumentDTO.class))),
+          content = @Content(schema = @Schema(implementation = DocumentDto.class))),
       @ApiResponse(responseCode = "404"),
       @ApiResponse(responseCode = "500",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -153,7 +154,7 @@ public class DocumentApiController {
       if (document.isPresent()) {
         Document doc = document.get();
 
-        DocumentDTO response = DocumentDTO.fromDocument(doc);
+        DocumentDto response = DocumentDto.fromDocument(doc);
 
         return ResponseEntity.ok(response);
       } else {
@@ -187,12 +188,16 @@ public class DocumentApiController {
     try {
       // For now, return empty relationships - this would be implemented with actual
       // relationship analysis
+      List<DocumentRelationshipDto> relationships = documentService
+          .getRelationshipsForDocument(documentId).stream()
+          .map(DocumentRelationshipDto::fromDocumentRelationship)
+          .toList();
 
       DocumentRelationshipInfoResponse response = new DocumentRelationshipInfoResponse(
           documentId,
-          List.of(),
-          0,
-          "Relationship analysis not yet implemented");
+          relationships,
+          relationships.size(),
+          "Successfully retrieved document relationships");
 
       return ResponseEntity.ok(response);
 
@@ -267,7 +272,7 @@ public class DocumentApiController {
 
       DocumentSearchResponse response = new DocumentSearchResponse(
           text,
-          similarChunks.stream().map(DocumentChunkDTO::fromDocumentChunk).toList(),
+          similarChunks.stream().map(DocumentChunkDto::fromDocumentChunk).toList(),
           similarChunks.size(),
           "Search completed successfully");
 
@@ -310,8 +315,8 @@ public class DocumentApiController {
         documents = documentService.getDocumentsByFilename(filename);
       }
 
-      List<DocumentDTO> docsDto = documents.stream()
-          .map(DocumentDTO::fromDocument)
+      List<DocumentDto> docsDto = documents.stream()
+          .map(DocumentDto::fromDocument)
           .toList();
 
       DocumentListResponse response = new DocumentListResponse(
@@ -373,7 +378,7 @@ public class DocumentApiController {
     }
 
     DocumentListResponse response = new DocumentListResponse(
-        documents.stream().map(DocumentDTO::fromDocument).toList(),
+        documents.stream().map(DocumentDto::fromDocument).toList(),
         (long) documents.size(),
         "Documents with summaries retrieved successfully");
 

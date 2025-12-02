@@ -1,10 +1,9 @@
 package dev.coms4156.project.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import dev.coms4156.project.converter.FloatArrayToPgVectorConverter;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,8 +19,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Entity representing a chunk of text from a document with embedding vector.
@@ -61,11 +64,13 @@ public class DocumentChunk {
   @Column(name = "end_position")
   private Integer endPosition;
 
+  @JdbcTypeCode(SqlTypes.VECTOR)
   @Column(name = "embedding", columnDefinition = "vector(3072)")
-  @Convert(converter = FloatArrayToPgVectorConverter.class)
+  @Type(JsonType.class)
   @JsonIgnore
   private float[] embedding;
 
+  @ColumnTransformer(write = "?::jsonb")
   @Column(name = "metadata", columnDefinition = "JSONB")
   private String metadata;
 

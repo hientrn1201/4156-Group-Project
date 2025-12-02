@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-class DocumentChunkDTOTest {
+class DocumentChunkDtoTest {
 
   @Test
   void testFromDocumentChunk_ValidChunk() {
@@ -35,7 +35,7 @@ class DocumentChunkDTOTest {
       hibernateMock.when(() -> Hibernate.isInitialized(doc)).thenReturn(true);
       hibernateMock.when(() -> Hibernate.isInitialized(new ArrayList<>())).thenReturn(true);
 
-      DocumentChunkDTO dto = DocumentChunkDTO.fromDocumentChunk(chunk);
+      DocumentChunkDto dto = DocumentChunkDto.fromDocumentChunk(chunk);
 
       assertNotNull(dto);
       assertEquals(1L, dto.getId());
@@ -45,7 +45,7 @@ class DocumentChunkDTOTest {
 
   @Test
   void testFromDocumentChunk_NullChunk() {
-    DocumentChunkDTO dto = DocumentChunkDTO.fromDocumentChunk(null);
+    DocumentChunkDto dto = DocumentChunkDto.fromDocumentChunk(null);
     assertNull(dto);
   }
 
@@ -62,7 +62,7 @@ class DocumentChunkDTOTest {
     try (MockedStatic<Hibernate> hibernateMock = Mockito.mockStatic(Hibernate.class)) {
       hibernateMock.when(() -> Hibernate.isInitialized(new ArrayList<>())).thenReturn(false);
 
-      DocumentChunkDTO dto = DocumentChunkDTO.fromDocumentChunk(chunk);
+      DocumentChunkDto dto = DocumentChunkDto.fromDocumentChunk(chunk);
 
       assertNotNull(dto);
       assertNull(dto.getSourceRelationships());
@@ -72,7 +72,7 @@ class DocumentChunkDTOTest {
 
   @Test
   void testBuilder() {
-    DocumentChunkDTO dto = DocumentChunkDTO.builder()
+    DocumentChunkDto dto = DocumentChunkDto.builder()
         .id(1L)
         .textContent("Test")
         .build();

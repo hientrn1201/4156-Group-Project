@@ -15,7 +15,7 @@ import lombok.Data;
 public class DocumentSearchResponse {
   private String query;
 
-  private List<DocumentChunkDTO> results;
+  private List<DocumentChunkDto> results;
 
   private Integer count;
 

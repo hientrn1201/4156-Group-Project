@@ -3,7 +3,6 @@ package dev.coms4156.project.config;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;

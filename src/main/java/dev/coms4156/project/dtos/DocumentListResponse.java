@@ -13,7 +13,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class DocumentListResponse {
-  private List<DocumentDTO> documents;
+  private List<DocumentDto> documents;
 
   private Long count;
 

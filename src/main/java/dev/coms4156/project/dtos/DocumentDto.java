@@ -15,7 +15,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @Builder
-public class DocumentDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
+public class DocumentDto { // CHECKSTYLE.ON: AbbreviationAsWordInName
   private Long id;
 
   private String filename;
@@ -33,18 +33,18 @@ public class DocumentDTO { // CHECKSTYLE.ON: AbbreviationAsWordInName
   private LocalDateTime updatedAt;
 
   /**
-   * Converts a Document entity to a DocumentDTO.
+   * Converts a Document entity to a DocumentDto.
    *
    * @param doc the Document entity to convert
-   * @return the DocumentDTO, or null if the input is null
+   * @return the DocumentDto, or null if the input is null
    */
-  public static DocumentDTO fromDocument(Document doc) {
+  public static DocumentDto fromDocument(Document doc) {
 
     if (doc == null) {
       return null;
     }
 
-    return new DocumentDTO(
+    return new DocumentDto(
         doc.getId(),
         doc.getFilename(),
         doc.getContentType(),

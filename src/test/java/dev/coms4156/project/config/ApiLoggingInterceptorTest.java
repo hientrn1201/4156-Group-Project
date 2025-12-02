@@ -378,6 +378,8 @@ class ApiLoggingInterceptorTest {
     for (int i = 0; i < 1100; i++) {
       longBody.append("b");
     }
+    when(wrapper.getStatus()).thenReturn(200);
+    when(wrapper.getContentAsByteArray()).thenReturn(longBody.toString().getBytes());
     
     when(request.getAttribute("startTime")).thenReturn(System.currentTimeMillis() - 100);
     when(request.getAttribute("requestId")).thenReturn("test-id");
@@ -385,8 +387,6 @@ class ApiLoggingInterceptorTest {
     when(request.getMethod()).thenReturn("GET");
     when(request.getRequestURI()).thenReturn("/api/v1/documents");
     when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-    when(wrapper.getStatus()).thenReturn(200);
-    when(wrapper.getContentAsByteArray()).thenReturn(longBody.toString().getBytes());
     when(apiLoggingService.getClientId(anyString(), anyString())).thenReturn("client-123");
 
     interceptor.afterCompletion(request, wrapper, null, null);
