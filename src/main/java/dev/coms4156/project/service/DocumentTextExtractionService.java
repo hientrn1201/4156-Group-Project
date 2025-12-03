@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Service for extracting text content from various document formats using Apache Tika.
+ * Service for extracting text content from various document formats using
+ * Apache Tika.
  */
 @Service
 public class DocumentTextExtractionService {
@@ -82,7 +83,7 @@ public class DocumentTextExtractionService {
    * @return Cleaned text
    */
   private String cleanExtractedText(String rawText) {
-    if (rawText == null || rawText.trim().isEmpty()) {
+    if (rawText == null || rawText.isBlank()) {
       return "";
     }
 
@@ -107,19 +108,20 @@ public class DocumentTextExtractionService {
     }
 
     // Common supported document types
-    return contentType.startsWith("text/") || contentType.equals("application/pdf")
-        || contentType.equals("application/msword")
-        || contentType.equals(
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        || contentType.equals("application/vnd.ms-excel")
-        || contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        || contentType.equals("application/vnd.ms-powerpoint")
-        || contentType.equals(
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation")
-        || contentType.equals("application/rtf")
-        || contentType.equals("text/plain")
-        || contentType.equals("text/html")
-        || contentType.equals("text/xml")
-        || contentType.equals("application/xml");
+    return contentType.startsWith("text/") || "application/pdf".equals(contentType)
+        || "application/msword".equals(contentType)
+        || "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            .equals(contentType)
+        || "application/vnd.ms-excel".equals(contentType)
+        || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            .equals(contentType)
+        || "application/vnd.ms-powerpoint".equals(contentType)
+        || "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            .equals(contentType)
+        || "application/rtf".equals(contentType)
+        || "text/plain".equals(contentType)
+        || "text/html".equals(contentType)
+        || "text/xml".equals(contentType)
+        || "application/xml".equals(contentType);
   }
 }

@@ -2,6 +2,8 @@ package dev.coms4156.project.service;
 
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.repository.DocumentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,11 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DocumentSummarizationService {
 
+  private static final Logger logger = LoggerFactory.getLogger(DocumentSummarizationService.class);
+
   private final DocumentRepository documentRepository;
   private final ChatClient chatClient;
 
   public DocumentSummarizationService(DocumentRepository documentRepository,
-                                      ChatClient chatClient) {
+      ChatClient chatClient) {
     this.documentRepository = documentRepository;
     this.chatClient = chatClient;
   }
@@ -26,11 +30,11 @@ public class DocumentSummarizationService {
    */
   @Transactional
   public String generateSummary(Document document) {
-    System.out.println("Generating summary for document: " + document.getFilename());
+    logger.info("Generating summary for document: {}", document.getFilename());
 
     String text = document.getExtractedText();
-    if (text == null || text.trim().isEmpty()) {
-      System.err.println("No text content available for summarization: " + document.getId());
+    if (text == null || text.isBlank()) {
+      logger.warn("No text content available for summarization: {}", document.getId());
       return null;
     }
 
@@ -41,13 +45,13 @@ public class DocumentSummarizationService {
       document.setSummary(summary);
       documentRepository.save(document);
 
-      System.out.println("Successfully generated summary for document: " + document.getFilename());
+      logger.info("Successfully generated summary for document: {}", document.getFilename());
       return summary;
 
     } catch (Exception e) {
-      System.err.println(
-          "Error generating summary for document " + document.getId() + ": " + e.getMessage());
-      throw new RuntimeException("Failed to generate summary", e);
+      logger.error("Error generating summary for document {}: {}", document.getId(),
+          e.getMessage(), e);
+      throw new IllegalStateException("Failed to generate summary", e);
     }
   }
 
@@ -55,7 +59,7 @@ public class DocumentSummarizationService {
    * Generate an AI-powered summary using Ollama.
    */
   public String generateAiSummary(String text) {
-    System.out.println("Generating AI summary from text of length: " + text.length());
+    logger.debug("Generating AI summary from text of length: {}", text.length());
 
     try {
       // Use Ollama to generate a real AI summary
@@ -65,15 +69,15 @@ public class DocumentSummarizationService {
           .content();
 
       if (summary == null) {
-        System.err.println(" returned null summary,using fallback");
+        logger.warn("AI returned null summary, using fallback");
         return generateSimpleSummary(text);
       }
 
-      System.out.println("Generated AI summary of length: " + summary.length());
+      logger.debug("Generated AI summary of length: {}", summary.length());
       return summary;
 
     } catch (Exception e) {
-      System.err.println("Error generating AI summary: " + e.getMessage());
+      logger.error("Error generating AI summary: {}", e.getMessage(), e);
       // Fallback to simple summary if AI fails
       return generateSimpleSummary(text);
     }
@@ -83,7 +87,7 @@ public class DocumentSummarizationService {
    * Generate a simple summary by extracting the first few sentences (fallback).
    */
   public String generateSimpleSummary(String text) {
-    System.out.println("Generating simple summary from text of length: " + text.length());
+    logger.debug("Generating simple summary from text of length: {}", text.length());
 
     // Simple summarization: take first 200 characters
     if (text.length() <= 200) {
@@ -91,7 +95,7 @@ public class DocumentSummarizationService {
     }
 
     String summary = text.substring(0, 200) + "...";
-    System.out.println("Generated summary of length: " + summary.length());
+    logger.debug("Generated summary of length: {}", summary.length());
     return summary;
   }
 

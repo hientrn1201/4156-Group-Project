@@ -67,8 +67,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-                               DocumentSummarizationService summarizationService,
-                               RagService ragService) {
+      DocumentSummarizationService summarizationService,
+      RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -88,7 +88,7 @@ public class DocumentApiController {
           content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
   })
   public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file,
-                                          HttpServletRequest request) {
+      HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -162,7 +162,7 @@ public class DocumentApiController {
       }
 
     } catch (Exception e) {
-      System.err.println("Error retrieving document " + id + ": " + e.getMessage());
+      logger.error("Error retrieving document {}: {}", id, e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to retrieve document");
 
@@ -177,10 +177,7 @@ public class DocumentApiController {
   @GetMapping("/relationships/{documentId}")
   @ApiResponses({
       @ApiResponse(responseCode = "200",
-          content = @Content(
-              schema = @Schema(implementation = DocumentRelationshipInfoResponse.class)
-          )
-      ),
+          content = @Content(schema = @Schema(implementation = DocumentRelationshipInfoResponse.class))),
       @ApiResponse(responseCode = "500",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
@@ -202,7 +199,7 @@ public class DocumentApiController {
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      System.err.println("Error getting document relationships: " + e.getMessage());
+      logger.error("Error getting document relationships: {}", e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to get document relationships");
 
@@ -237,7 +234,7 @@ public class DocumentApiController {
       }
 
     } catch (Exception e) {
-      System.err.println("Error retrieving summary for document " + id + ": " + e.getMessage());
+      logger.error("Error retrieving summary for document {}: {}", id, e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to retrieve summary");
 
@@ -257,7 +254,7 @@ public class DocumentApiController {
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> searchDocuments(@PathVariable String text,
-                                           HttpServletRequest request) {
+      HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -309,7 +306,7 @@ public class DocumentApiController {
 
     try {
       List<Document> documents;
-      if (filename == null || filename.trim().isEmpty()) {
+      if (filename == null || filename.isBlank()) {
         documents = documentService.getAllDocuments();
       } else {
         documents = documentService.getDocumentsByFilename(filename);
@@ -327,7 +324,7 @@ public class DocumentApiController {
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      System.err.println("Error retrieving documents: " + e.getMessage());
+      logger.error("Error retrieving documents: {}", e.getMessage(), e);
       ErrorResponse error = new ErrorResponse("Failed to retrieve documents");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
