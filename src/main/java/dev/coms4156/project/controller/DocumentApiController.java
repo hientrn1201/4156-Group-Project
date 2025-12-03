@@ -67,8 +67,8 @@ public class DocumentApiController {
    * @param ragService           The RAG service
    */
   public DocumentApiController(DocumentService documentService,
-      DocumentSummarizationService summarizationService,
-      RagService ragService) {
+                               DocumentSummarizationService summarizationService,
+                               RagService ragService) {
     this.documentService = documentService;
     this.summarizationService = summarizationService;
     this.ragService = ragService;
@@ -88,7 +88,7 @@ public class DocumentApiController {
           content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
   })
   public ResponseEntity<?> uploadDocument(@RequestParam("file") MultipartFile file,
-      HttpServletRequest request) {
+                                          HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -177,7 +177,8 @@ public class DocumentApiController {
   @GetMapping("/relationships/{documentId}")
   @ApiResponses({
       @ApiResponse(responseCode = "200",
-          content = @Content(schema = @Schema(implementation = DocumentRelationshipInfoResponse.class))),
+          content = @Content(schema =
+          @Schema(implementation = DocumentRelationshipInfoResponse.class))),
       @ApiResponse(responseCode = "500",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
@@ -254,7 +255,7 @@ public class DocumentApiController {
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<?> searchDocuments(@PathVariable String text,
-      HttpServletRequest request) {
+                                           HttpServletRequest request) {
     String requestId = apiLoggingService.generateRequestId();
     String clientId = apiLoggingService.getClientId(
         request.getHeader("X-Client-ID"),
@@ -351,7 +352,9 @@ public class DocumentApiController {
     }
     documentService.deleteDocument(id);
 
-    return ResponseEntity.ok(Map.of("documentId", id, "message", "Document deleted successfully"));
+    return ResponseEntity.ok(
+        Map.of("documentId", id, "message", "Document deleted successfully")
+    );
   }
 
   /**
