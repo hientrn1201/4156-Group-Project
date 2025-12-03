@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
  * request details, response status, and timing information.
  */
 @Service
+@SuppressWarnings("PMD.MoreThanOneLogger")
 public class ApiLoggingService {
 
   private static final Logger logger = LoggerFactory.getLogger(ApiLoggingService.class);

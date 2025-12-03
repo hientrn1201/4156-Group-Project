@@ -271,13 +271,12 @@
           <printFailingErrors>true</printFailingErrors>
           <verbose>true</verbose>
           <linkXRef>false</linkXRef>
-          <minimumPriority>5</minimumPriority>
+          <minimumPriority>1</minimumPriority>
+          <excludeRoots>
+            <excludeRoot>target/generated-sources</excludeRoot>
+          </excludeRoots>
           <rulesets>
-            <ruleset>rulesets/java/maven-pmd-plugin-default.xml</ruleset>
-            <ruleset>category/java/performance.xml</ruleset>
-            <ruleset>category/java/bestpractices.xml</ruleset>
-            <ruleset>category/java/errorprone.xml</ruleset>
-            <ruleset>category/java/design.xml</ruleset>
+            <ruleset>${project.basedir}/pmd-ruleset.xml</ruleset>
           </rulesets>
         </configuration>
         <executions>
