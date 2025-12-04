@@ -110,7 +110,7 @@ postman_collection json is in the project root.
 
 documentation log:
 
-https://documenter.getpostman.com/view/48798844/2sB3Wjy3kr
+https://documenter.getpostman.com/view/48798844/2sB3dPRVKF
 
 ## API Endpoints
 
@@ -689,6 +689,18 @@ Run this:
 
 ![Style check](reports/checkstyle.png)
 
+### Bug Check
+
+Implemented PMD and Spotbugs for more strict checks
+
+**First bug check :**
+
+![bug check](reports/spotbugs-before.png)
+
+**Second FIXED bug check:**
+
+![bug check](reports/spotbugs-after.png)
+
 ### Coverage Analysis
 
 An existing coverage report can be viewed by opening `target/site/jacoco/index.html` in the browser, however if you would like to re-generate it, run the following command:
@@ -701,7 +713,7 @@ mvn test jacoco:report
 
 ![pmd report](reports/coverage.png)
 
-This repository achieves 58% branch coverage (exceeds 55% requirement).
+This repository achieves 85% branch coverage.
 
 ### Test Files
 
@@ -739,7 +751,7 @@ This repository achieves 58% branch coverage (exceeds 55% requirement).
 - **Testing**: JUnit 5, Mockito, Spring Boot Test
 - **Coverage**: JaCoCo
 - **Style Checking**: Style Checking:Checkstyle with Google Java Style
-- **Static Analysis**: PMD
+- **Static Analysis**: PMD, Spotbugs
 ## CI/CD Pipeline
 
 This project includes an automated CI pipeline that runs on pushes and pull requests to the main branch.
@@ -748,7 +760,7 @@ This project includes an automated CI pipeline that runs on pushes and pull requ
 
 1. **Builds the project** with Java 17 and Maven
 2. **Runs unit tests** against PostgreSQL with PGVector (skips tests that require Ollama)
-3. **Runs quality checks** Checkstyle, PMD, JaCoCo coverage
+3. **Runs quality checks** Checkstyle, PMD, JaCoCo coverage, SpotBugs
 4. **Generates artifacts** (test results, coverage reports, application JAR)
 
 ### Pipeline Triggers
@@ -777,6 +789,10 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 - https://docs.spring.io/spring-data/jpa/docs/1.6.0.RELEASE/reference/html/jpa.repositories.html
 - https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html
 - https://docs.spring.io/spring-ai/reference/api/ollama.html
+- https://github.com/spotbugs/spotbugs/issues/1251 
+- https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html
+- https://projectlombok.org/features/EqualsAndHashCode 
+- https://docs.jboss.org/hibernate/orm/current/introduction/html_single/Hibernate_Introduction.html 
 
 ## AI usage documentation
 
@@ -820,3 +836,9 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
   We used it to help with Spring AI implementations and errors associated when building out.
 
   Prompt: I got this error [long error log] when retrieve relevant text using RAG
+
+- **Help with getting test documents that have relationship semantically**
+
+Reason : just to have data for the demo and show that the functions are working
+
+Prompt : give me a few documents that have semantic similarity related to ML

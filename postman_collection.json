@@ -1,273 +1,1181 @@
 {
-  "info": {
-    "name": "Endpoint check",
-    "description": "All endpoints checks in Controllers",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    {
-      "key": "documentId",
-      "value": "1"
-    },
-    {
-      "key": "searchText",
-      "value": "machine learning"
-    }
-  ],
-  "item": [
-    {
-      "name": "System",
-      "item": [
-        {
-          "name": "welcome(GET /api)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Documents",
-      "item": [
-        {
-          "name": "Upload Document (POST /api/v1/documents)",
-          "request": {
-            "method": "POST",
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            },
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List ddocuments (GET /api/v1/documents)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "try {",
-                  "  const arr = pm.response.json();",
-                  "  if (Array.isArray(arr) && arr.length) {",
-                  "    const id = arr[0].id || arr[0].documentId;",
-                  "    if (id) pm.collectionVariables.set('documentId', String(id));",
-                  "  }",
-                  "} catch(e) {}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Document by the ID(GET /api/v1/documents/{id})",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/{{documentId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "{{documentId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Document Summars(GET /api/v1/documents/{id}/summary)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/{{documentId}}/summary",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "{{documentId}}",
-                "summary"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Document Chunks(GET /api/v1/documents/{id}/chunks)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/{{documentId}}/chunks",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "{{documentId}}",
-                "chunks"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Documents with Summaries(GET /api/v1/documents/summaries)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/summaries",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "summaries"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Processing Statisticss(GET /api/v1/documents/stats)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/stats",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "stats"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Relationships(GET /api/v1/relationships/{documentId})",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/relationships/{{documentId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "relationships",
-                "{{documentId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Search (GET /api/v1/search/{text})",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/search/{{searchText}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "search",
-                "{{searchText}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Document(DELETE /api/v1/documents/{id})",
-          "request": {
-            "method": "DELETE",
-            "url": {
-              "raw": "http://localhost:8080/api/v1/documents/{{documentId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "{{documentId}}"
-              ]
-            }
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "ce7bbc43-8b90-4c81-9a2b-b0440bd65823",
+		"name": "Knowledge Management Service API",
+		"description": "updated API collection for the AI Knowledge Management Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48798844",
+		"_collection_link": "https://cn2673-5961040.postman.co/workspace/fc658dc2-b56d-4c0f-8b11-8bbac595a249/collection/48798844-ce7bbc43-8b90-4c81-9a2b-b0440bd65823?action=share&source=collection_link&creator=48798844"
+	},
+	"item": [
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "Welcome",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}",
+							"host": [
+								"{{base_url}}"
+							]
+						},
+						"description": "Get welcome message from the API"
+					},
+					"response": [
+						{
+							"name": "Welcome",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "54"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:51:36 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "Welcome to Knowledge Management Service Powered by AI!"
+						}
+					]
+				}
+			],
+			"description": "System endpoints"
+		},
+		{
+			"name": "Documents",
+			"item": [
+				{
+					"name": "Upload Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.documentId) {",
+									"        pm.collectionVariables.set('documentId', String(response.documentId));",
+									"        console.log('Document ID saved:', response.documentId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents"
+							]
+						},
+						"description": "Upload a document for processing. Supports PDF, DOC, DOCX, TXT, HTML, PPT, PPTX, RTF, ODT, ODP formats."
+					},
+					"response": [
+						{
+							"name": "Upload Document",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "/Users/chrisng/Downloads/03-natural-language-processing.txt"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "152"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:40:25 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"documentId\": 7,\n    \"filename\": \"03-natural-language-processing.txt\",\n    \"processingStatus\": \"COMPLETED\",\n    \"message\": \"Document uploaded and processed successfully\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List All Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"try {",
+									"    const response = pm.response.json();",
+									"    if (response.documents && Array.isArray(response.documents) && response.documents.length > 0) {",
+									"        const firstDoc = response.documents[0];",
+									"        const id = firstDoc.id || firstDoc.documentId;",
+									"        if (id) {",
+									"            pm.collectionVariables.set('documentId', String(id));",
+									"            console.log('Document ID saved:', id);",
+									"        }",
+									"    }",
+									"} catch(e) {",
+									"    console.log('Error parsing response:', e);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents"
+							]
+						},
+						"description": "Retrieve all documents"
+					},
+					"response": [
+						{
+							"name": "List All Documents",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1341"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:47:17 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"documents\": [\n        {\n            \"id\": 5,\n            \"filename\": \"01-machine-learning-introduction.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 2200,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Machine Learning: An Introduction Machine Learning (ML) is a subset of artificial intelligence that focuses on building systems that can learn from and make decisions based on data.\",\n            \"uploadedAt\": \"2025-12-04T21:38:16.789968\",\n            \"updatedAt\": \"2025-12-04T21:38:43.662451\"\n        },\n        {\n            \"id\": 6,\n            \"filename\": \"02-deep-learning-neural-networks.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 3598,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Deep Learning: Advanced Neural Networks Deep Learning is a specialized subset of machine learning that uses artificial neural networks with multiple layers (deep neural networks) to learn hierarchical...\",\n            \"uploadedAt\": \"2025-12-04T21:39:01.259023\",\n            \"updatedAt\": \"2025-12-04T21:39:31.45965\"\n        },\n        {\n            \"id\": 7,\n            \"filename\": \"03-natural-language-processing.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 4985,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Natural Language Processing: Understanding Human Language Natural Language Processing (NLP) is a branch of artificial intelligence that focuses on enabling computers to understand, interpret, and gene...\",\n            \"uploadedAt\": \"2025-12-04T21:39:40.227774\",\n            \"updatedAt\": \"2025-12-04T21:40:25.788378\"\n        }\n    ],\n    \"count\": 3,\n    \"message\": \"Documents retrieved successfully\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Document by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents/{{documentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents",
+								"{{documentId}}"
+							]
+						},
+						"description": "Retrieve a specific document by its ID"
+					},
+					"response": [
+						{
+							"name": "Get Document by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents/1",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"1"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "409"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:45:40 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 5,\n    \"filename\": \"01-machine-learning-introduction.txt\",\n    \"contentType\": \"text/plain\",\n    \"fileSize\": 2200,\n    \"processingStatus\": \"COMPLETED\",\n    \"summary\": \"Machine Learning: An Introduction Machine Learning (ML) is a subset of artificial intelligence that focuses on building systems that can learn from and make decisions based on data.\",\n    \"uploadedAt\": \"2025-12-04T21:38:16.789968\",\n    \"updatedAt\": \"2025-12-04T21:38:43.662451\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Document Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents/{{documentId}}/summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents",
+								"{{documentId}}",
+								"summary"
+							]
+						},
+						"description": "Retrieve the AI-generated summary for a document"
+					},
+					"response": [
+						{
+							"name": "Get Document Summary",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents/1/summary",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"1",
+										"summary"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "210"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:45:26 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"documentId\": 5,\n    \"summary\": \"Machine Learning: An Introduction Machine Learning (ML) is a subset of artificial intelligence that focuses on building systems that can learn from and make decisions based on data.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Documents with Summaries",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents/summaries",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents",
+								"summaries"
+							]
+						},
+						"description": "Retrieve all documents that have summaries generated"
+					},
+					"response": [
+						{
+							"name": "Get Documents with Summaries",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents/summaries",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"summaries"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1356"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:44:55 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"documents\": [\n        {\n            \"id\": 5,\n            \"filename\": \"01-machine-learning-introduction.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 2200,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Machine Learning: An Introduction Machine Learning (ML) is a subset of artificial intelligence that focuses on building systems that can learn from and make decisions based on data.\",\n            \"uploadedAt\": \"2025-12-04T21:38:16.789968\",\n            \"updatedAt\": \"2025-12-04T21:38:43.662451\"\n        },\n        {\n            \"id\": 6,\n            \"filename\": \"02-deep-learning-neural-networks.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 3598,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Deep Learning: Advanced Neural Networks Deep Learning is a specialized subset of machine learning that uses artificial neural networks with multiple layers (deep neural networks) to learn hierarchical...\",\n            \"uploadedAt\": \"2025-12-04T21:39:01.259023\",\n            \"updatedAt\": \"2025-12-04T21:39:31.45965\"\n        },\n        {\n            \"id\": 7,\n            \"filename\": \"03-natural-language-processing.txt\",\n            \"contentType\": \"text/plain\",\n            \"fileSize\": 4985,\n            \"processingStatus\": \"COMPLETED\",\n            \"summary\": \"Natural Language Processing: Understanding Human Language Natural Language Processing (NLP) is a branch of artificial intelligence that focuses on enabling computers to understand, interpret, and gene...\",\n            \"uploadedAt\": \"2025-12-04T21:39:40.227774\",\n            \"updatedAt\": \"2025-12-04T21:40:25.788378\"\n        }\n    ],\n    \"count\": 3,\n    \"message\": \"Documents with summaries retrieved successfully\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Processing Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents",
+								"stats"
+							]
+						},
+						"description": "Get processing statistics for all documents including counts by status and completion rates"
+					},
+					"response": [
+						{
+							"name": "Get Processing Statistics",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents/stats",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"stats"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "170"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:43:32 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"total\": 4,\n    \"byStatus\": {\n        \"uploaded\": 0,\n        \"textExtracted\": 0,\n        \"chunked\": 0,\n        \"embeddingsGenerated\": 0,\n        \"summarized\": 0,\n        \"completed\": 4,\n        \"failed\": 0\n    },\n    \"completionRate\": 1,\n    \"failureRate\": 0\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Document Relationships",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/relationships/{{documentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"relationships",
+								"{{documentId}}"
+							]
+						},
+						"description": "Retrieve related documents (knowledge graph edges) for a specific document"
+					},
+					"response": [
+						{
+							"name": "Get Document Relationships",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/relationships/1",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"relationships",
+										"1"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "5878"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:40:45 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"documentId\": 5,\n    \"relationships\": [\n        {\n            \"id\": 8,\n            \"sourceChunkId\": 17,\n            \"targetChunkId\": 14,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.5496875860456376,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:38:43.641483\"\n        },\n        {\n            \"id\": 7,\n            \"sourceChunkId\": 16,\n            \"targetChunkId\": 14,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.5511130766316741,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:38:43.598742\"\n        },\n        {\n            \"id\": 6,\n            \"sourceChunkId\": 15,\n            \"targetChunkId\": 14,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.2593211789036406,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:38:43.521417\"\n        },\n        {\n            \"id\": 40,\n            \"sourceChunkId\": 25,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.04704096701500479,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.488374\"\n        },\n        {\n            \"id\": 25,\n            \"sourceChunkId\": 22,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.37460451235771675,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.128704\"\n        },\n        {\n            \"id\": 24,\n            \"sourceChunkId\": 21,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.33360879197494336,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.424388\"\n        },\n        {\n            \"id\": 20,\n            \"sourceChunkId\": 20,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.38293613587586245,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.346371\"\n        },\n        {\n            \"id\": 15,\n            \"sourceChunkId\": 19,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.10971484330831846,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.265796\"\n        },\n        {\n            \"id\": 12,\n            \"sourceChunkId\": 18,\n            \"targetChunkId\": 15,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.3723320648563251,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.184491\"\n        },\n        {\n            \"id\": 51,\n            \"sourceChunkId\": 27,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.34153341104806006,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.729517\"\n        },\n        {\n            \"id\": 45,\n            \"sourceChunkId\": 26,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.2726030910307064,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.612693\"\n        },\n        {\n            \"id\": 43,\n            \"sourceChunkId\": 25,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.008642599120515883,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.496815\"\n        },\n        {\n            \"id\": 35,\n            \"sourceChunkId\": 24,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.17460392389832705,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.370437\"\n        },\n        {\n            \"id\": 30,\n            \"sourceChunkId\": 23,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.29206778447617465,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.247087\"\n        },\n        {\n            \"id\": 26,\n            \"sourceChunkId\": 22,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.3643149595505576,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.132487\"\n        },\n        {\n            \"id\": 22,\n            \"sourceChunkId\": 21,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.6987036807763379,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.418205\"\n        },\n        {\n            \"id\": 17,\n            \"sourceChunkId\": 20,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.6483768709688134,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.336654\"\n        },\n        {\n            \"id\": 13,\n            \"sourceChunkId\": 19,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.17201565778070335,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.2586\"\n        },\n        {\n            \"id\": 9,\n            \"sourceChunkId\": 18,\n            \"targetChunkId\": 16,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.5284792424157879,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.172828\"\n        },\n        {\n            \"id\": 50,\n            \"sourceChunkId\": 27,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.3588898626919879,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.72679\"\n        },\n        {\n            \"id\": 46,\n            \"sourceChunkId\": 26,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.25206996643156704,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.61581\"\n        },\n        {\n            \"id\": 38,\n            \"sourceChunkId\": 24,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.1503792975593767,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.380061\"\n        },\n        {\n            \"id\": 31,\n            \"sourceChunkId\": 23,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.2599385661052532,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.250855\"\n        },\n        {\n            \"id\": 29,\n            \"sourceChunkId\": 22,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.27655666454513317,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:40:25.144279\"\n        },\n        {\n            \"id\": 21,\n            \"sourceChunkId\": 21,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.7804870973685296,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.414897\"\n        },\n        {\n            \"id\": 18,\n            \"sourceChunkId\": 20,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.5390200240804518,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.339819\"\n        },\n        {\n            \"id\": 14,\n            \"sourceChunkId\": 19,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.16121605352976368,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.262024\"\n        },\n        {\n            \"id\": 11,\n            \"sourceChunkId\": 18,\n            \"targetChunkId\": 17,\n            \"relationshipType\": \"SEMANTIC_SIMILARITY\",\n            \"similarityScore\": 0.42664305126060265,\n            \"confidenceScore\": null,\n            \"metadata\": null,\n            \"createdAt\": \"2025-12-04T21:39:31.180105\"\n        }\n    ],\n    \"count\": 28,\n    \"message\": \"Successfully retrieved document relationships\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/documents/{{documentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"documents",
+								"{{documentId}}"
+							]
+						},
+						"description": "Delete a document by its ID"
+					},
+					"response": [
+						{
+							"name": "Delete Document",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsInVzZXJJZCI6MSwic3ViIjoiam9uIiwiaWF0IjoxNzY0ODgwNjAwLCJleHAiOjE3NjQ5NjcwMDB9.e8I-vO4dS-6AawvcEAt_YpHesCBP5bDnCoJZeBss8Dr-V_a0ZbF9g5Do5cbAmnv7VxEPQ2U2Y7ON0I3g7ynjNQ",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://34.69.247.43:8080/api/v1/documents/1",
+									"protocol": "http",
+									"host": [
+										"34",
+										"69",
+										"247",
+										"43"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"documents",
+										"1"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "58"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 04 Dec 2025 21:44:39 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Document deleted successfully\",\n    \"documentId\": 4\n}"
+						}
+					]
+				}
+			],
+			"description": "Document management endpoints"
+		},
+		{
+			"name": "Search",
+			"item": [
+				{
+					"name": "Semantic Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/search/{{searchText}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"search",
+								"{{searchText}}"
+							]
+						},
+						"description": "Retrieve top 3 relevant document chunks based on text input using AI-powered semantic search"
+					},
+					"response": []
+				},
+				{
+					"name": "Search - Custom Query",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/search/artificial intelligence",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"search",
+								"artificial intelligence"
+							]
+						},
+						"description": "Search with a custom query. Replace the text in the URL with your search query."
+					},
+					"response": []
+				}
+			],
+			"description": "Semantic search operations"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://34.69.247.43:8080/api",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "documentId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "searchText",
+			"value": "machine learning",
+			"type": "string"
+		}
+	]
 }
