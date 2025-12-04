@@ -561,20 +561,118 @@ mvn clean test
 
 ### End-to-End Testing
 
-Comprehensive end-to-end testing documentation and tools are available:
+We provide comprehensive end-to-end testing that exercises the full functionality clients need from our service. These tests verify that clients can successfully upload documents, have them processed with AI, search through them semantically, and manage their document collections.
 
-- **E2E_TESTING_CHECKLIST.md**: Complete checklist covering all API endpoints, error scenarios, and edge cases (80+ test scenarios)
-- **Automated Test Runner**: `./run_e2e_tests.sh` - Executes comprehensive API testing
-- **Manual Testing**: Individual test scripts in `client/` directory
+#### Automated End-to-End Tests
 
+Our automated tests run the complete client workflow without manual intervention:
+
+**Option 1: Full Test Suite**
 ```bash
-# Run comprehensive end-to-end tests
+# Run comprehensive automated tests
 chmod +x run_e2e_tests.sh
 ./run_e2e_tests.sh
-
-# Or run individual client tests
-python3 client/e2e_test_runner.py
 ```
+
+This script automatically:
+- Verifies all services are running
+- Tests authentication flows
+- Uploads sample documents
+- Tests search functionality
+- Verifies document management operations
+- Cleans up test data
+
+**Option 2: Python Client Tests**
+```bash
+cd client
+python3 e2e_test_runner.py
+```
+
+**Option 3: Multi-Client Testing**
+```bash
+cd client
+python3 demo_multiple_clients.py
+```
+
+#### Manual End-to-End Testing
+
+For detailed testing and troubleshooting, we provide manual test procedures in `E2E_TESTING_CHECKLIST.md`. These tests can be run step-by-step to verify specific functionality:
+
+**Core Client Workflow Test:**
+
+1. **Get Authentication Token**
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testclient", "email": "test@example.com", "password": "test123"}' \
+  | jq -r '.token')
+```
+
+2. **Upload Documents for Processing**
+```bash
+# Upload a research document
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@research-paper.pdf"
+
+# Upload meeting notes
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@meeting-notes.txt"
+```
+
+3. **Wait for AI Processing**
+```bash
+# Check processing status
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/stats
+```
+
+4. **Search Through Documents**
+```bash
+# Search for specific information
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/project%20timeline"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/research%20findings"
+```
+
+5. **Get AI-Generated Summaries**
+```bash
+# Retrieve document summaries
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/summaries
+```
+
+**Expected Results:**
+- Authentication returns valid JWT tokens
+- Document uploads return 200 OK with document IDs
+- Processing status progresses from UPLOADED to COMPLETED
+- Search queries return relevant document chunks
+- Summaries are generated for processed documents
+- Multiple clients can operate independently
+
+**Manual Test Scenarios:**
+
+The complete manual testing checklist covers:
+- Authentication flows (registration, login, error cases)
+- Document upload (various formats, error handling)
+- Document management (retrieval, deletion, statistics)
+- Semantic search (queries, special characters, no results)
+- Multi-client operations (concurrent access, client isolation)
+- Error handling (unauthorized access, invalid requests)
+- Performance testing (large files, concurrent operations)
+
+**Running Manual Tests:**
+
+Refer to `E2E_TESTING_CHECKLIST.md` for the complete list of manual test procedures. Each test includes:
+- Exact commands to run
+- Expected outcomes
+- Error scenarios to verify
+- Troubleshooting steps
+
+These tests ensure that clients can rely on our service for their knowledge management needs, from document ingestion through AI-powered search and retrieval.
 
 ### Style Checking
 Follows standard Java coding conventions under Google Java Style Guide : 

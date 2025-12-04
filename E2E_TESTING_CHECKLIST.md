@@ -1,234 +1,328 @@
-# End-to-End Testing Checklist
+# End-to-End Testing Guide
 
 ## Overview
-This checklist documents comprehensive end-to-end testing for the AI Knowledge Management Service API. It covers all endpoints, expected outcomes, error scenarios, and edge cases.
+This guide provides comprehensive end-to-end testing for our AI Knowledge Management Service. We've designed these tests to verify that clients can successfully use all the core functionality our service provides - from uploading documents to searching through them using AI-powered semantic search.
+
+Our testing approach includes both automated scripts for quick validation and manual test procedures for thorough verification. This ensures we can catch issues whether you're doing rapid development cycles or preparing for production releases.
 
 ## Prerequisites
-- Service running at `http://localhost:8080`
-- Docker services (Ollama, PostgreSQL) running via `docker-compose up -d`
-- Valid JWT token obtained through authentication
-- Test files available for upload
+Before running any tests, make sure you have:
+- The service running at `http://localhost:8080`
+- Docker services started with `docker-compose up -d`
+- A valid JWT token (we'll show you how to get one)
+- Some test files ready for upload (PDF, TXT, or DOCX work well)
 
-## Test Environment Setup
+## Getting Started
 
-### 1. Service Health Check
+First, let's verify everything is working:
+
 ```bash
-# Verify service is running
+# Check if the service is responding
 curl -s http://localhost:8080/api
-# Expected: "Welcome to Knowledge Management Service Powered by AI!"
 ```
+You should see: `Welcome to Knowledge Management Service Powered by AI!`
 
-### 2. Authentication Setup
+Next, get a JWT token for authenticated requests:
+
 ```bash
-# Register test user
+# Register a new test user
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "testuser", "email": "test@example.com", "password": "password123"}'
-# Expected: {"token": "eyJ...", "username": "testuser", "email": "test@example.com"}
-
-# Login existing user
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "testuser", "password": "password123"}'
-# Expected: {"token": "eyJ...", "username": "testuser", "email": "test@example.com"}
 ```
 
-## API Endpoint Testing
+Save the token from the response - you'll need it for most API calls.
 
-### Authentication Endpoints (`/api/v1/auth`)
+## Automated Tests
 
-#### POST /api/v1/auth/register
-**Test Cases:**
-- [ ] **Valid Registration**: New user with valid data
-  - Expected: 200 OK, JWT token returned
-- [ ] **Duplicate Username**: Register existing username
-  - Expected: 400 Bad Request, error message
-- [ ] **Invalid Email**: Register with malformed email
-  - Expected: 400 Bad Request, validation error
-- [ ] **Missing Fields**: Register without required fields
-  - Expected: 400 Bad Request, validation error
+We've created several automated test runners that exercise the full functionality of our service. These are great for continuous integration and quick validation during development.
 
-#### POST /api/v1/auth/login
-**Test Cases:**
-- [ ] **Valid Login**: Correct username/password
-  - Expected: 200 OK, JWT token returned
-- [ ] **Invalid Password**: Wrong password
-  - Expected: 401 Unauthorized, error message
-- [ ] **Non-existent User**: Login with unknown username
-  - Expected: 401 Unauthorized, error message
-- [ ] **Missing Credentials**: Login without username/password
-  - Expected: 400 Bad Request, validation error
+### Running Automated Tests
 
-### Welcome Endpoint (`/api`)
+**Option 1: Comprehensive Test Runner**
+```bash
+# Run the full automated test suite
+./run_e2e_tests.sh
+```
 
-#### GET /api
-**Test Cases:**
-- [ ] **Welcome Message**: Basic service health check
-  - Expected: 200 OK, welcome message string
-- [ ] **With Authentication**: Include JWT token
-  - Expected: 200 OK, same welcome message
-- [ ] **Without Authentication**: No JWT token
-  - Expected: 200 OK, same welcome message (public endpoint)
+This script will:
+- Verify all services are running
+- Test authentication flows
+- Upload sample documents
+- Test search functionality
+- Verify document management operations
+- Clean up test data
 
-### Document Management Endpoints (`/api/v1/documents`)
+**Option 2: Python Client Tests**
+```bash
+cd client
+python3 e2e_test_runner.py
+```
 
-#### POST /api/v1/documents (Upload Document)
-**Test Cases:**
-- [ ] **Valid PDF Upload**: Upload .pdf file
-  - Expected: 200 OK, document ID, processing status
-- [ ] **Valid TXT Upload**: Upload .txt file
-  - Expected: 200 OK, document ID, processing status
-- [ ] **Valid DOCX Upload**: Upload .docx file
-  - Expected: 200 OK, document ID, processing status
-- [ ] **Large File Upload**: Upload file near 50MB limit
-  - Expected: 200 OK or timeout handling
-- [ ] **Unsupported Format**: Upload .exe or other unsupported file
-  - Expected: 400 Bad Request, error message
-- [ ] **Empty File**: Upload 0-byte file
-  - Expected: 400 Bad Request, error message
-- [ ] **No File**: POST without file parameter
-  - Expected: 400 Bad Request, error message
-- [ ] **No Authentication**: Upload without JWT token
-  - Expected: 401 Unauthorized
+This Python script provides more detailed output and is useful for debugging specific issues.
 
-#### GET /api/v1/documents (Get All Documents)
-**Test Cases:**
-- [ ] **List All Documents**: No filters
-  - Expected: 200 OK, array of documents with metadata
-- [ ] **Filter by Filename**: Use filename parameter
-  - Expected: 200 OK, filtered results
-- [ ] **Empty Database**: No documents uploaded
-  - Expected: 200 OK, empty array, count: 0
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+**Option 3: Multi-Client Testing**
+```bash
+cd client
+python3 demo_multiple_clients.py
+```
 
-#### GET /api/v1/documents/{id} (Get Document by ID)
-**Test Cases:**
-- [ ] **Valid Document ID**: Existing document
-  - Expected: 200 OK, document details with all metadata
-- [ ] **Non-existent ID**: ID that doesn't exist
-  - Expected: 404 Not Found
-- [ ] **Invalid ID Format**: Non-numeric ID
-  - Expected: 400 Bad Request
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+This demonstrates how multiple clients can use the service simultaneously, which is important for real-world usage scenarios.
 
-#### GET /api/v1/documents/{id}/summary (Get Document Summary)
-**Test Cases:**
-- [ ] **Document with Summary**: Processed document
-  - Expected: 200 OK, document ID and summary text
-- [ ] **Document without Summary**: Unprocessed document
-  - Expected: 404 Not Found
-- [ ] **Non-existent Document**: Invalid document ID
-  - Expected: 404 Not Found
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+## Manual Testing Procedures
 
-#### GET /api/v1/documents/summaries (Get Documents with Summaries)
-**Test Cases:**
-- [ ] **Documents with Summaries**: Some processed documents exist
-  - Expected: 200 OK, array of documents that have summaries
-- [ ] **No Summaries**: No documents have been summarized
-  - Expected: 200 OK, empty array, count: 0
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+Sometimes you need to test specific scenarios manually or investigate issues in detail. Here are the key test cases you should run through:
 
-#### GET /api/v1/documents/stats (Get Processing Statistics)
-**Test Cases:**
-- [ ] **With Documents**: Various processing statuses
-  - Expected: 200 OK, total count, status breakdown, completion/failure rates
-- [ ] **Empty Database**: No documents
-  - Expected: 200 OK, total: 0, all status counts: 0, rates: 0.0
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+### Core Authentication Flow
 
-#### DELETE /api/v1/documents/{id} (Delete Document)
-**Test Cases:**
-- [ ] **Valid Deletion**: Existing document
-  - Expected: 200 OK, confirmation message with document ID
-- [ ] **Non-existent Document**: Invalid document ID
-  - Expected: 404 Not Found, error message
-- [ ] **Already Deleted**: Delete same document twice
-  - Expected: 404 Not Found
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+**Test 1: User Registration**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "newuser", "email": "new@example.com", "password": "securepass"}'
+```
+Expected: 200 OK with JWT token
 
-### Search Endpoints (`/api/v1/search`)
+**Test 2: User Login**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "newuser", "password": "securepass"}'
+```
+Expected: 200 OK with JWT token
 
-#### GET /api/v1/search/{text} (Semantic Search)
-**Test Cases:**
-- [ ] **Valid Search Query**: Common terms
-  - Expected: 200 OK, relevant document chunks, similarity scores
-- [ ] **No Results**: Query with no matches
-  - Expected: 200 OK, empty results array, count: 0
-- [ ] **Special Characters**: Query with symbols, punctuation
-  - Expected: 200 OK, handled gracefully
-- [ ] **Long Query**: Very long search text
-  - Expected: 200 OK or appropriate handling
-- [ ] **Empty Query**: Empty string search
-  - Expected: 400 Bad Request or empty results
-- [ ] **URL Encoding**: Query with spaces and special chars
-  - Expected: 200 OK, properly decoded query
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+**Test 3: Invalid Login**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "newuser", "password": "wrongpass"}'
+```
+Expected: 401 Unauthorized with error message
 
-### Relationship Endpoints (`/api/v1/relationships`)
+### Document Upload and Management
 
-#### GET /api/v1/relationships/{documentId} (Get Document Relationships)
-**Test Cases:**
-- [ ] **Valid Document**: Existing document ID
-  - Expected: 200 OK, relationships array (may be empty), count
-- [ ] **Non-existent Document**: Invalid document ID
-  - Expected: 200 OK, empty relationships (current implementation)
-- [ ] **No Authentication**: Request without JWT token
-  - Expected: 401 Unauthorized
+**Test 4: Upload a Document**
+```bash
+# Replace YOUR_JWT_TOKEN with the token from authentication
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@sample-document.pdf"
+```
+Expected: 200 OK with document ID and processing status
 
-## Error Handling Testing
+**Test 5: List All Documents**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents
+```
+Expected: 200 OK with array of uploaded documents
 
-### HTTP Status Codes
-- [ ] **200 OK**: Successful operations
-- [ ] **400 Bad Request**: Invalid input, validation errors
-- [ ] **401 Unauthorized**: Missing or invalid JWT token
-- [ ] **404 Not Found**: Resource not found
-- [ ] **500 Internal Server Error**: Server-side errors
+**Test 6: Get Specific Document**
+```bash
+# Replace 1 with actual document ID from previous test
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/1
+```
+Expected: 200 OK with detailed document information
 
-### Error Response Format
-- [ ] **Consistent Error Structure**: All errors return proper JSON format
-- [ ] **Meaningful Error Messages**: Clear, actionable error descriptions
-- [ ] **No Sensitive Information**: Errors don't expose internal details
+**Test 7: Get Document Summary**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/1/summary
+```
+Expected: 200 OK with AI-generated summary (may take time to process)
 
-## Performance Testing
+**Test 8: Upload Invalid File**
+```bash
+# Try uploading an unsupported file type
+echo "test" > test.exe
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@test.exe"
+```
+Expected: 400 Bad Request with error message
 
-### Load Testing
-- [ ] **Concurrent Uploads**: Multiple clients uploading simultaneously
-- [ ] **Concurrent Searches**: Multiple search requests
-- [ ] **Large File Processing**: Upload and process large documents
-- [ ] **Database Stress**: Many documents in system
+### Semantic Search Testing
 
-### Timeout Testing
-- [ ] **Long Processing**: Documents that take time to process
-- [ ] **Search Timeouts**: Complex search queries
-- [ ] **Connection Timeouts**: Network interruption scenarios
+**Test 9: Basic Search**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:8080/api/v1/search/machine%20learning"
+```
+Expected: 200 OK with relevant document chunks
 
-## Integration Testing
+**Test 10: Search with No Results**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:8080/api/v1/search/nonexistent%20topic"
+```
+Expected: 200 OK with empty results array
 
-### Document Processing Pipeline
-- [ ] **End-to-End Flow**: Upload → Text Extraction → Chunking → Embeddings → Summary
-- [ ] **Status Progression**: Verify status updates through pipeline
-- [ ] **Error Recovery**: Handle failures at each stage
-- [ ] **Data Consistency**: Verify data integrity throughout process
+**Test 11: Search with Special Characters**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:8080/api/v1/search/AI%20%26%20data%20science"
+```
+Expected: 200 OK with properly handled query
+
+### Document Statistics and Management
+
+**Test 12: Get Processing Statistics**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/stats
+```
+Expected: 200 OK with processing statistics and completion rates
+
+**Test 13: Get Documents with Summaries**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/summaries
+```
+Expected: 200 OK with documents that have been summarized
+
+**Test 14: Delete Document**
+```bash
+# Replace 1 with actual document ID
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -X DELETE http://localhost:8080/api/v1/documents/1
+```
+Expected: 200 OK with deletion confirmation
+
+### Error Handling Verification
+
+**Test 15: Unauthorized Access**
+```bash
+# Try accessing protected endpoint without token
+curl http://localhost:8080/api/v1/documents
+```
+Expected: 401 Unauthorized
+
+**Test 16: Invalid Document ID**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/99999
+```
+Expected: 404 Not Found
+
+**Test 17: Malformed Request**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/documents/invalid-id
+```
+Expected: 400 Bad Request
 
 ### Multi-Client Testing
-- [ ] **Client Isolation**: Multiple clients don't interfere
-- [ ] **Concurrent Operations**: Simultaneous operations work correctly
-- [ ] **Client Identification**: X-Client-ID header handling
 
-## Security Testing
+**Test 18: Concurrent Operations**
+Open two terminal windows and run these simultaneously:
 
-### Authentication
-- [ ] **JWT Validation**: Invalid tokens rejected
-- [ ] **Token Expiration**: Expired tokens handled
-- [ ] **No Token**: Protected endpoints require authentication
+Terminal 1:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-Client-ID: client-1" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@document1.pdf"
+```
+
+Terminal 2:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-Client-ID: client-2" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@document2.pdf"
+```
+
+Both should succeed without interfering with each other.
+
+## Complete End-to-End Workflow Test
+
+This is the most important test - it verifies that a client can use our service for its intended purpose: managing and searching through documents with AI assistance.
+
+**Test 19: Full Client Workflow**
+
+1. **Setup**: Register and authenticate
+```bash
+# Get your JWT token
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "workflow-test", "email": "workflow@test.com", "password": "test123"}' \
+  | jq -r '.token')
+```
+
+2. **Upload documents**: Add some content to search through
+```bash
+# Upload multiple documents
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@research-paper.pdf"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@meeting-notes.txt"
+```
+
+3. **Wait for processing**: Check status until complete
+```bash
+# Check processing status
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/stats
+```
+
+4. **Search for information**: Use semantic search to find relevant content
+```bash
+# Search for specific topics
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/project%20timeline"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/research%20findings"
+```
+
+5. **Get summaries**: Retrieve AI-generated summaries
+```bash
+# Get summaries of uploaded documents
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/summaries
+```
+
+6. **Cleanup**: Remove test documents
+```bash
+# List documents to get IDs
+DOC_IDS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents | jq -r '.documents[].id')
+
+# Delete each document
+for id in $DOC_IDS; do
+  curl -H "Authorization: Bearer $TOKEN" \
+    -X DELETE http://localhost:8080/api/v1/documents/$id
+done
+```
+
+## What Success Looks Like
+
+When running these tests, you should see:
+- Authentication returns valid JWT tokens
+- Document uploads return 200 OK with document IDs
+- Processing status progresses from UPLOADED to COMPLETED
+- Search queries return relevant document chunks
+- Summaries are generated for processed documents
+- Error cases return appropriate HTTP status codes
+- Multiple clients can operate independently
+
+## Troubleshooting Common Issues
+
+**Service not responding**: Check that `docker-compose up -d` completed successfully and all containers are running.
+
+**Authentication failures**: Make sure you're using a fresh JWT token and including the Authorization header correctly.
+
+**Upload failures**: Verify file exists and is a supported format (PDF, TXT, DOCX, etc.).
+
+**Search returns no results**: Wait for document processing to complete (check status endpoint) before searching.
+
+**Processing stuck**: Check Docker logs for Ollama and PostgreSQL containers to ensure AI services are working.
+
+These tests verify that our service provides real value to clients by enabling them to upload documents, have them processed with AI, and then search through them semantically - which is exactly what a knowledge management system should do. require authentication
 - [ ] **Token Tampering**: Modified tokens rejected
 
 ### Authorization
