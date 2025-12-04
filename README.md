@@ -603,7 +603,7 @@ mvn test jacoco:report
 
 ![pmd report](reports/coverage.png)
 
-This repository achieves 58% branch coverage (exceeds 55% requirement).
+This repository achieves 89.03% branch coverage (exceeds 80% requirement).
 
 ### Test Files
 
