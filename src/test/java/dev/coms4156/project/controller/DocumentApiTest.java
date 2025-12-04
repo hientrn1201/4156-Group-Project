@@ -56,7 +56,7 @@ import org.springframework.test.web.servlet.MockMvc;
     SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class })
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("API Integration Tests")
-class DocumentApiIntegrationTest {
+class DocumentApiTest {
 
   @Autowired
   private MockMvc mockMvc;

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+- 
+
 Multiple Client Demo Script
 
 Demonstrates how multiple client instances can connect to the service simultaneously.
@@ -105,8 +107,17 @@ def main():
     
     # Define operations for each client - demonstrates concurrent API usage
     client_operations = {
-        # Client focused on read operations
+        # Client that uploads documents FIRST
+        'client-uploader-1': [
+            {'type': 'welcome'},
+            {'type': 'upload', 'file_path': '../test-document.txt'},
+            {'type': 'wait', 'duration': 8},
+            {'type': 'list'},
+            {'type': 'stats'},
+        ],
+        # Client focused on read operations (waits for upload)
         'client-reader-1': [
+            {'type': 'wait', 'duration': 5},
             {'type': 'welcome'},
             {'type': 'list'},
             {'type': 'stats'},
@@ -116,23 +127,15 @@ def main():
         ],
         # Second client with different read patterns
         'client-reader-2': [
-            {'type': 'wait', 'duration': 1},
+            {'type': 'wait', 'duration': 6},
             {'type': 'stats'},
             {'type': 'search', 'query': 'artificial intelligence'},
             {'type': 'list'},
             {'type': 'search', 'query': 'neural networks'},
         ],
-        # Client that uploads documents
-        'client-uploader-1': [
-            {'type': 'welcome'},
-            {'type': 'upload', 'file_path': '../test-document.txt'},
-            {'type': 'wait', 'duration': 3},
-            {'type': 'list'},
-            {'type': 'stats'},
-        ],
         # Client focused on search operations
         'client-searcher-1': [
-            {'type': 'wait', 'duration': 2},
+            {'type': 'wait', 'duration': 7},
             {'type': 'search', 'query': 'test'},
             {'type': 'search', 'query': 'document'},
             {'type': 'search', 'query': 'knowledge'},
