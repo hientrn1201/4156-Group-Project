@@ -84,7 +84,7 @@ def main():
     # Load .env file automatically
     load_env_file()
     
-    service_url = os.getenv('SERVICE_URL', 'http://localhost:8080')
+    service_url = os.getenv('SERVICE_URL', 'http://34.69.247.43:8080')
     jwt_token = os.getenv('JWT_TOKEN')
     
     print("=== Multiple Client Demo ===")
