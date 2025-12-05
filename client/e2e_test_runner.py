@@ -322,7 +322,8 @@ class E2ETestRunner:
                         self.log_test("Relationships Response Structure", "FAIL", 
                                     "Response structure validation failed")
                 else:
-                    self.log_test("Get Document Relationships", "FAIL", f"Status: {response.status_code}")
+                    self.log_test("Get Relationships via Client Library", "FAIL", 
+                                "Invalid response from client method")
             except Exception as e:
                 self.log_test("Get Document Relationships", "FAIL", f"Exception: {str(e)}")
         

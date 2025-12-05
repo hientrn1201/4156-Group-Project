@@ -174,6 +174,21 @@ class KnowledgeServiceClient:
         response.raise_for_status()
         return response.json()
 
+    def get_relationships(self, document_id: int) -> Dict[str, Any]:
+        """
+        Get relationships for a document.
+
+        Args:
+            document_id: Document ID
+
+        Returns:
+            Document relationships
+        """
+        url = f"{self.api_base}/relationships/{document_id}"
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+        return response.json()
+
     def get_welcome(self) -> str:
         """
         Get the welcome message from the service.
@@ -250,6 +265,36 @@ def print_statistics(stats: Dict[str, Any]):
         print(f"    {status}: {count}")
 
 
+def print_relationships(relationships_data: Dict[str, Any]):
+    """Print relationships in a readable format."""
+    document_id = relationships_data.get('documentId', 'N/A')
+    relationships = relationships_data.get('relationships', [])
+    count = relationships_data.get('count', 0)
+    message = relationships_data.get('message', '')
+
+    print(f"\nDocument ID: {document_id}")
+    print(f"Found {count} relationship(s):")
+    if message:
+        print(f"Message: {message}")
+
+    if count == 0:
+        print("  No relationships found for this document.")
+    else:
+        for i, rel in enumerate(relationships, 1):
+            print(f"\n  Relationship {i}:")
+            if isinstance(rel, dict):
+                rel_type = rel.get('relationshipType', 'N/A')
+                source_chunk_id = rel.get('sourceChunkId', 'N/A')
+                target_chunk_id = rel.get('targetChunkId', 'N/A')
+                similarity_score = rel.get('similarityScore')
+                
+                print(f"    Type: {rel_type}")
+                print(f"    Source Chunk ID: {source_chunk_id}")
+                print(f"    Target Chunk ID: {target_chunk_id}")
+                if similarity_score is not None:
+                    print(f"    Similarity Score: {similarity_score:.4f}")
+
+
 def main():
     """Main entry point for the client."""
     # Load .env file automatically
@@ -323,6 +368,10 @@ Examples:
     # Summaries command
     subparsers.add_parser('summaries', help='Get all documents with summaries')
 
+    # Relationships command
+    relationships_parser = subparsers.add_parser('relationships', help='Get document relationships')
+    relationships_parser.add_argument('id', type=int, help='Document ID')
+
     # Stats command
     subparsers.add_parser('stats', help='Get processing statistics')
 
@@ -377,6 +426,10 @@ Examples:
             print(f"\nFound {count} document(s) with summaries:")
             for doc in documents:
                 print_document(doc)
+
+        elif args.command == 'relationships':
+            result = client.get_relationships(args.id)
+            print_relationships(result)
 
         elif args.command == 'stats':
             result = client.get_statistics()
