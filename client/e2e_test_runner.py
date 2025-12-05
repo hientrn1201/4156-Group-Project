@@ -300,17 +300,63 @@ class E2ETestRunner:
         """Test relationship endpoints."""
         headers = self.get_auth_headers()
         
+        # Test getting relationships for existing document
         if self.test_document_id:
             try:
                 response = requests.get(f"{self.api_base}/relationships/{self.test_document_id}", headers=headers)
                 if response.status_code == 200:
                     data = response.json()
                     count = data.get('count', 0)
-                    self.log_test("Get Document Relationships", "PASS", f"Found {count} relationships")
+                    relationships = data.get('relationships', [])
+                    document_id = data.get('documentId')
+                    message = data.get('message', '')
+                    
+                    self.log_test("Get Document Relationships", "PASS", 
+                                f"Document {document_id}: {count} relationships, Message: {message}")
+                    
+                    # Verify response structure
+                    if document_id == self.test_document_id and isinstance(relationships, list):
+                        self.log_test("Relationships Response Structure", "PASS", 
+                                    "Response has correct structure with documentId, relationships, count, message")
+                    else:
+                        self.log_test("Relationships Response Structure", "FAIL", 
+                                    "Response structure validation failed")
                 else:
                     self.log_test("Get Document Relationships", "FAIL", f"Status: {response.status_code}")
             except Exception as e:
                 self.log_test("Get Document Relationships", "FAIL", f"Exception: {str(e)}")
+        
+        # Test getting relationships for non-existent document
+        try:
+            response = requests.get(f"{self.api_base}/relationships/99999", headers=headers)
+            if response.status_code == 200:
+                # Service returns 200 even for non-existent docs (as per current implementation)
+                data = response.json()
+                self.log_test("Get Relationships Non-existent Document", "PASS", 
+                            f"Non-existent document handled gracefully: {data.get('message', '')}")
+            elif response.status_code == 404:
+                self.log_test("Get Relationships Non-existent Document", "PASS", 
+                            "404 returned for non-existent document")
+            else:
+                self.log_test("Get Relationships Non-existent Document", "FAIL", 
+                            f"Unexpected status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Get Relationships Non-existent Document", "FAIL", f"Exception: {str(e)}")
+        
+        # Test relationships with invalid document ID format
+        try:
+            response = requests.get(f"{self.api_base}/relationships/invalid-id", headers=headers)
+            if response.status_code == 400:
+                self.log_test("Get Relationships Invalid ID Format", "PASS", 
+                            "400 returned for invalid document ID format")
+            elif response.status_code == 401:
+                self.log_test("Get Relationships Invalid ID Format", "PASS", 
+                            "401 returned - Spring Security handled invalid path format")
+            else:
+                self.log_test("Get Relationships Invalid ID Format", "FAIL", 
+                            f"Expected 400 or 401, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Get Relationships Invalid ID Format", "FAIL", f"Exception: {str(e)}")
     
     def test_unauthorized_access(self):
         """Test endpoints without authentication."""

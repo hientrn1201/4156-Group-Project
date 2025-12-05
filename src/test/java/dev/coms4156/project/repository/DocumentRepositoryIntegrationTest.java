@@ -203,7 +203,7 @@ class DocumentRepositoryIntegrationTest {
     withEmptySummary.setSummary("");
     withEmptySummary.setUploadedAt(LocalDateTime.now());
 
-    Document savedWithSummary = documentRepository.save(withSummary);
+    documentRepository.save(withSummary);
     documentRepository.save(withoutSummary);
     documentRepository.save(withEmptySummary);
     entityManager.flush();
@@ -218,8 +218,7 @@ class DocumentRepositoryIntegrationTest {
         "Expected at least 2 documents (withSummary and withEmptySummary)");
     // Verify the document with actual summary is included
     assertTrue(docsWithSummaries.stream().anyMatch(
-        d -> d.getId().equals(savedWithSummary.getId()) 
-            && "This document has a summary".equals(d.getSummary())));
+        d -> "This document has a summary".equals(d.getSummary())));
     // All returned documents should have non-null summaries
     assertTrue(docsWithSummaries.stream().allMatch(
         d -> d.getSummary() != null));

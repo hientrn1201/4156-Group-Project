@@ -446,6 +446,14 @@ Run the multi-client demonstration:
 python demo_multiple_clients.py
 ```
 
+This script demonstrates how multiple client instances can connect to the service simultaneously. It creates 4 concurrent clients with different roles:
+- **client-uploader-1**: Uploads documents and monitors processing
+- **client-reader-1**: Performs read operations and searches after upload
+- **client-reader-2**: Focuses on statistics and different search queries
+- **client-searcher-1**: Specialized in search operations
+
+Each client operates independently with unique client IDs, demonstrating that the service can handle concurrent operations from multiple clients without interference.
+
 ## Examples
 
 ### Upload a Document
@@ -593,6 +601,8 @@ python3 e2e_test_runner.py
 cd client
 python3 demo_multiple_clients.py
 ```
+
+This demonstrates how multiple clients can use the service simultaneously using threading. The script creates 4 concurrent clients that perform different operations (upload, search, statistics) to verify the service can handle multiple simultaneous connections and maintain client isolation.
 
 #### Manual End-to-End Testing
 
@@ -842,3 +852,9 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 Reason : just to have data for the demo and show that the functions are working
 
 Prompt : give me a few documents that have semantic similarity related to ML
+
+- **Help reformat the E2E testing checklist for better readability**
+
+  Reason: We wrote all the information and all the tests ourselves, but to make it more readable and better formatted, we used ChatGPT to help restructure the content - adding proper headers, bolding important text, converting commands to bash code blocks, and organizing sections logically.
+
+  Prompt: help format the bash commands properly and add better section headers in this checklist to make more readable.
