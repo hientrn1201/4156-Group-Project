@@ -48,6 +48,12 @@ class DocumentChunkRepositoryIntegrationTest {
 
   @BeforeEach
   void setUp() {
+    // Clean up any existing test data
+    chunkRepository.deleteAll();
+    documentRepository.deleteAll();
+    entityManager.flush();
+    entityManager.clear();
+
     // Create a test document
     testDocument = new Document();
     testDocument.setFilename("test-document.pdf");

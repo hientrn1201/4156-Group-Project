@@ -3,6 +3,7 @@ package dev.coms4156.project.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.coms4156.project.model.User;
@@ -42,6 +43,11 @@ class UserRepositoryIntegrationTest {
 
   @BeforeEach
   void setUp() {
+    // Clean up any existing test data
+    userRepository.deleteAll();
+    entityManager.flush();
+    entityManager.clear();
+
     // Create a test user
     testUser = new User();
     testUser.setUsername("testuser");
@@ -235,10 +241,10 @@ class UserRepositoryIntegrationTest {
     duplicate.setPasswordHash("pass");
     duplicate.setRole(User.Role.USER);
 
-    // Save should work (database constraint would prevent if unique constraint exists)
-    // This test verifies the repository method works
-    User saved = userRepository.save(duplicate);
-    assertNotNull(saved);
+    // Then - Should throw exception due to unique constraint
+    assertThrows(Exception.class, () -> {
+      userRepository.saveAndFlush(duplicate);
+    }, "Expected exception when saving duplicate username");
   }
 }
 
