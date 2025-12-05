@@ -322,29 +322,34 @@ When running these tests, you should see:
 
 **Processing stuck**: Check Docker logs for Ollama and PostgreSQL containers to ensure AI services are working.
 
-These tests verify that our service provides real value to clients by enabling them to upload documents, have them processed with AI, and then search through them semantically - which is exactly what a knowledge management system should do. require authentication
-- [ ] **Token Tampering**: Modified tokens rejected
+These tests verify that our service provides real value to clients by enabling them to upload documents, have them processed with AI, and then search through them semantically - which is exactly what a knowledge management system should do.
+
+## Additional Security Testing
+
+### Authentication Security
+**Token Tampering**: Verify that modified tokens are rejected
+**Invalid Tokens**: Test with expired or malformed tokens
 
 ### Authorization
-- [ ] **User Isolation**: Users can only access their data
-- [ ] **Admin Operations**: Proper permission checks
+**User Isolation**: Ensure users can only access their own data
+**Admin Operations**: Verify proper permission checks for admin functions
 
 ### Input Validation
-- [ ] **SQL Injection**: Malicious input in search queries
-- [ ] **File Upload Security**: Malicious file uploads
-- [ ] **XSS Prevention**: Script injection in text fields
+**SQL Injection**: Test malicious input in search queries
+**File Upload Security**: Attempt to upload malicious files
+**XSS Prevention**: Test script injection in text fields
 
 ## Data Validation Testing
 
 ### File Upload Validation
-- [ ] **File Type Validation**: Only supported formats accepted
-- [ ] **File Size Limits**: Enforce maximum file size
-- [ ] **File Content Validation**: Verify file integrity
+**File Type Validation**: Verify only supported formats are accepted
+**File Size Limits**: Test enforcement of maximum file size
+**File Content Validation**: Check file integrity validation
 
 ### Search Query Validation
-- [ ] **Query Length Limits**: Handle very long queries
-- [ ] **Special Character Handling**: Unicode, symbols, etc.
-- [ ] **Encoding Issues**: Proper UTF-8 handling
+**Query Length Limits**: Test handling of very long queries
+**Special Character Handling**: Test Unicode, symbols, etc.
+**Encoding Issues**: Verify proper UTF-8 handling
 
 ## Manual Testing Scripts
 
@@ -380,47 +385,47 @@ python3 client/demo_multiple_clients.py
 ## Test Data Requirements
 
 ### Test Files
-- [ ] **Small Text File**: < 1KB for quick tests
-- [ ] **Medium PDF**: 1-10MB typical document
-- [ ] **Large Document**: Near 50MB limit
-- [ ] **Various Formats**: PDF, DOC, DOCX, TXT, HTML, PPT, etc.
-- [ ] **Edge Cases**: Empty files, corrupted files, unsupported formats
+**Small Text File**: Files under 1KB for quick tests
+**Medium PDF**: 1-10MB typical documents
+**Large Document**: Files near the 50MB limit
+**Various Formats**: PDF, DOC, DOCX, TXT, HTML, PPT, etc.
+**Edge Cases**: Empty files, corrupted files, unsupported formats
 
 ### Test Users
-- [ ] **Valid Test User**: For authentication testing
-- [ ] **Multiple Users**: For isolation testing
-- [ ] **Invalid Credentials**: For negative testing
+**Valid Test User**: For standard authentication testing
+**Multiple Users**: For user isolation testing
+**Invalid Credentials**: For negative testing scenarios
 
 ## Automated Testing Integration
 
 ### CI/CD Pipeline Tests
-- [ ] **Unit Tests**: All service layer tests pass
-- [ ] **Integration Tests**: Database connectivity tests
-- [ ] **API Tests**: Endpoint response validation
-- [ ] **Security Tests**: Authentication and authorization
+**Unit Tests**: Verify all service layer tests pass
+**Integration Tests**: Test database connectivity
+**API Tests**: Validate endpoint responses
+**Security Tests**: Check authentication and authorization
 
 ### Test Coverage
-- [ ] **Code Coverage**: Maintain >55% branch coverage
-- [ ] **API Coverage**: All endpoints tested
-- [ ] **Error Path Coverage**: All error scenarios tested
+**Code Coverage**: Maintain above 80% branch coverage
+**API Coverage**: Ensure all endpoints are tested
+**Error Path Coverage**: Test all error scenarios
 
 ## Test Results Documentation
 
 ### Test Execution Log
-- [ ] **Test Date/Time**: When tests were executed
-- [ ] **Environment**: Service version, dependencies
-- [ ] **Test Results**: Pass/fail status for each test case
-- [ ] **Issues Found**: Bugs, performance issues, etc.
-- [ ] **Recommendations**: Improvements and fixes needed
+**Test Date/Time**: Record when tests were executed
+**Environment**: Document service version and dependencies
+**Test Results**: Track pass/fail status for each test case
+**Issues Found**: Log bugs, performance issues, etc.
+**Recommendations**: Note improvements and fixes needed
 
 ### Performance Metrics
-- [ ] **Response Times**: Average response time per endpoint
-- [ ] **Throughput**: Requests per second capacity
-- [ ] **Resource Usage**: Memory, CPU, disk usage
-- [ ] **Error Rates**: Percentage of failed requests
+**Response Times**: Measure average response time per endpoint
+**Throughput**: Test requests per second capacity
+**Resource Usage**: Monitor memory, CPU, and disk usage
+**Error Rates**: Calculate percentage of failed requests
 
 ## Conclusion
 
-This checklist provides comprehensive coverage of all API endpoints and their expected behaviors. Execute these tests manually or integrate them into automated testing frameworks to ensure the AI Knowledge Management Service functions correctly across all scenarios.
+This guide provides comprehensive coverage of all API endpoints and their expected behaviors. Execute these tests manually or integrate them into automated testing frameworks to ensure the AI Knowledge Management Service functions correctly across all scenarios.
 
 **Total Test Cases**: 80+ individual test scenarios covering all endpoints, error conditions, and edge cases.
