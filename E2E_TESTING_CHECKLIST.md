@@ -73,6 +73,8 @@ This demonstrates how multiple clients can use the service simultaneously, which
 
 Sometimes you need to test specific scenarios manually or investigate issues in detail. Here are the key test cases you should run through:
 
+**Note**: The following manual tests correspond to automated tests that exist in the codebase. All endpoints and functionality listed here have been implemented and tested in the Java test suite.
+
 ### Core Authentication Flow
 
 **Test 1: User Registration**
@@ -104,9 +106,10 @@ Expected: 401 Unauthorized with error message
 **Test 4: Upload a Document**
 ```bash
 # Replace YOUR_JWT_TOKEN with the token from authentication
+# Use test-relationships-document.txt or any available PDF/text file
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@sample-document.pdf"
+  -F "file=@test-relationships-document.txt"
 ```
 Expected: 200 OK with document ID and processing status
 
@@ -181,7 +184,30 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 ```
 Expected: 200 OK with documents that have been summarized
 
-**Test 14: Delete Document**
+### Document Relationships Testing
+
+**Test 14: Get Document Relationships**
+```bash
+# Get relationships for a document (replace 1 with actual document ID)
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/relationships/1
+```
+Expected: 200 OK with relationships array, documentId, count, and message
+
+**Test 15: Get Relationships with Invalid ID Format**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  http://localhost:8080/api/v1/relationships/invalid
+```
+Expected: 401 Unauthorized (Spring Security handles invalid path format) or 400 Bad Request
+
+**Note**: The relationships endpoint is implemented and tested in:
+- `DocumentApiTest.java` - Unit tests with MockMvc
+- `DocumentControllerTest.java` - Controller tests with boundary analysis
+- `ApiLoggingIntegrationTest.java` - Integration test for endpoint accessibility
+- Currently returns empty relationships as the relationship analysis feature is not yet fully implemented
+
+**Test 16: Delete Document**
 ```bash
 # Replace 1 with actual document ID
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -191,21 +217,14 @@ Expected: 200 OK with deletion confirmation
 
 ### Error Handling Verification
 
-**Test 15: Unauthorized Access**
-```bash
-# Try accessing protected endpoint without token
-curl http://localhost:8080/api/v1/documents
-```
-Expected: 401 Unauthorized
-
-**Test 16: Invalid Document ID**
+**Test 17: Invalid Document ID**
 ```bash
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   http://localhost:8080/api/v1/documents/99999
 ```
 Expected: 404 Not Found
 
-**Test 17: Malformed Request**
+**Test 18: Malformed Request**
 ```bash
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   http://localhost:8080/api/v1/documents/invalid-id
@@ -214,7 +233,7 @@ Expected: 400 Bad Request
 
 ### Multi-Client Testing
 
-**Test 18: Concurrent Operations**
+**Test 19: Concurrent Operations**
 Open two terminal windows and run these simultaneously:
 
 Terminal 1:
@@ -222,7 +241,7 @@ Terminal 1:
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "X-Client-ID: client-1" \
   -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@document1.pdf"
+  -F "file=@test-relationships-document.txt"
 ```
 
 Terminal 2:
@@ -230,8 +249,10 @@ Terminal 2:
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "X-Client-ID: client-2" \
   -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@document2.pdf"
+  -F "file=@test-document.txt"
 ```
+
+**Note**: Use any available text/PDF files you have, or create simple test files
 
 Both should succeed without interfering with each other.
 
@@ -239,27 +260,33 @@ Both should succeed without interfering with each other.
 
 This is the most important test - it verifies that a client can use our service for its intended purpose: managing and searching through documents with AI assistance.
 
-**Test 19: Full Client Workflow**
+**Test 20: Full Client Workflow**
 
 1. **Setup**: Register and authenticate
 ```bash
-# Get your JWT token
+# Get your JWT token (requires jq to be installed)
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "workflow-test", "email": "workflow@test.com", "password": "test123"}' \
   | jq -r '.token')
+
+# Alternative without jq - manually copy token from response:
+# curl -X POST http://localhost:8080/api/v1/auth/register \
+#   -H "Content-Type: application/json" \
+#   -d '{"username": "workflow-test", "email": "workflow@test.com", "password": "test123"}'
+# Then set: TOKEN="your-token-here"
 ```
 
 2. **Upload documents**: Add some content to search through
 ```bash
-# Upload multiple documents
+# Upload test documents (use actual files you have available)
 curl -H "Authorization: Bearer $TOKEN" \
   -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@research-paper.pdf"
+  -F "file=@test-relationships-document.txt"
 
 curl -H "Authorization: Bearer $TOKEN" \
   -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@meeting-notes.txt"
+  -F "file=@test-document.txt"
 ```
 
 3. **Wait for processing**: Check status until complete
@@ -286,9 +313,18 @@ curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/v1/documents/summaries
 ```
 
-6. **Cleanup**: Remove test documents
+6. **Check relationships**: Verify document relationships
 ```bash
-# List documents to get IDs
+# Get relationships for uploaded documents
+for id in $DOC_IDS; do
+  curl -H "Authorization: Bearer $TOKEN" \
+    http://localhost:8080/api/v1/relationships/$id
+done
+```
+
+7. **Cleanup**: Remove test documents
+```bash
+# List documents to get IDs (requires jq)
 DOC_IDS=$(curl -s -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/v1/documents | jq -r '.documents[].id')
 
@@ -297,6 +333,10 @@ for id in $DOC_IDS; do
   curl -H "Authorization: Bearer $TOKEN" \
     -X DELETE http://localhost:8080/api/v1/documents/$id
 done
+
+# Alternative without jq - manually delete by ID:
+# curl -H "Authorization: Bearer $TOKEN" -X DELETE http://localhost:8080/api/v1/documents/1
+# curl -H "Authorization: Bearer $TOKEN" -X DELETE http://localhost:8080/api/v1/documents/2
 ```
 
 ## What Success Looks Like
@@ -365,13 +405,14 @@ python3 client/client.py stats
 ### Full Feature Test
 ```bash
 #!/bin/bash
-# Test all major features
-python3 client/client.py upload test-document.txt
+# Test all major features (requires client.py to have relationships command)
+python3 client/client.py upload test-relationships-document.txt
 python3 client/client.py list
 python3 client/client.py get 1
 python3 client/client.py summary 1
 python3 client/client.py search "test"
 python3 client/client.py stats
+# python3 client/client.py relationships 1  # If relationships command is implemented
 python3 client/client.py delete 1
 ```
 

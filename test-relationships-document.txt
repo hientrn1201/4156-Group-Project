@@ -1,0 +1,23 @@
+Document Relationships Test File
+
+This document is designed to test the relationships endpoint functionality in the Knowledge Management Service.
+
+Content Topics:
+- Machine Learning algorithms and neural networks
+- Artificial Intelligence applications in healthcare
+- Data science methodologies and best practices
+- Natural Language Processing techniques
+- Computer Vision and image recognition
+- Deep Learning frameworks and architectures
+
+Related Concepts:
+- Supervised and unsupervised learning
+- Feature engineering and data preprocessing
+- Model evaluation and validation techniques
+- Cross-validation and hyperparameter tuning
+- Ensemble methods and model stacking
+- Transfer learning and fine-tuning
+
+This content should help establish semantic relationships with other documents that contain similar topics, allowing the relationships endpoint to demonstrate its functionality for knowledge graph construction and document similarity analysis.
+
+Keywords: AI, ML, data science, neural networks, deep learning, NLP, computer vision, algorithms, models, training, validation, testing, deployment, optimization, performance, accuracy, precision, recall, F1-score, ROC-AUC, confusion matrix, feature selection, dimensionality reduction, clustering, classification, regression, time series analysis, recommendation systems, reinforcement learning.
