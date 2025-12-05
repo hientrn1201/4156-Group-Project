@@ -78,16 +78,19 @@ class DocumentRepositoryIntegrationTest {
     // Given - Create documents with different statuses
     Document doc1 = new Document();
     doc1.setFilename("doc1.pdf");
+    doc1.setContentType("application/pdf");
     doc1.setProcessingStatus(Document.ProcessingStatus.COMPLETED);
     doc1.setUploadedAt(LocalDateTime.now());
 
     Document doc2 = new Document();
     doc2.setFilename("doc2.pdf");
+    doc2.setContentType("application/pdf");
     doc2.setProcessingStatus(Document.ProcessingStatus.FAILED);
     doc2.setUploadedAt(LocalDateTime.now());
 
     Document doc3 = new Document();
     doc3.setFilename("doc3.pdf");
+    doc3.setContentType("application/pdf");
     doc3.setProcessingStatus(Document.ProcessingStatus.COMPLETED);
     doc3.setUploadedAt(LocalDateTime.now());
 
@@ -146,14 +149,17 @@ class DocumentRepositoryIntegrationTest {
     // Given - Create documents with different filenames
     Document doc1 = new Document();
     doc1.setFilename("research-paper.pdf");
+    doc1.setContentType("application/pdf");
     doc1.setUploadedAt(LocalDateTime.now());
 
     Document doc2 = new Document();
     doc2.setFilename("research-summary.pdf");
+    doc2.setContentType("application/pdf");
     doc2.setUploadedAt(LocalDateTime.now());
 
     Document doc3 = new Document();
     doc3.setFilename("unrelated-doc.pdf");
+    doc3.setContentType("application/pdf");
     doc3.setUploadedAt(LocalDateTime.now());
 
     documentRepository.save(doc1);
@@ -176,16 +182,19 @@ class DocumentRepositoryIntegrationTest {
     // Given - Create documents with and without summaries
     Document withSummary = new Document();
     withSummary.setFilename("doc1.pdf");
+    withSummary.setContentType("application/pdf");
     withSummary.setSummary("This document has a summary");
     withSummary.setUploadedAt(LocalDateTime.now());
 
     Document withoutSummary = new Document();
     withoutSummary.setFilename("doc2.pdf");
+    withoutSummary.setContentType("application/pdf");
     withoutSummary.setSummary(null);
     withoutSummary.setUploadedAt(LocalDateTime.now());
 
     Document withEmptySummary = new Document();
     withEmptySummary.setFilename("doc3.pdf");
+    withEmptySummary.setContentType("application/pdf");
     withEmptySummary.setSummary("");
     withEmptySummary.setUploadedAt(LocalDateTime.now());
 
@@ -209,16 +218,19 @@ class DocumentRepositoryIntegrationTest {
     // Given - Create documents with different statuses
     Document doc1 = new Document();
     doc1.setFilename("doc1.pdf");
+    doc1.setContentType("application/pdf");
     doc1.setProcessingStatus(Document.ProcessingStatus.COMPLETED);
     doc1.setUploadedAt(LocalDateTime.now());
 
     Document doc2 = new Document();
     doc2.setFilename("doc2.pdf");
+    doc2.setContentType("application/pdf");
     doc2.setProcessingStatus(Document.ProcessingStatus.COMPLETED);
     doc2.setUploadedAt(LocalDateTime.now());
 
     Document doc3 = new Document();
     doc3.setFilename("doc3.pdf");
+    doc3.setContentType("application/pdf");
     doc3.setProcessingStatus(Document.ProcessingStatus.FAILED);
     doc3.setUploadedAt(LocalDateTime.now());
 
@@ -264,10 +276,12 @@ class DocumentRepositoryIntegrationTest {
     // Given - Save multiple documents
     Document doc1 = new Document();
     doc1.setFilename("doc1.pdf");
+    doc1.setContentType("application/pdf");
     doc1.setUploadedAt(LocalDateTime.now());
 
     Document doc2 = new Document();
     doc2.setFilename("doc2.pdf");
+    doc2.setContentType("application/pdf");
     doc2.setUploadedAt(LocalDateTime.now());
 
     documentRepository.save(doc1);
