@@ -858,3 +858,9 @@ Prompt : give me a few documents that have semantic similarity related to ML
   Reason: We wrote all the information and all the tests ourselves, but to make it more readable and better formatted, we used ChatGPT to help restructure the content - adding proper headers, bolding important text, converting commands to bash code blocks, and organizing sections logically.
 
   Prompt: help format the bash commands properly and add better section headers in this checklist to make more readable.
+
+- **Help create test document for relationships endpoint testing**
+
+  Reason: We needed a test document with AI/ML content to test the relationships endpoint functionality and demonstrate semantic similarity.
+
+  Prompt: create a test document with machine learning and AI content that would help test document relationships and semantic similarity
