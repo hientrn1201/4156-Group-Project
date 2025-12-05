@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
@@ -20,28 +22,33 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SimpleEmbeddingService {
 
+  private static final Logger logger = LoggerFactory.getLogger(SimpleEmbeddingService.class);
+
   private final DocumentChunkRepository documentChunkRepository;
   private final EmbeddingModel embeddingModel;
 
   @Autowired
   public SimpleEmbeddingService(DocumentChunkRepository documentChunkRepository,
-                                EmbeddingModel embeddingModel) {
+      EmbeddingModel embeddingModel) {
     this.documentChunkRepository = documentChunkRepository;
     this.embeddingModel = embeddingModel;
   }
 
   /**
-   * Generates an embedding for a given {@link DocumentChunk} using the Ollama embedding model.
+   * Generates an embedding for a given {@link DocumentChunk} using the Ollama
+   * embedding model.
    *
    * @param chunk the {@link DocumentChunk} containing text content to embed.
    * @return the same {@link DocumentChunk} with its embedding field populated.
-   * @throws IllegalArgumentException if the chunk or its text content is null or empty.
-   * @throws RuntimeException         if embedding generation or database insertion fails.
+   * @throws IllegalArgumentException if the chunk or its text content is null or
+   *                                  empty.
+   * @throws RuntimeException         if embedding generation or database
+   *                                  insertion fails.
    */
   @Transactional
   public DocumentChunk generateEmbedding(DocumentChunk chunk) {
     if (chunk == null || chunk.getTextContent() == null
-        || chunk.getTextContent().trim().isEmpty()) {
+        || chunk.getTextContent().isBlank()) {
       throw new IllegalArgumentException("Chunk or text content cannot be null or empty");
     }
 
@@ -65,8 +72,12 @@ public class SimpleEmbeddingService {
       // Set embedding on chunk for return value
       chunk.setEmbedding(embeddingArray);
       return chunk;
+    } catch (IllegalArgumentException e) {
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException("Failed to generate embedding for chunk: " + e.getMessage(), e);
+      throw new IllegalStateException(
+          "Failed to generate embedding for chunk: " + e.getMessage(), e
+      );
     }
   }
 
@@ -85,28 +96,17 @@ public class SimpleEmbeddingService {
     List<DocumentChunk> processedChunks = new ArrayList<>();
 
     for (DocumentChunk chunk : chunks) {
-      if (chunk.getTextContent() != null && !chunk.getTextContent().trim().isEmpty()) {
+      if (chunk.getTextContent() != null && !chunk.getTextContent().isBlank()) {
         try {
           float[] embeddingArray = generateOllamaEmbeddingArray(chunk.getTextContent());
-          String embeddingString = convertFloatArrayToVectorString(embeddingArray);
-
-          // Use native SQL to insert with proper vector casting
-          documentChunkRepository.insertChunkWithEmbedding(
-              chunk.getChunkIndex(),
-              chunk.getChunkSize(),
-              chunk.getDocument().getId(),
-              embeddingString,
-              chunk.getEndPosition(),
-              chunk.getStartPosition(),
-              chunk.getTextContent());
 
           // Set embedding on chunk for return value
           chunk.setEmbedding(embeddingArray);
+          chunk = documentChunkRepository.save(chunk);
           processedChunks.add(chunk);
         } catch (Exception e) {
-          System.err
-              .println("Failed to generate embedding for chunk " + chunk.getId() + ": "
-                  + e.getMessage());
+          logger.error("Failed to generate embedding for chunk {}: {}", chunk.getId(),
+              e.getMessage(), e);
           // Continue processing other chunks
         }
       }
@@ -116,31 +116,34 @@ public class SimpleEmbeddingService {
   }
 
   /**
-   * Generates a float array embedding for the given text using the Ollama embedding model.
+   * Generates a float array embedding for the given text using the Ollama
+   * embedding model.
    *
    * @param text the text content to embed.
    * @return a float array representing the embedding vector.
-   * @throws RuntimeException if the embedding generation fails or returns no result.
+   * @throws RuntimeException if the embedding generation fails or returns no
+   *                          result.
    */
   private float[] generateOllamaEmbeddingArray(String text) {
     try {
-      System.out.println(
-          "Generating embedding for text: " + text.substring(0, Math.min(100, text.length()))
-              + "...");
+      logger.debug("Generating embedding for text: {}...",
+          text.substring(0, Math.min(100, text.length())));
       EmbeddingRequest request = new EmbeddingRequest(List.of(text), null);
       EmbeddingResponse response = embeddingModel.call(request);
 
       if (response.getResults() != null && !response.getResults().isEmpty()) {
         float[] embedding = response.getResults().get(0).getOutput();
-        System.out.println(
-            "Successfully generated embedding with " + embedding.length + " dimensions");
+        logger.debug("Successfully generated embedding with {} dimensions", embedding.length);
         return embedding;
       } else {
-        throw new RuntimeException("No embedding result returned from Ollama");
+        throw new IllegalStateException("No embedding result returned from Ollama");
       }
+    } catch (IllegalStateException e) {
+      logger.error("Failed to generate Ollama embedding: {}", e.getMessage(), e);
+      throw e;
     } catch (Exception e) {
-      System.err.println("Failed to generate Ollama embedding: " + e.getMessage());
-      throw new RuntimeException("Failed to generate Ollama embedding: " + e.getMessage(), e);
+      logger.error("Failed to generate Ollama embedding: {}", e.getMessage(), e);
+      throw new IllegalStateException("Failed to generate Ollama embedding: " + e.getMessage(), e);
     }
   }
 
@@ -160,23 +163,23 @@ public class SimpleEmbeddingService {
     for (int i = 0; i < vector.length; i++) {
       vectorString.append(vector[i]);
       if (i < vector.length - 1) {
-        vectorString.append(",");
+        vectorString.append(',');
       }
     }
-    vectorString.append("]");
+    vectorString.append(']');
     return vectorString.toString();
   }
-
 
   /**
    * Finds document chunks that are semantically similar to a given query text.
    *
    * @param queryText the input text used to find similar chunks.
    * @param limit     the maximum number of similar chunks to return.
-   * @return a list of similar {@link DocumentChunk} results, or an empty list if none found.
+   * @return a list of similar {@link DocumentChunk} results, or an empty list if
+   *         none found.
    */
   public List<DocumentChunk> findSimilarChunks(String queryText, int limit) {
-    if (queryText == null || queryText.trim().isEmpty()) {
+    if (queryText == null || queryText.isBlank()) {
       return new ArrayList<>();
     }
 
@@ -185,21 +188,58 @@ public class SimpleEmbeddingService {
       float[] queryEmbeddingArray = generateOllamaEmbeddingArray(queryText);
       String queryEmbedding = convertFloatArrayToVectorString(queryEmbeddingArray);
 
-      System.out.println("Search query embedding dimensions: " + queryEmbeddingArray.length);
-      System.out.println("Search query embedding preview: "
-          + queryEmbedding.substring(0, Math.min(50, queryEmbedding.length())) + "...");
+      logger.debug("Search query embedding dimensions: {}", queryEmbeddingArray.length);
+      logger.debug("Search query embedding preview: {}...",
+          queryEmbedding.substring(0, Math.min(50, queryEmbedding.length())));
 
       // Use PostgreSQL vector similarity search
-      List<DocumentChunk> results =
-          documentChunkRepository.findSimilarChunks(queryEmbedding, limit);
-      System.out.println("Found " + results.size() + " similar chunks");
+      List<DocumentChunk> results = documentChunkRepository
+          .findSimilarChunks(queryEmbedding, limit);
+      logger.debug("Found {} similar chunks", results.size());
       return results;
     } catch (Exception e) {
-      System.err.println("Failed to find similar chunks: " + e.getMessage());
+      logger.error("Failed to find similar chunks: {}", e.getMessage(), e);
       return new ArrayList<>();
     }
   }
 
+  /**
+   * Finds document chunks related to a given chunk based on embedding similarity.
+   *
+   * @param chunk the {@link DocumentChunk} to find related chunks for.
+   * @param limit the maximum number of related chunks to return.
+   * @return a list of related {@link DocumentChunk} results, or an empty list
+   */
+  public List<DocumentChunk> findRelatedChunks(DocumentChunk chunk, int limit) {
+    if (chunk == null || chunk.getEmbedding() == null
+        || chunk.getEmbedding().length == 0) {
+      return new ArrayList<>();
+    }
+
+    if (limit == 0) {
+      return new ArrayList<>();
+    }
+
+    try {
+      float[] queryEmbeddingArray = chunk.getEmbedding();
+      String queryEmbedding = convertFloatArrayToVectorString(queryEmbeddingArray);
+      logger.debug("Chunk query embedding preview: {}...",
+          queryEmbedding.substring(0, Math.min(50, queryEmbedding.length())));
+
+      logger.debug("Chunk document ID: {}", chunk.getDocument().getId());
+
+      logger.debug("Finding related chunks for chunk ID: {}", chunk.getId());
+
+      // Use PostgreSQL vector similarity search
+      List<DocumentChunk> results = documentChunkRepository.findRelatedChunks(
+          chunk.getDocument().getId(), queryEmbedding, limit);
+      logger.debug("Found {} related chunks", results.size());
+      return results;
+    } catch (Exception e) {
+      logger.error("Failed to find related chunks: {}", e.getMessage(), e);
+      return new ArrayList<>();
+    }
+  }
 
   /**
    * Calculates the cosine similarity between two embedding vectors.
@@ -217,11 +257,10 @@ public class SimpleEmbeddingService {
     try {
       return calculateCosineSimilarity(embedding1, embedding2);
     } catch (Exception e) {
-      System.err.println("Failed to calculate similarity: " + e.getMessage());
+      logger.error("Failed to calculate similarity: {}", e.getMessage(), e);
       return 0.0;
     }
   }
-
 
   /**
    * Computes cosine similarity between two equal-length float vectors.
@@ -283,15 +322,16 @@ public class SimpleEmbeddingService {
   }
 
   /**
-   * Generates embeddings for all chunks of a specific document that do not yet have embeddings.
+   * Generates embeddings for all chunks of a specific document that do not yet
+   * have embeddings.
    *
    * @param documentId the ID of the document whose chunks should be embedded.
    * @return the number of chunks successfully processed.
    */
   @Transactional
   public int generateEmbeddingsForDocument(Long documentId) {
-    List<DocumentChunk> chunks =
-        documentChunkRepository.findByDocumentIdAndEmbeddingIsNull(documentId);
+    List<DocumentChunk> chunks = documentChunkRepository
+        .findByDocumentIdAndEmbeddingIsNull(documentId);
     if (chunks.isEmpty()) {
       return 0;
     }
@@ -299,7 +339,6 @@ public class SimpleEmbeddingService {
     List<DocumentChunk> processedChunks = generateEmbeddings(chunks);
     return processedChunks.size();
   }
-
 
   /**
    * Tests the connectivity and functionality of the Ollama embedding model.

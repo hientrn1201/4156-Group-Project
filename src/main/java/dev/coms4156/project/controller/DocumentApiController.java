@@ -1,8 +1,9 @@
 package dev.coms4156.project.controller;
 
-import dev.coms4156.project.dtos.DocumentChunkDTO;
-import dev.coms4156.project.dtos.DocumentDTO;
+import dev.coms4156.project.dtos.DocumentChunkDto;
+import dev.coms4156.project.dtos.DocumentDto;
 import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipDto;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
@@ -141,7 +142,7 @@ public class DocumentApiController {
   @GetMapping("/documents/{id}")
   @ApiResponses({
       @ApiResponse(responseCode = "200",
-          content = @Content(schema = @Schema(implementation = DocumentDTO.class))),
+          content = @Content(schema = @Schema(implementation = DocumentDto.class))),
       @ApiResponse(responseCode = "404"),
       @ApiResponse(responseCode = "500",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -153,7 +154,7 @@ public class DocumentApiController {
       if (document.isPresent()) {
         Document doc = document.get();
 
-        DocumentDTO response = DocumentDTO.fromDocument(doc);
+        DocumentDto response = DocumentDto.fromDocument(doc);
 
         return ResponseEntity.ok(response);
       } else {
@@ -161,7 +162,7 @@ public class DocumentApiController {
       }
 
     } catch (Exception e) {
-      System.err.println("Error retrieving document " + id + ": " + e.getMessage());
+      logger.error("Error retrieving document {}: {}", id, e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to retrieve document");
 
@@ -176,10 +177,8 @@ public class DocumentApiController {
   @GetMapping("/relationships/{documentId}")
   @ApiResponses({
       @ApiResponse(responseCode = "200",
-          content = @Content(
-              schema = @Schema(implementation = DocumentRelationshipInfoResponse.class)
-          )
-      ),
+          content = @Content(schema =
+          @Schema(implementation = DocumentRelationshipInfoResponse.class))),
       @ApiResponse(responseCode = "500",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
@@ -187,17 +186,21 @@ public class DocumentApiController {
     try {
       // For now, return empty relationships - this would be implemented with actual
       // relationship analysis
+      List<DocumentRelationshipDto> relationships = documentService
+          .getRelationshipsForDocument(documentId).stream()
+          .map(DocumentRelationshipDto::fromDocumentRelationship)
+          .toList();
 
       DocumentRelationshipInfoResponse response = new DocumentRelationshipInfoResponse(
           documentId,
-          List.of(),
-          0,
-          "Relationship analysis not yet implemented");
+          relationships,
+          relationships.size(),
+          "Successfully retrieved document relationships");
 
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      System.err.println("Error getting document relationships: " + e.getMessage());
+      logger.error("Error getting document relationships: {}", e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to get document relationships");
 
@@ -232,7 +235,7 @@ public class DocumentApiController {
       }
 
     } catch (Exception e) {
-      System.err.println("Error retrieving summary for document " + id + ": " + e.getMessage());
+      logger.error("Error retrieving summary for document {}: {}", id, e.getMessage(), e);
 
       ErrorResponse error = new ErrorResponse("Failed to retrieve summary");
 
@@ -267,7 +270,7 @@ public class DocumentApiController {
 
       DocumentSearchResponse response = new DocumentSearchResponse(
           text,
-          similarChunks.stream().map(DocumentChunkDTO::fromDocumentChunk).toList(),
+          similarChunks.stream().map(DocumentChunkDto::fromDocumentChunk).toList(),
           similarChunks.size(),
           "Search completed successfully");
 
@@ -304,14 +307,14 @@ public class DocumentApiController {
 
     try {
       List<Document> documents;
-      if (filename == null || filename.trim().isEmpty()) {
+      if (filename == null || filename.isBlank()) {
         documents = documentService.getAllDocuments();
       } else {
         documents = documentService.getDocumentsByFilename(filename);
       }
 
-      List<DocumentDTO> docsDto = documents.stream()
-          .map(DocumentDTO::fromDocument)
+      List<DocumentDto> docsDto = documents.stream()
+          .map(DocumentDto::fromDocument)
           .toList();
 
       DocumentListResponse response = new DocumentListResponse(
@@ -322,7 +325,7 @@ public class DocumentApiController {
       return ResponseEntity.ok(response);
 
     } catch (Exception e) {
-      System.err.println("Error retrieving documents: " + e.getMessage());
+      logger.error("Error retrieving documents: {}", e.getMessage(), e);
       ErrorResponse error = new ErrorResponse("Failed to retrieve documents");
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
@@ -349,7 +352,9 @@ public class DocumentApiController {
     }
     documentService.deleteDocument(id);
 
-    return ResponseEntity.ok(Map.of("documentId", id, "message", "Document deleted successfully"));
+    return ResponseEntity.ok(
+        Map.of("documentId", id, "message", "Document deleted successfully")
+    );
   }
 
   /**
@@ -373,7 +378,7 @@ public class DocumentApiController {
     }
 
     DocumentListResponse response = new DocumentListResponse(
-        documents.stream().map(DocumentDTO::fromDocument).toList(),
+        documents.stream().map(DocumentDto::fromDocument).toList(),
         (long) documents.size(),
         "Documents with summaries retrieved successfully");
 

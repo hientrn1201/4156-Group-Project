@@ -110,7 +110,7 @@ postman_collection json is in the project root.
 
 documentation log:
 
-https://documenter.getpostman.com/view/48798844/2sB3Wjy3kr
+https://documenter.getpostman.com/view/48798844/2sB3dPRVKF
 
 ## API Endpoints
 
@@ -396,17 +396,15 @@ A Python client is provided in the `client/` directory for easy API interaction.
 
 ### Client Setup
 
+**IMPORTANT: Make sure the service is running first!**
+
 1. **Navigate to client directory:**
 ```bash
 cd client
 ```
 
-2. **Set up authentication:**
+2. **Get a JWT token by registering a user:**
 ```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Register a user and get a JWT token
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -414,12 +412,16 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
     "email": "test@example.com",
     "password": "password123"
   }'
-
-# Copy the token from the response and add it to .env file
-# Edit .env and replace 'your-jwt-token-here' with your actual token
 ```
 
-3. **Use the client:**
+3. **Set up authentication:**
+```bash
+# Edit client/.env and replace YOUR_JWT_TOKEN_HERE with the actual token from step 2
+# Example: JWT_TOKEN=eyJhbGciOiJIUzUxMiJ9...
+# DO NOT include quotes around the token
+```
+
+5. **Use the client:**
 ```bash
 # Test connection
 python client.py welcome
@@ -557,6 +559,121 @@ To run all tests from the terminal:
 mvn clean test
 ```
 
+### End-to-End Testing
+
+We provide comprehensive end-to-end testing that exercises the full functionality clients need from our service. These tests verify that clients can successfully upload documents, have them processed with AI, search through them semantically, and manage their document collections.
+
+#### Automated End-to-End Tests
+
+Our automated tests run the complete client workflow without manual intervention:
+
+**Option 1: Full Test Suite**
+```bash
+# Run comprehensive automated tests
+chmod +x run_e2e_tests.sh
+./run_e2e_tests.sh
+```
+
+This script automatically:
+- Verifies all services are running
+- Tests authentication flows
+- Uploads sample documents
+- Tests search functionality
+- Verifies document management operations
+- Cleans up test data
+
+**Option 2: Python Client Tests**
+```bash
+cd client
+python3 e2e_test_runner.py
+```
+
+**Option 3: Multi-Client Testing**
+```bash
+cd client
+python3 demo_multiple_clients.py
+```
+
+#### Manual End-to-End Testing
+
+For detailed testing and troubleshooting, we provide manual test procedures in `E2E_TESTING_CHECKLIST.md`. These tests can be run step-by-step to verify specific functionality:
+
+**Core Client Workflow Test:**
+
+1. **Get Authentication Token**
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testclient", "email": "test@example.com", "password": "test123"}' \
+  | jq -r '.token')
+```
+
+2. **Upload Documents for Processing**
+```bash
+# Upload a research document
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@research-paper.pdf"
+
+# Upload meeting notes
+curl -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8080/api/v1/documents \
+  -F "file=@meeting-notes.txt"
+```
+
+3. **Wait for AI Processing**
+```bash
+# Check processing status
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/stats
+```
+
+4. **Search Through Documents**
+```bash
+# Search for specific information
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/project%20timeline"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/search/research%20findings"
+```
+
+5. **Get AI-Generated Summaries**
+```bash
+# Retrieve document summaries
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/documents/summaries
+```
+
+**Expected Results:**
+- Authentication returns valid JWT tokens
+- Document uploads return 200 OK with document IDs
+- Processing status progresses from UPLOADED to COMPLETED
+- Search queries return relevant document chunks
+- Summaries are generated for processed documents
+- Multiple clients can operate independently
+
+**Manual Test Scenarios:**
+
+The complete manual testing checklist covers:
+- Authentication flows (registration, login, error cases)
+- Document upload (various formats, error handling)
+- Document management (retrieval, deletion, statistics)
+- Semantic search (queries, special characters, no results)
+- Multi-client operations (concurrent access, client isolation)
+- Error handling (unauthorized access, invalid requests)
+- Performance testing (large files, concurrent operations)
+
+**Running Manual Tests:**
+
+Refer to `E2E_TESTING_CHECKLIST.md` for the complete list of manual test procedures. Each test includes:
+- Exact commands to run
+- Expected outcomes
+- Error scenarios to verify
+- Troubleshooting steps
+
+These tests ensure that clients can rely on our service for their knowledge management needs, from document ingestion through AI-powered search and retrieval.
+
 ### Style Checking
 Follows standard Java coding conventions under Google Java Style Guide : 
 
@@ -572,6 +689,18 @@ Run this:
 
 ![Style check](reports/checkstyle.png)
 
+### Bug Check
+
+Implemented PMD and Spotbugs for more strict checks
+
+**First bug check :**
+
+![bug check](reports/spotbugs-before.png)
+
+**Second FIXED bug check:**
+
+![bug check](reports/spotbugs-after.png)
+
 ### Coverage Analysis
 
 An existing coverage report can be viewed by opening `target/site/jacoco/index.html` in the browser, however if you would like to re-generate it, run the following command:
@@ -584,7 +713,7 @@ mvn test jacoco:report
 
 ![pmd report](reports/coverage.png)
 
-This repository achieves 89.03% branch coverage (exceeds 80% requirement).
+This repository achieves 85% branch coverage.
 
 ### Test Files
 
@@ -622,7 +751,7 @@ This repository achieves 89.03% branch coverage (exceeds 80% requirement).
 - **Testing**: JUnit 5, Mockito, Spring Boot Test
 - **Coverage**: JaCoCo
 - **Style Checking**: Style Checking:Checkstyle with Google Java Style
-- **Static Analysis**: PMD
+- **Static Analysis**: PMD, Spotbugs
 ## CI/CD Pipeline
 
 This project includes an automated CI pipeline that runs on pushes and pull requests to the main branch.
@@ -631,7 +760,7 @@ This project includes an automated CI pipeline that runs on pushes and pull requ
 
 1. **Builds the project** with Java 17 and Maven
 2. **Runs unit tests** against PostgreSQL with PGVector (skips tests that require Ollama)
-3. **Runs quality checks** Checkstyle, PMD, JaCoCo coverage
+3. **Runs quality checks** Checkstyle, PMD, JaCoCo coverage, SpotBugs
 4. **Generates artifacts** (test results, coverage reports, application JAR)
 
 ### Pipeline Triggers
@@ -660,6 +789,10 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
 - https://docs.spring.io/spring-data/jpa/docs/1.6.0.RELEASE/reference/html/jpa.repositories.html
 - https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html
 - https://docs.spring.io/spring-ai/reference/api/ollama.html
+- https://github.com/spotbugs/spotbugs/issues/1251 
+- https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html
+- https://projectlombok.org/features/EqualsAndHashCode 
+- https://docs.jboss.org/hibernate/orm/current/introduction/html_single/Hibernate_Introduction.html 
 
 ## AI usage documentation
 
@@ -703,3 +836,9 @@ Uses PostgreSQL with PGVector extension for testing database connectivity and ba
   We used it to help with Spring AI implementations and errors associated when building out.
 
   Prompt: I got this error [long error log] when retrieve relevant text using RAG
+
+- **Help with getting test documents that have relationship semantically**
+
+Reason : just to have data for the demo and show that the functions are working
+
+Prompt : give me a few documents that have semantic similarity related to ML

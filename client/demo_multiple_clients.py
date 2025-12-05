@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+- 
+
 Multiple Client Demo Script
 
 Demonstrates how multiple client instances can connect to the service simultaneously.
@@ -28,27 +30,32 @@ def client_worker(client_id: str, service_url: str, operations: list, jwt_token:
     
     for operation in operations:
         try:
+            # Test GET /api endpoint - welcome message
             if operation['type'] == 'welcome':
                 result = client.get_welcome()
                 print(f"[{client_id}] Welcome: {result.strip()}")
                 
+            # Test GET /api/v1/documents - list all documents
             elif operation['type'] == 'list':
                 result = client.get_all_documents()
                 count = result.get('count', 0)
                 print(f"[{client_id}] Found {count} documents")
                 
+            # Test GET /api/v1/documents/stats - processing statistics
             elif operation['type'] == 'stats':
                 result = client.get_statistics()
                 total = result.get('total', 0)
                 completion_rate = result.get('completionRate', 0.0)
                 print(f"[{client_id}] Stats: {total} total docs, {completion_rate:.1%} completion rate")
                 
+            # Test GET /api/v1/search/{text} - semantic search
             elif operation['type'] == 'search':
                 query = operation.get('query', 'test')
                 result = client.search_documents(query)
                 count = result.get('count', 0)
                 print(f"[{client_id}] Search '{query}': {count} results")
                 
+            # Test POST /api/v1/documents - document upload
             elif operation['type'] == 'upload':
                 file_path = operation.get('file_path')
                 if file_path and os.path.exists(file_path):
@@ -58,6 +65,7 @@ def client_worker(client_id: str, service_url: str, operations: list, jwt_token:
                 else:
                     print(f"[{client_id}] Skipping upload - file not found: {file_path}")
                     
+            # Timing control for demonstration purposes
             elif operation['type'] == 'wait':
                 duration = operation.get('duration', 1)
                 print(f"[{client_id}] Waiting {duration}s...")
@@ -97,9 +105,19 @@ def main():
     print("Starting multiple client instances...")
     print()
     
-    # Define operations for each client
+    # Define operations for each client - demonstrates concurrent API usage
     client_operations = {
+        # Client that uploads documents FIRST
+        'client-uploader-1': [
+            {'type': 'welcome'},
+            {'type': 'upload', 'file_path': '../test-document.txt'},
+            {'type': 'wait', 'duration': 8},
+            {'type': 'list'},
+            {'type': 'stats'},
+        ],
+        # Client focused on read operations (waits for upload)
         'client-reader-1': [
+            {'type': 'wait', 'duration': 5},
             {'type': 'welcome'},
             {'type': 'list'},
             {'type': 'stats'},
@@ -107,22 +125,17 @@ def main():
             {'type': 'wait', 'duration': 2},
             {'type': 'list'},
         ],
+        # Second client with different read patterns
         'client-reader-2': [
-            {'type': 'wait', 'duration': 1},
+            {'type': 'wait', 'duration': 6},
             {'type': 'stats'},
             {'type': 'search', 'query': 'artificial intelligence'},
             {'type': 'list'},
             {'type': 'search', 'query': 'neural networks'},
         ],
-        'client-uploader-1': [
-            {'type': 'welcome'},
-            {'type': 'upload', 'file_path': '../test-document.txt'},
-            {'type': 'wait', 'duration': 3},
-            {'type': 'list'},
-            {'type': 'stats'},
-        ],
+        # Client focused on search operations
         'client-searcher-1': [
-            {'type': 'wait', 'duration': 2},
+            {'type': 'wait', 'duration': 7},
             {'type': 'search', 'query': 'test'},
             {'type': 'search', 'query': 'document'},
             {'type': 'search', 'query': 'knowledge'},

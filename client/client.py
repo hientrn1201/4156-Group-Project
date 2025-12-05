@@ -282,14 +282,14 @@ Examples:
   python client.py delete 1
 
   # Use a different service URL and client ID
-  python client.py --url http://localhost:8080 --client-id my-client-001 upload doc.pdf
+  python client.py --url http://34.69.247.43:8080 --client-id my-client-001 upload doc.pdf
         """
     )
 
     parser.add_argument(
         '--url',
-        default=os.getenv('SERVICE_URL', 'http://localhost:8080'),
-        help='Base URL of the service (default: http://localhost:8080 or SERVICE_URL env var)'
+        default=os.getenv('SERVICE_URL', 'http://34.69.247.43:8080'),
+        help='Base URL of the service (default: http://34.69.247.43:8080 or SERVICE_URL env var)'
     )
     parser.add_argument(
         '--client-id',

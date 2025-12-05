@@ -2,6 +2,7 @@ package dev.coms4156.project.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,8 +13,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import dev.coms4156.project.dtos.DocumentDTO;
+import dev.coms4156.project.dtos.DocumentDto;
 import dev.coms4156.project.dtos.DocumentListResponse;
+import dev.coms4156.project.dtos.DocumentRelationshipDto;
 import dev.coms4156.project.dtos.DocumentRelationshipInfoResponse;
 import dev.coms4156.project.dtos.DocumentSearchResponse;
 import dev.coms4156.project.dtos.DocumentStatsResponse;
@@ -23,6 +25,7 @@ import dev.coms4156.project.dtos.DocumentUploadResponse;
 import dev.coms4156.project.dtos.ErrorResponse;
 import dev.coms4156.project.model.Document;
 import dev.coms4156.project.model.DocumentChunk;
+import dev.coms4156.project.model.DocumentRelationship;
 import dev.coms4156.project.service.ApiLoggingService;
 import dev.coms4156.project.service.DocumentService;
 import dev.coms4156.project.service.DocumentSummarizationService;
@@ -30,6 +33,7 @@ import dev.coms4156.project.service.RagService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -57,8 +61,8 @@ class DocumentControllerTest {
     controller = new DocumentApiController(documentService, summarizationService, ragService);
 
     // Inject the mocked ApiLoggingService using reflection
-    Field apiLoggingServiceField =
-        DocumentApiController.class.getDeclaredField("apiLoggingService");
+    Field apiLoggingServiceField = DocumentApiController.class
+        .getDeclaredField("apiLoggingService");
     apiLoggingServiceField.setAccessible(true);
     apiLoggingServiceField.set(controller, apiLoggingService);
 
@@ -68,7 +72,7 @@ class DocumentControllerTest {
   }
 
   private Document makeDoc(Long id, String filename, String contentType, long size,
-                           Document.ProcessingStatus status, String summary) {
+      Document.ProcessingStatus status, String summary) {
     Document d = new Document();
     d.setId(id);
     d.setFilename(filename);
@@ -160,7 +164,7 @@ class DocumentControllerTest {
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    DocumentDTO responseBody = (DocumentDTO) response.getBody();
+    DocumentDto responseBody = (DocumentDto) response.getBody();
     assertEquals(documentId, responseBody.getId());
     assertEquals("test.pdf", responseBody.getFilename());
     assertEquals(Document.ProcessingStatus.COMPLETED, responseBody.getProcessingStatus());
@@ -191,17 +195,37 @@ class DocumentControllerTest {
     // Given
     Long documentId = 1L;
 
+    DocumentChunk chunk = DocumentChunk.builder()
+        .id(1L)
+        .textContent("Sample chunk")
+        .build();
+    DocumentRelationship relationship = DocumentRelationship.builder()
+        .sourceChunk(chunk)
+        .targetChunk(chunk)
+        .build();
+    DocumentRelationship relationship2 = DocumentRelationship.builder()
+        .sourceChunk(chunk)
+        .targetChunk(chunk)
+        .build();
+    final List<DocumentRelationshipDto> relationshipDtos = Arrays.asList(
+        DocumentRelationshipDto.fromDocumentRelationship(relationship),
+        DocumentRelationshipDto.fromDocumentRelationship(relationship2));
+
+    when(documentService.getRelationshipsForDocument(documentId))
+        .thenReturn(Arrays.asList(relationship, relationship2));
+
     // When
     ResponseEntity<?> response = controller.getDocumentRelationships(documentId);
 
     // Then
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    DocumentRelationshipInfoResponse responseBody =
-        (DocumentRelationshipInfoResponse) response.getBody();
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response
+        .getBody();
     assertEquals(documentId, responseBody.getDocumentId());
-    assertEquals(0, responseBody.getCount());
-    assertEquals("Relationship analysis not yet implemented", responseBody.getMessage());
+    assertIterableEquals(relationshipDtos, responseBody.getRelationships());
+    assertEquals(2, responseBody.getCount());
+    assertEquals("Successfully retrieved document relationships", responseBody.getMessage());
   }
 
   @Test
@@ -363,7 +387,7 @@ class DocumentControllerTest {
   @Test
   void testGetProcessingStatistics_AllStatuses() {
     List<Document> all = List.of(makeDoc(1L, "a", "t", 1,
-            Document.ProcessingStatus.UPLOADED, null),
+        Document.ProcessingStatus.UPLOADED, null),
         makeDoc(2L, "b", "t", 1,
             Document.ProcessingStatus.TEXT_EXTRACTED, null),
         makeDoc(3L, "c", "t", 1,
@@ -488,7 +512,7 @@ class DocumentControllerTest {
     assertEquals(3L, body.getCount());
     assertEquals(3, body.getDocuments().size());
     Set<Long> ids = new HashSet<>();
-    for (DocumentDTO doc : body.getDocuments()) {
+    for (DocumentDto doc : body.getDocuments()) {
       ids.add(doc.getId());
     }
     assertTrue(ids.contains(1L));
@@ -704,7 +728,8 @@ class DocumentControllerTest {
   void testGetDocumentRelationships_NegativeId() {
     ResponseEntity<?> response = controller.getDocumentRelationships(-1L);
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response
+        .getBody();
     assertEquals(-1L, responseBody.getDocumentId());
   }
 
@@ -713,7 +738,8 @@ class DocumentControllerTest {
   void testGetDocumentRelationships_ZeroId() {
     ResponseEntity<?> response = controller.getDocumentRelationships(0L);
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response.getBody();
+    DocumentRelationshipInfoResponse responseBody = (DocumentRelationshipInfoResponse) response
+        .getBody();
     assertEquals(0L, responseBody.getDocumentId());
   }
 
@@ -724,8 +750,7 @@ class DocumentControllerTest {
         makeDoc(1L, "doc1", "t", 1L, Document.ProcessingStatus.COMPLETED, "valid summary"),
         makeDoc(2L, "doc2", "t", 1L, Document.ProcessingStatus.COMPLETED, ""),
         makeDoc(3L, "doc3", "t", 1L, Document.ProcessingStatus.COMPLETED, "   "),
-        makeDoc(4L, "doc4", "t", 1L, Document.ProcessingStatus.COMPLETED, null)
-    );
+        makeDoc(4L, "doc4", "t", 1L, Document.ProcessingStatus.COMPLETED, null));
     when(documentService.getAllDocuments()).thenReturn(all);
 
     ResponseEntity<?> response = controller.getDocumentsWithSummaries();

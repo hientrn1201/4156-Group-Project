@@ -41,7 +41,8 @@ class ResponseBodyCaptureFilterTest {
 
     filter.doFilter(request, response, filterChain);
 
-    verify(filterChain).doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    verify(filterChain)
+        .doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
   }
 
   @Test

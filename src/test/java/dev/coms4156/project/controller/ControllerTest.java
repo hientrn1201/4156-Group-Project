@@ -50,11 +50,11 @@ class ControllerTest {
   void test_index_response_immutable() {
     ResponseEntity<String> response1 = controller.index();
     ResponseEntity<String> response2 = controller.index();
-    
+
     // Responses should be identical
     assertEquals(response1.getStatusCode(), response2.getStatusCode());
     assertEquals(response1.getBody(), response2.getBody());
-    
+
     // Body should not be modifiable reference
     String body1 = response1.getBody();
     String body2 = response2.getBody();
@@ -76,28 +76,30 @@ class ControllerTest {
     final int threadCount = 10;
     final ResponseEntity<String>[] responses = new ResponseEntity[threadCount];
     Thread[] threads = new Thread[threadCount];
-    
+
     for (int i = 0; i < threadCount; i++) {
       final int index = i;
       threads[i] = new Thread(() -> {
         responses[index] = controller.index();
       });
     }
-    
+
     // Start all threads
     for (Thread thread : threads) {
       thread.start();
     }
-    
+
     // Wait for all threads to complete
     for (Thread thread : threads) {
       thread.join();
     }
-    
+
     // Verify all responses are identical
     for (int i = 0; i < threadCount; i++) {
       assertEquals(HttpStatus.OK, responses[i].getStatusCode());
-      assertEquals("Welcome to Knowledge Management Service Powered by AI!", responses[i].getBody());
+      assertEquals(
+          "Welcome to Knowledge Management Service Powered by AI!",
+          responses[i].getBody());
     }
   }
 
@@ -106,12 +108,12 @@ class ControllerTest {
   void test_index_response_content_validation() {
     ResponseEntity<String> response = controller.index();
     String body = response.getBody();
-    
+
     assertNotNull(body);
     assertFalse(body.isEmpty());
     assertFalse(body.isBlank());
     assertTrue(body.length() > 0);
-    
+
     // Verify specific content requirements
     assertEquals("Welcome to Knowledge Management Service Powered by AI!", body);
   }
@@ -121,7 +123,7 @@ class ControllerTest {
   void test_index_response_size() {
     ResponseEntity<String> response = controller.index();
     String body = response.getBody();
-    
+
     assertNotNull(body);
     // Verify reasonable response size (not too large, not empty)
     assertTrue(body.length() > 10); // Minimum reasonable length
@@ -139,5 +141,5 @@ class ControllerTest {
   private void assertFalse(boolean condition) {
     org.junit.jupiter.api.Assertions.assertFalse(condition);
   }
-  
+
 }

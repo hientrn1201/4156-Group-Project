@@ -57,7 +57,8 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getInputStream()).thenReturn(emptyStream);
 
-    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService)
+        .extractText(multipartFile);
 
     assertNotNull(result);
   }
@@ -71,7 +72,8 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.getInputStream()).thenReturn(inputStream);
 
     // When
-    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService)
+        .extractText(multipartFile);
 
     // Then
     assertEquals("This is a test document content.", result);
@@ -85,7 +87,8 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getInputStream()).thenReturn(inputStream);
 
-    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService)
+        .extractText(multipartFile);
 
     assertNotNull(result);
     assertTrue(result.length() > 1000);
@@ -98,7 +101,8 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getInputStream()).thenReturn(inputStream);
 
-    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService)
+        .extractText(multipartFile);
 
     assertEquals("a", result);
   }
@@ -111,7 +115,8 @@ class DocumentTextExtractionServiceTest {
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getInputStream()).thenReturn(inputStream);
 
-    String result = ((DocumentTextExtractionService) textExtractionService).extractText(multipartFile);
+    String result = ((DocumentTextExtractionService) textExtractionService)
+        .extractText(multipartFile);
 
     assertNotNull(result);
     assertTrue(result.contains("àáâãäåæçèéêë"));
@@ -221,10 +226,13 @@ class DocumentTextExtractionServiceTest {
   // Invalid equivalence partition - malformed content types
   @Test
   void testIsSupportedContentType_MalformedTypes() {
-    assertFalse(textExtractionService.isSupportedContentType("textplain")); // doesn't start with text/
-    assertTrue(textExtractionService.isSupportedContentType("text/")); // starts with text/
+    // doesn't start with text/
+    assertFalse(textExtractionService.isSupportedContentType("textplain"));
+    // starts with text/
+    assertTrue(textExtractionService.isSupportedContentType("text/"));
     assertFalse(textExtractionService.isSupportedContentType("/plain"));
-    assertTrue(textExtractionService.isSupportedContentType("text//plain")); // starts with text/
+    // starts with text/
+    assertTrue(textExtractionService.isSupportedContentType("text//plain"));
   }
 
   // Boundary analysis - very long content type

@@ -7,8 +7,11 @@ import dev.coms4156.project.repository.DocumentChunkRepository;
 import dev.coms4156.project.repository.DocumentRelationshipRepository;
 import dev.coms4156.project.repository.DocumentRepository;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 public class DocumentService {
+
+  private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
 
   private final DocumentRepository documentRepository;
   private final DocumentChunkRepository documentChunkRepository;
@@ -76,7 +81,7 @@ public class DocumentService {
    */
   @Transactional
   public Document processDocument(MultipartFile file) throws IOException {
-    System.out.println("Starting document processing for: " + file.getOriginalFilename());
+    logger.info("Starting document processing for: {}", file.getOriginalFilename());
 
     // Validate file
     if (file.isEmpty()) {
@@ -101,11 +106,11 @@ public class DocumentService {
 
     try {
       // Step 1: Extract text using Apache Tika
-      System.out.println("Step 1: Extracting text from document: " + document.getId());
+      logger.info("Step 1: Extracting text from document: {}", document.getId());
       String extractedText = textExtractionService.extractText(file);
 
-      if (extractedText == null || extractedText.trim().isEmpty()) {
-        throw new RuntimeException("No text could be extracted from the document");
+      if (extractedText == null || extractedText.isBlank()) {
+        throw new IllegalStateException("No text could be extracted from the document");
       }
 
       document.setExtractedText(extractedText);
@@ -113,41 +118,55 @@ public class DocumentService {
       document = documentRepository.save(document);
 
       // Step 2: Chunk the document (in memory only)
-      System.out.println("Step 2: Chunking document: " + document.getId());
+      logger.info("Step 2: Chunking document: {}", document.getId());
       List<DocumentChunk> chunks = chunkingService.chunkDocument(document);
 
       if (chunks.isEmpty()) {
-        throw new RuntimeException("No chunks could be created from the document");
+        throw new IllegalStateException("No chunks could be created from the document");
       }
-
-      // Step 3: Generate embeddings for chunks
-      System.out.println("Step 3: Generating embeddings for " + chunks.size() + " chunks");
-      embeddingService.generateEmbeddings(chunks);
 
       document.setProcessingStatus(Document.ProcessingStatus.CHUNKED);
       document = documentRepository.save(document);
+
+      // Step 3: Generate embeddings for chunks
+      logger.info("Step 3: Generating embeddings for {} chunks", chunks.size());
+      chunks = embeddingService.generateEmbeddings(chunks);
 
       document.setProcessingStatus(Document.ProcessingStatus.EMBEDDINGS_GENERATED);
       document = documentRepository.save(document);
 
       // Step 4: Generate summary (optional - can be implemented later)
-      System.out.println("Step 4: Generating summary for document: " + document.getId());
+      logger.info("Step 4: Generating summary for document: {}", document.getId());
       String summary = generateSummary(extractedText);
+
+      // Step 5: Generate relationships between chunks
+      List<DocumentRelationship> relationships = createRelationshipsForSourceChunks(chunks);
+      logger.info("Created {} document relationships.", relationships.size());
 
       document.setSummary(summary);
       document.setProcessingStatus(Document.ProcessingStatus.COMPLETED);
       document = documentRepository.save(document);
 
-      System.out.println("Successfully processed document: " + document.getFilename() + " with "
-          + chunks.size() + " chunks");
+      logger.info("Successfully processed document: {} with {} chunks", document.getFilename(),
+          chunks.size());
       return document;
 
-    } catch (Exception e) {
-      System.err.println("Error processing document " + document.getId() + ": " + e.getMessage());
-      e.printStackTrace();
+    } catch (IllegalStateException | IllegalArgumentException e) {
+      logger.error("Error processing document {}: {}", document.getId(), e.getMessage(), e);
       document.setProcessingStatus(Document.ProcessingStatus.FAILED);
       documentRepository.save(document);
-      throw new RuntimeException("Document processing failed", e);
+      throw e;
+    } catch (IOException e) {
+      logger.error("IO error processing document {}: {}", document.getId(), e.getMessage(), e);
+      document.setProcessingStatus(Document.ProcessingStatus.FAILED);
+      documentRepository.save(document);
+      throw e;
+    } catch (Exception e) {
+      logger.error("Unexpected error processing document {}: {}", document.getId(),
+          e.getMessage(), e);
+      document.setProcessingStatus(Document.ProcessingStatus.FAILED);
+      documentRepository.save(document);
+      throw new IllegalStateException("Document processing failed", e);
     }
   }
 
@@ -202,7 +221,7 @@ public class DocumentService {
   public void deleteDocument(Long id) {
     Optional<Document> documentOpt = documentRepository.findById(id);
     if (documentOpt.isEmpty()) {
-      System.out.println("Document not found: " + id);
+      logger.warn("Document not found: {}", id);
       return;
     }
 
@@ -213,19 +232,19 @@ public class DocumentService {
     // This avoids loading entities with embeddings which can cause converter issues
     int relationshipsDeleted = documentRelationshipRepository.deleteByDocumentIdNative(id);
     if (relationshipsDeleted > 0) {
-      System.out.println("Deleted " + relationshipsDeleted + " relationships for document: " + id);
+      logger.info("Deleted {} relationships for document: {}", relationshipsDeleted, id);
     }
 
     // Step 2: Delete all chunks associated with this document using native query
     // This avoids loading entities with embeddings which can cause converter issues
     int chunksDeleted = documentChunkRepository.deleteByDocumentIdNative(id);
     if (chunksDeleted > 0) {
-      System.out.println("Deleted " + chunksDeleted + " chunks for document: " + id);
+      logger.info("Deleted {} chunks for document: {}", chunksDeleted, id);
     }
 
     // Step 3: Delete the document itself
     documentRepository.delete(document);
-    System.out.println("Deleted document: " + id);
+    logger.info("Deleted document: {}", id);
   }
 
   /**
@@ -288,7 +307,7 @@ public class DocumentService {
    *         unavailable.
    */
   private String generateSummary(String text) {
-    if (text == null || text.trim().isEmpty()) {
+    if (text == null || text.isBlank()) {
       return "No summary available";
     }
 
@@ -306,5 +325,80 @@ public class DocumentService {
     }
 
     return truncated + "...";
+  }
+
+  /**
+   * Retrieves all document relationships for a given document ID.
+   *
+   * @param documentId the ID of the document for which relationships are
+   *                   retrieved
+   * @return List of DocumentRelationship entities
+   */
+  public List<DocumentRelationship> getRelationshipsForDocument(Long documentId) {
+    return documentRelationshipRepository.findByDocumentId(documentId);
+  }
+
+  /**
+   * Creates document relationships for all chunks of a given document.
+   *
+   * @param sourceChunks the list of source document chunks
+   * @return List of created DocumentRelationship entities
+   */
+  public List<DocumentRelationship> createRelationshipsForSourceChunks(
+      List<DocumentChunk> sourceChunks) {
+    List<DocumentRelationship> allRelationships = new ArrayList<>();
+
+    for (DocumentChunk sourceChunk : sourceChunks) {
+      List<DocumentChunk> targetChunks = embeddingService.findRelatedChunks(sourceChunk, 5);
+
+      List<DocumentRelationship> relationships = createRelationshipsFromChunks(
+          sourceChunk, targetChunks);
+      allRelationships.addAll(relationships);
+    }
+
+    allRelationships = documentRelationshipRepository.saveAll(allRelationships);
+
+    return allRelationships;
+  }
+
+  /**
+   * Creates {@link DocumentRelationship}s entries from a source chunk and a list
+   * of target chunks.
+   *
+   * @param source  the document chunk that the given targets are related to.
+   * @param targets the chunks that we are linking with the source chunk.
+   * @return List of created document relationships
+   * @throws IllegalArgumentException on null source or empty list of targets.
+   */
+  public List<DocumentRelationship> createRelationshipsFromChunks(
+      DocumentChunk source,
+      List<DocumentChunk> targets) {
+    if (source == null) {
+      throw new IllegalArgumentException("Source chunk must not be null!");
+    }
+
+    try {
+      // Only supports SEMANTIC_SIMILARITY
+      List<DocumentRelationship> results = new ArrayList<>();
+      for (DocumentChunk target : targets) {
+        Double similarityScore = embeddingService
+            .calculateSimilarity(source.getEmbedding(), target.getEmbedding());
+
+        DocumentRelationship docRel = new DocumentRelationship();
+        docRel.setSourceChunk(source);
+        docRel.setTargetChunk(target);
+        docRel.setRelationshipType(DocumentRelationship.RelationshipType.SEMANTIC_SIMILARITY);
+        docRel.setSimilarityScore(similarityScore);
+        docRel = documentRelationshipRepository.save(docRel);
+
+        results.add(docRel);
+      }
+
+      logger.info("Successfully created document relationships.");
+      return results;
+    } catch (Exception e) {
+      logger.error("Could not create document relationships", e);
+      return new ArrayList<>();
+    }
   }
 }

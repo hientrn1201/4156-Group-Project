@@ -7,7 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Main Spring Boot application class for the Knowledge Management Service.
  */
 @SpringBootApplication
-public class KnowledgeServiceApplication {
+public final class KnowledgeServiceApplication {
+
+  private KnowledgeServiceApplication() {
+    // Private constructor to prevent instantiation
+  }
 
   public static void main(String[] args) {
     SpringApplication.run(KnowledgeServiceApplication.class, args);

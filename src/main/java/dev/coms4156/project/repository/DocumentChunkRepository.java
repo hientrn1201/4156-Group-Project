@@ -48,6 +48,13 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Lo
   List<DocumentChunk> findSimilarChunks(@Param("queryEmbedding") String queryEmbedding,
                                         @Param("limit") int limit);
 
+  @Query(value = "SELECT * FROM document_chunks WHERE document_id != :documentId "
+      + "AND embedding IS NOT NULL "
+      + "ORDER BY embedding <-> CAST(:embedding AS vector) LIMIT :limit", nativeQuery = true)
+  List<DocumentChunk> findRelatedChunks(@Param("documentId") Long documentId,
+                                        @Param("embedding") String embedding,
+                                       @Param("limit") int limit);
+
   @Modifying
   @Query("DELETE FROM DocumentChunk dc WHERE dc.document = :document")
   void deleteByDocument(@Param("document") Document document);
