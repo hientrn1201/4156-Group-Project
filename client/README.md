@@ -109,6 +109,16 @@ python client.py summary 1
 python client.py summaries
 ```
 
+#### Get Document Relationships
+```bash
+python client.py relationships <document_id>
+```
+
+Example:
+```bash
+python client.py relationships 1
+```
+
 #### Get Processing Statistics
 ```bash
 python client.py stats
