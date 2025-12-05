@@ -20,8 +20,8 @@ import org.springframework.test.context.TestPropertySource;
 /**
  * Integration tests for DocumentChunkRepository.
  * Tests actual database operations using PostgreSQL with PGVector.
- * 
- * This test integrates with:
+ *
+ * <p>This test integrates with:
  * - PostgreSQL database with PGVector extension (external resource)
  * - JPA/Hibernate ORM
  * - DocumentChunk entity persistence with vector embeddings
@@ -162,7 +162,8 @@ class DocumentChunkRepositoryIntegrationTest {
     entityManager.clear();
 
     // When - Find ordered by chunk index
-    List<DocumentChunk> chunks = chunkRepository.findByDocumentIdOrderByChunkIndex(savedDoc.getId());
+    List<DocumentChunk> chunks =
+        chunkRepository.findByDocumentIdOrderByChunkIndex(savedDoc.getId());
 
     // Then - Should be in order
     assertTrue(chunks.size() >= 3);

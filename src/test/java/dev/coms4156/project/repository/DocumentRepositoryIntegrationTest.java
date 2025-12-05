@@ -20,8 +20,8 @@ import org.springframework.test.context.TestPropertySource;
 /**
  * Integration tests for DocumentRepository.
  * Tests actual database operations using PostgreSQL with PGVector.
- * 
- * This test integrates with:
+ *
+ * <p>This test integrates with:
  * - PostgreSQL database (external resource)
  * - JPA/Hibernate ORM
  * - Document entity persistence

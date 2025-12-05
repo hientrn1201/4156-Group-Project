@@ -18,8 +18,8 @@ import org.springframework.test.context.TestPropertySource;
 /**
  * Integration tests for UserRepository.
  * Tests actual database operations using PostgreSQL.
- * 
- * This test integrates with:
+ *
+ * <p>This test integrates with:
  * - PostgreSQL database (external resource)
  * - JPA/Hibernate ORM
  * - User entity persistence
@@ -69,7 +69,7 @@ class UserRepositoryIntegrationTest {
   @Test
   void testFindByUsername() {
     // Given - Save user
-    User saved = userRepository.save(testUser);
+    final User saved = userRepository.save(testUser);
     entityManager.flush();
     entityManager.clear();
 
@@ -85,7 +85,7 @@ class UserRepositoryIntegrationTest {
   @Test
   void testFindByEmail() {
     // Given - Save user
-    User saved = userRepository.save(testUser);
+    final User saved = userRepository.save(testUser);
     entityManager.flush();
     entityManager.clear();
 
@@ -165,7 +165,7 @@ class UserRepositoryIntegrationTest {
 
     // When - Save both
     User saved1 = userRepository.save(user1);
-    User saved2 = userRepository.save(user2);
+    final User saved2 = userRepository.save(user2);
     entityManager.flush();
     entityManager.clear();
 
